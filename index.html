@@ -9,7 +9,7 @@
   import { getDatabase, ref, set, push, onValue, onChildAdded, onDisconnect, remove, get, off, update }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword,
-    signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile }
+    signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalStoragePersistence }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
   const firebaseConfig = {
@@ -26,6 +26,9 @@
   const app  = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db   = getDatabase(app);
+
+  // Persist session in localStorage — no more re-login every visit
+  setPersistence(auth, browserLocalStoragePersistence).catch(()=>{});
 
   window._db  = db;
   window._auth = auth;
@@ -483,6 +486,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <button class="icon-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;font-size:1.1rem;">☰</button>
       <span class="ch-name" id="chat-channel-name">Selecciona un canal</span>
       <div class="header-actions">
+        <button class="icon-btn" onclick="openSearchModal()" title="Buscar">🔍</button>
         <button class="icon-btn" onclick="startVoiceCall()" title="Llamada de voz">📞</button>
         <button class="icon-btn" onclick="openVideoCall()" title="Videollamada">📹</button>
         <button class="icon-btn" onclick="toggleMembers()" title="Miembros">👥</button>
@@ -496,7 +500,9 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     </div>
     <div id="input-area">
       <div id="input-box">
-        <button class="input-btn" onclick="openModal('image-url-modal')" title="Imagen por URL">🖼️</button>
+        <button class="input-btn" onclick="document.getElementById('img-file-input').click()" title="Imagen">🖼️</button>
+        <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="handleChatImageUpload(this)">
+        <button class="input-btn" onclick="openModal('audio-modal')" title="Mensaje de voz">🎙️</button>
         <textarea id="msg-input" rows="1" placeholder="Escribe un mensaje..."
           onkeydown="handleInputKey(event)" oninput="autoResize(this);handleTyping()"></textarea>
         <button class="input-btn" onclick="togglePicker('emoji')" title="Emojis">😄</button>
@@ -808,6 +814,40 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg-0);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div class="auth-logo"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L9.5 8.5H3l5.5 4-2 6.5L12 15l5.5 4-2-6.5L21 8.5h-6.5z" fill="#fff"/></svg></div>
+  <div id="loading-msg" style="color:var(--text-2);font-size:.9rem;">Cargando...</div>
+  <div style="width:120px;height:3px;background:var(--bg-3);border-radius:2px;overflow:hidden;"><div id="loading-bar" style="height:100%;background:var(--accent);border-radius:2px;animation:loadBar 1.5s ease-in-out infinite;"></div></div>
+</div>
+<style>@keyframes loadBar{0%{width:0%;margin-left:0}50%{width:60%;margin-left:20%}100%{width:0%;margin-left:100%}}</style>
+
+<!-- SEARCH MODAL -->
+<div class="modal-overlay" id="search-modal">
+  <div class="modal" style="width:560px;">
+    <button class="close-btn" onclick="closeModal('search-modal')">✕</button>
+    <h2>🔍 Buscar mensajes</h2>
+    <input type="text" id="search-input" placeholder="Buscar en este canal..." oninput="searchMessages(this.value)" style="margin-top:8px;">
+    <div id="search-results" style="margin-top:14px;max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
+  </div>
+</div>
+
+<!-- AUDIO MESSAGE MODAL -->
+<div class="modal-overlay" id="audio-modal">
+  <div class="modal" style="width:380px;text-align:center;">
+    <button class="close-btn" onclick="closeAudioModal()">✕</button>
+    <h2>🎙️ Mensaje de audio</h2>
+    <p class="sub">Graba un mensaje de voz para enviar</p>
+    <div id="audio-timer" style="font-size:2rem;font-weight:700;color:var(--accent);font-family:monospace;margin:16px 0;">00:00</div>
+    <div id="audio-visualizer" style="height:40px;display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:16px;"></div>
+    <div style="display:flex;gap:10px;justify-content:center;">
+      <button class="btn btn-danger" id="audio-record-btn" onclick="toggleAudioRecording()">🎙️ Grabar</button>
+      <button class="btn btn-primary" id="audio-send-btn" onclick="sendAudioMessage()" style="display:none;">📤 Enviar</button>
+    </div>
+    <audio id="audio-preview" controls style="margin-top:14px;width:100%;display:none;"></audio>
+  </div>
+</div>
+
 <div class="modal-overlay" id="edit-msg-modal">
   <div class="modal">
     <button class="close-btn" onclick="closeModal('edit-msg-modal')">✕</button>
@@ -906,14 +946,16 @@ async function doSignOut(){
 
 // ── ON LOGIN ──
 async function onUserLoggedIn(firebaseUser){
+  // Show loading overlay
+  showLoadingOverlay('Cargando tu perfil...');
   await initUserProfile(firebaseUser,firebaseUser.displayName,firebaseUser.photoURL);
   const snap=await fbGet('users/'+firebaseUser.uid);
-  const profile=snap.val();
+  const profile=snap.exists()?snap.val():{};
   state.currentUser={...profile,uid:firebaseUser.uid,email:firebaseUser.email||''};
-  state.avatarSelectedColor=profile.avatarColor||'#5865f2';
+  state.avatarSelectedColor=profile.avatarColor||'#7c3aed';
 
   const presRef=fbRef('presence/'+state.currentUser.uid);
-  await window._fbSet(presRef,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,status:state.currentUser.status,customStatus:state.currentUser.customStatus||'',ts:Date.now()});
+  await window._fbSet(presRef,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()});
   window._fbOnDisconnect(presRef).remove();
   window._fbOnDisconnect(fbRef('typing/'+state.currentUser.uid)).remove();
 
@@ -931,12 +973,27 @@ async function onUserLoggedIn(firebaseUser){
   document.getElementById('auth-screen').style.display='none';
   document.getElementById('app').classList.add('visible');
   document.getElementById('live-badge').style.display='block';
-  state.currentServerId='__dm__';
-  renderAll();updateUserBar();
 
+  // Restore last server/channel from localStorage
+  try {
+    const lastSrv=localStorage.getItem('nova_last_server');
+    const lastCh=localStorage.getItem('nova_last_channel');
+    const srvExists=lastSrv&&(lastSrv==='__dm__'||state.servers.find(s=>s.id===lastSrv));
+    state.currentServerId=srvExists?lastSrv:'__dm__';
+    if(lastCh&&lastCh!=='null')state.currentChannelId=lastCh;
+  } catch(e){ state.currentServerId='__dm__'; }
+
+  renderAll();updateUserBar();hideLoadingOverlay();
+
+  // Heartbeat presence
   setInterval(()=>{
-    if(state.currentUser)fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,status:state.currentUser.status,customStatus:state.currentUser.customStatus||'',ts:Date.now()});
+    if(state.currentUser)fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()});
   },25000);
+
+  // Request notification permission
+  if('Notification' in window && Notification.permission==='default'){
+    Notification.requestPermission();
+  }
 }
 
 // ── SUBSCRIPTIONS ──
@@ -1296,10 +1353,12 @@ function openDM(uid){
 function selectChannel(id){
   state.currentChannelId=id;state.unreadCounts[id]=0;
   subscribeChannel(id);renderChannelsPanel();renderChatArea();
+  try{localStorage.setItem('nova_last_channel',id);}catch(e){}
 }
 function selectServer(id){
   state.currentServerId=id;state.currentChannelId=null;state.currentDmUid=null;
   if(id!=='__dm__'){const srv=getServer(id);if(srv){const f=srv.channels?.flatMap(c=>c.children||[]).find(c=>c.type==='text');if(f){state.currentChannelId=f.id;subscribeChannel(f.id);}}}
+  try{localStorage.setItem('nova_last_server',id);localStorage.setItem('nova_last_channel',state.currentChannelId||'');}catch(e){}
   renderAll();
 }
 function openAddChannelModal(){if(!state.currentServerId||state.currentServerId==='__dm__')return;populateCategorySelect();document.getElementById('ch-private-toggle').classList.remove('on');openModal('add-channel-modal');}
@@ -1533,14 +1592,7 @@ function manageRoles(uid){
 }
 
 // ── USER SETTINGS ──
-function openMyProfile(){
-  const u=state.currentUser;
-  document.getElementById('us-username').value=u.name;
-  document.getElementById('us-avatar-url').value=u.avatarUrl||'';
-  document.getElementById('us-status').value=u.customStatus||'';
-  document.getElementById('us-presence').value=u.status;
-  openModal('user-settings-modal');closeProfilePopup();
-}
+function openMyProfile(){ openUserSettings(); }
 async function deleteMyAccount(){
   if(!confirm('¿Eliminar tu cuenta permanentemente? Esto no se puede deshacer.'))return;
   const uid=state.currentUser.uid;
