@@ -697,7 +697,23 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div class="server-sep"></div>
     <div id="server-icons-list"></div>
     <div class="server-sep"></div>
-    <div class="server-icon" id="add-server-btn" title="Crear servidor" onclick="openModal('create-server-modal')">＋</div>
+    <div class="server-icon" id="add-server-btn" title="Agregar servidor" onclick="toggleAddServerMenu(event)">＋</div>
+    <!-- Add server popup menu -->
+    <div id="add-server-menu" style="display:none;position:fixed;left:80px;background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:6px;z-index:500;box-shadow:0 12px 40px rgba(0,0,0,.55);min-width:210px;">
+      <div class="ctx-item" onclick="closeAddServerMenu();openModal('create-server-modal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Crear un servidor
+      </div>
+      <div class="ctx-item" onclick="closeAddServerMenu();openModal('join-server-modal')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Unirse con código
+      </div>
+      <div class="ctx-sep"></div>
+      <div class="ctx-item" onclick="closeAddServerMenu();openInvitePeopleModal()" id="invite-people-menu-item">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Invitar personas
+      </div>
+    </div>
   </div>
   <div id="channels-panel">
     <div id="channels-header">
@@ -724,59 +740,59 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <div class="uname" id="uname-display">Usuario</div>
         <div class="utag" id="utag-display">#0000</div>
       </div>
-      <button class="icon-btn" title="Micrófono" onclick="toggleMute()" id="mute-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
-      <button class="icon-btn" title="Cerrar sesión" onclick="doSignOut()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+      <button class="icon-btn" title="Micrófono" onclick="toggleMute()" id="mute-btn">🎤</button>
+      <button class="icon-btn" title="Cerrar sesión" onclick="doSignOut()">🚪</button>
     </div>
   </div>
   <div id="chat-area">
     <div id="call-bar">
-      <div class="call-info"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> <span id="call-channel-name">Llamada</span> — <span class="call-timer" id="call-timer">00:00</span></div>
+      <div class="call-info">📞 <span id="call-channel-name">Llamada</span> — <span class="call-timer" id="call-timer">00:00</span></div>
       <div id="call-participants"></div>
-      <button class="call-btn mute" onclick="toggleCallMute()" id="call-mute-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Silenciar</button>
-      <button class="call-btn" onclick="openVideoCall()" style="background:var(--bg-4);color:var(--text-1);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Vídeo</button>
-      <button class="call-btn end" onclick="endCall()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Colgar</button>
+      <button class="call-btn mute" onclick="toggleCallMute()" id="call-mute-btn">🎤 Silenciar</button>
+      <button class="call-btn" onclick="openVideoCall()" style="background:var(--bg-4);color:var(--text-1);">📹 Vídeo</button>
+      <button class="call-btn end" onclick="endCall()">📞 Colgar</button>
     </div>
     <div id="chat-header">
-      <button class="icon-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;font-size:1.1rem;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+      <button class="icon-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;font-size:1.1rem;">☰</button>
       <span class="ch-name" id="chat-channel-name">Selecciona un canal</span>
       <div class="header-actions">
-        <button class="icon-btn" onclick="openSearchModal()" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openModal('thread-modal')" title="Nuevo hilo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openModal('poll-modal')" title="Encuesta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openModal('event-modal')" title="Evento"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openLeaderboard()" title="Ranking XP"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="startVoiceCall()" title="Llamada de voz"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openVideoCall()" title="Videollamada"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="toggleMembers()" title="Miembros"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
-        <button class="icon-btn" id="mobile-more-btn" onclick="toggleMobileMoreMenu()" title="Más opciones" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
+        <button class="icon-btn" onclick="openSearchModal()" title="Buscar">🔍</button>
+        <button class="icon-btn mobile-hide" onclick="openModal('thread-modal')" title="Nuevo hilo">💬</button>
+        <button class="icon-btn mobile-hide" onclick="openModal('poll-modal')" title="Encuesta">📊</button>
+        <button class="icon-btn mobile-hide" onclick="openModal('event-modal')" title="Evento">📅</button>
+        <button class="icon-btn mobile-hide" onclick="openLeaderboard()" title="Ranking XP">🏆</button>
+        <button class="icon-btn mobile-hide" onclick="startVoiceCall()" title="Llamada de voz">📞</button>
+        <button class="icon-btn mobile-hide" onclick="openVideoCall()" title="Videollamada">📹</button>
+        <button class="icon-btn mobile-hide" onclick="toggleMembers()" title="Miembros">👥</button>
+        <button class="icon-btn" id="mobile-more-btn" onclick="toggleMobileMoreMenu()" title="Más opciones" style="display:none;">⋯</button>
       </div>
       <!-- Mobile overflow menu -->
       <div id="mobile-more-menu" style="display:none;position:fixed;top:52px;right:8px;background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:6px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:160px;">
-        <div class="ctx-item" onclick="openModal('thread-modal');closeMobileMore()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Nuevo hilo</div>
-        <div class="ctx-item" onclick="openModal('poll-modal');closeMobileMore()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Encuesta</div>
-        <div class="ctx-item" onclick="openModal('event-modal');closeMobileMore()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Evento</div>
-        <div class="ctx-item" onclick="openLeaderboard();closeMobileMore()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> Ranking XP</div>
-        <div class="ctx-item" onclick="startVoiceCall();closeMobileMore()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Llamada de voz</div>
-        <div class="ctx-item" onclick="openVideoCall();closeMobileMore()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Videollamada</div>
+        <div class="ctx-item" onclick="openModal('thread-modal');closeMobileMore()">💬 Nuevo hilo</div>
+        <div class="ctx-item" onclick="openModal('poll-modal');closeMobileMore()">📊 Encuesta</div>
+        <div class="ctx-item" onclick="openModal('event-modal');closeMobileMore()">📅 Evento</div>
+        <div class="ctx-item" onclick="openLeaderboard();closeMobileMore()">🏆 Ranking XP</div>
+        <div class="ctx-item" onclick="startVoiceCall();closeMobileMore()">📞 Llamada de voz</div>
+        <div class="ctx-item" onclick="openVideoCall();closeMobileMore()">📹 Videollamada</div>
       </div>
     </div>
     <div id="messages"></div>
     <div class="typing-indicator" id="typing-indicator"></div>
     <div class="reply-bar" id="reply-bar">
       <span id="reply-text">Respondiendo a...</span>
-      <button class="icon-btn" onclick="cancelReply()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button class="icon-btn" onclick="cancelReply()">✕</button>
     </div>
     <div id="input-area">
       <div id="input-box">
-        <button class="input-btn" onclick="document.getElementById('img-file-input').click()" title="Imagen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+        <button class="input-btn" onclick="document.getElementById('img-file-input').click()" title="Imagen">🖼️</button>
         <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="handleChatImageUpload(this)">
-        <button class="input-btn" onclick="openModal('audio-modal')" title="Mensaje de voz"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+        <button class="input-btn" onclick="openModal('audio-modal')" title="Mensaje de voz">🎙️</button>
         <textarea id="msg-input" rows="1" placeholder="Escribe un mensaje..."
           onkeydown="handleInputKey(event)" oninput="autoResize(this);handleTyping()"></textarea>
-        <button class="input-btn" onclick="togglePicker('emoji')" title="Emojis"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
-        <button class="input-btn" onclick="togglePicker('custom')" title="Custom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
-        <button class="input-btn" onclick="togglePicker('sticker')" title="Stickers"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10"/><path d="M12 22C6.48 22 2 17.52 2 12"/><path d="M12 22c5.52 0 10-4.48 10-10"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg></button>
-        <button class="input-btn" onclick="sendMessage()" title="Enviar"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21L23 12 2 3v7l15 2-15 2z"/></svg></button>
+        <button class="input-btn" onclick="togglePicker('emoji')" title="Emojis">😄</button>
+        <button class="input-btn" onclick="togglePicker('custom')" title="Custom">✨</button>
+        <button class="input-btn" onclick="togglePicker('sticker')" title="Stickers">🎭</button>
+        <button class="input-btn" onclick="sendMessage()" title="Enviar">➤</button>
       </div>
       <!-- PICKER PREMIUM -->
       <div class="picker-popup" id="emoji-picker">
@@ -787,16 +803,16 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           </div>
           <div class="picker-tabs">
             <button class="picker-tab active" data-tab="emoji" onclick="switchPickerTab('emoji',this)">
-              <span class="tab-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></span><span class="tab-label">Emojis</span>
+              <span class="tab-icon">😄</span><span class="tab-label">Emojis</span>
             </button>
             <button class="picker-tab" data-tab="custom" onclick="switchPickerTab('custom',this)">
-              <span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span><span class="tab-label">Custom</span>
+              <span class="tab-icon">✨</span><span class="tab-label">Custom</span>
             </button>
             <button class="picker-tab" data-tab="sticker" onclick="switchPickerTab('sticker',this)">
-              <span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10"/><path d="M12 22C6.48 22 2 17.52 2 12"/><path d="M12 22c5.52 0 10-4.48 10-10"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg></span><span class="tab-label">Stickers</span>
+              <span class="tab-icon">🎭</span><span class="tab-label">Stickers</span>
             </button>
             <button class="picker-tab" data-tab="gif" onclick="switchPickerTab('gif',this)">
-              <span class="tab-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></span><span class="tab-label">GIF</span>
+              <span class="tab-icon">🎬</span><span class="tab-label">GIF</span>
             </button>
           </div>
         </div>
@@ -810,20 +826,112 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
+<!-- JOIN SERVER MODAL -->
+<div class="modal-overlay" id="join-server-modal">
+  <div class="modal" style="width:440px;">
+    <button class="close-btn" onclick="closeModal('join-server-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="width:56px;height:56px;border-radius:16px;background:var(--accent-glow);border:1px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent-g)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      </div>
+      <h2>Unirse a un servidor</h2>
+      <p class="sub">Ingresa el código de invitación para acceder a un servidor.</p>
+    </div>
+    <label>Código de invitación</label>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input type="text" id="join-code-input" placeholder="ej. abc12xyz" style="flex:1;font-family:monospace;letter-spacing:.06em;font-size:1rem;" oninput="previewJoinServer(this.value)" onkeydown="if(event.key==='Enter')joinByInviteNew()">
+      <button class="btn btn-primary" style="white-space:nowrap;" onclick="joinByInviteNew()">Unirse</button>
+    </div>
+    <!-- Preview card -->
+    <div id="join-preview" style="display:none;margin-top:16px;background:var(--bg-3);border-radius:12px;padding:14px 16px;border:1px solid var(--border);display:flex;align-items:center;gap:12px;">
+      <div id="join-preview-icon" style="width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;"></div>
+      <div>
+        <div id="join-preview-name" style="font-weight:700;color:var(--text-0);font-size:.95rem;"></div>
+        <div id="join-preview-members" style="font-size:.75rem;color:var(--text-3);margin-top:2px;"></div>
+      </div>
+      <div id="join-preview-status" style="margin-left:auto;font-size:.72rem;font-weight:600;"></div>
+    </div>
+    <div id="join-error" style="display:none;margin-top:12px;padding:10px 14px;background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.2);border-radius:8px;color:var(--red);font-size:.82rem;">
+      ❌ Código inválido o expirado. Verifica e intenta de nuevo.
+    </div>
+    <p style="font-size:.72rem;color:var(--text-3);margin-top:14px;text-align:center;">Los códigos de invitación son sensibles a mayúsculas.</p>
+  </div>
+</div>
+
+<!-- INVITE PEOPLE MODAL -->
+<div class="modal-overlay" id="invite-people-modal">
+  <div class="modal" style="width:480px;">
+    <button class="close-btn" onclick="closeModal('invite-people-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+      <div id="inv-server-icon" style="width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;"></div>
+      <div>
+        <h2 style="margin-bottom:2px;">Invitar a <span id="inv-server-name">este servidor</span></h2>
+        <p class="sub" style="margin:0;">Comparte el código o enlace para invitar personas.</p>
+      </div>
+    </div>
+
+    <!-- Invite code display -->
+    <label>Código de invitación</label>
+    <div class="invite-code-box" style="margin-top:8px;">
+      <span id="inv-code-text" style="font-size:1.05rem;letter-spacing:.08em;font-weight:700;"></span>
+      <button class="btn btn-ghost btn-sm" onclick="copyInviteNew()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
+
+    <!-- Invite link display -->
+    <label>Enlace de invitación</label>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <input type="text" id="inv-link-text" readonly style="flex:1;font-family:monospace;font-size:.78rem;color:var(--accent-g);cursor:text;" onclick="this.select()">
+      <button class="btn btn-ghost btn-sm" onclick="copyInviteLink()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copiar
+      </button>
+    </div>
+
+    <!-- Share actions -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px;">
+      <button class="btn btn-ghost" style="font-size:.82rem;justify-content:flex-start;gap:8px;" onclick="shareInvite('whatsapp')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#25d366;"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413z"/></svg>
+        WhatsApp
+      </button>
+      <button class="btn btn-ghost" style="font-size:.82rem;justify-content:flex-start;gap:8px;" onclick="shareInvite('telegram')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="color:#229ed9;"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+        Telegram
+      </button>
+    </div>
+
+    <div style="height:1px;background:var(--border);margin:18px 0;"></div>
+
+    <!-- Members list with invite status -->
+    <label>Miembros actuales</label>
+    <div id="inv-members-list" style="display:flex;flex-direction:column;gap:4px;margin-top:8px;max-height:180px;overflow-y:auto;"></div>
+
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn btn-ghost btn-sm" onclick="regenerateInviteNew()" style="font-size:.78rem;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Regenerar código
+      </button>
+      <button class="btn btn-primary" style="margin-left:auto;" onclick="closeModal('invite-people-modal')">Listo</button>
+    </div>
+  </div>
+</div>
+
 <!-- VIDEO MODAL -->
 <div id="video-modal">
   <div class="video-grid" id="video-grid"></div>
   <div class="video-controls">
-    <button class="vid-btn mic" id="vid-mic-btn" onclick="toggleVideoMic()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
-    <button class="vid-btn cam" id="vid-cam-btn" onclick="toggleVideoCam()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
-    <button class="vid-btn hangup" onclick="endVideoCall()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg></button>
+    <button class="vid-btn mic" id="vid-mic-btn" onclick="toggleVideoMic()">🎤</button>
+    <button class="vid-btn cam" id="vid-cam-btn" onclick="toggleVideoCam()">📹</button>
+    <button class="vid-btn hangup" onclick="endVideoCall()">📞</button>
   </div>
 </div>
 
 <!-- MODALS -->
 <div class="modal-overlay" id="create-server-modal">
   <div class="modal">
-    <button class="close-btn" onclick="closeModal('create-server-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button class="close-btn" onclick="closeModal('create-server-modal')">✕</button>
     <h2>Crear servidor</h2>
     <!-- Icon preview + upload -->
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
@@ -848,11 +956,11 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
 <div class="modal-overlay" id="add-channel-modal">
   <div class="modal">
-    <button class="close-btn" onclick="closeModal('add-channel-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button class="close-btn" onclick="closeModal('add-channel-modal')">✕</button>
     <h2>Crear canal</h2>
     <label>Tipo</label>
     <select id="new-channel-type">
-      <option value="text"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Texto</option>
+      <option value="text">💬 Texto</option>
       <option value="voice">🔊 Voz</option>
       <option value="announcement">📢 Anuncios</option>
     </select>
@@ -871,7 +979,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
 <div class="modal-overlay" id="user-settings-modal">
   <div class="modal" style="width:560px;">
-    <button class="close-btn" onclick="closeModal('user-settings-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button class="close-btn" onclick="closeModal('user-settings-modal')">✕</button>
     <h2>Configuración</h2>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('us',0,this)">Perfil</button>
@@ -1008,7 +1116,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div style="margin-top:20px;padding:14px;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.15);border-radius:var(--r-sm);">
         <div style="font-size:.875rem;font-weight:600;color:var(--red);margin-bottom:6px;">⚠️ Zona de peligro</div>
         <div style="font-size:.78rem;color:var(--text-3);margin-bottom:12px;">Esta acción es permanente e irreversible.</div>
-        <button class="btn btn-danger" style="width:100%;" onclick="deleteMyAccount()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar cuenta permanentemente</button>
+        <button class="btn btn-danger" style="width:100%;" onclick="deleteMyAccount()">🗑️ Eliminar cuenta permanentemente</button>
       </div>
     </div>
 
@@ -1048,12 +1156,12 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <button class="ss-nav-item" data-section="bans" onclick="openSsSection('bans',this)">Baneos</button>
 
       <div style="height:1px;background:var(--border);margin:10px 8px;"></div>
-      <button class="ss-nav-item danger" onclick="deleteCurrentServer()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar servidor</button>
+      <button class="ss-nav-item danger" onclick="deleteCurrentServer()">🗑️ Eliminar servidor</button>
     </div>
 
     <!-- MAIN CONTENT -->
     <div style="flex:1;overflow-y:auto;background:var(--bg-2);position:relative;">
-      <button onclick="closeModal('server-settings-modal')" style="position:fixed;top:20px;right:20px;background:var(--bg-4);border:none;color:var(--text-2);width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;transition:all .15s;" onmouseover="this.style.background='var(--bg-5)'" onmouseout="this.style.background='var(--bg-4)'"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <button onclick="closeModal('server-settings-modal')" style="position:fixed;top:20px;right:20px;background:var(--bg-4);border:none;color:var(--text-2);width:32px;height:32px;border-radius:50%;font-size:1rem;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;transition:all .15s;" onmouseover="this.style.background='var(--bg-5)'" onmouseout="this.style.background='var(--bg-4)'">✕</button>
 
       <!-- GENERAL / PERFIL -->
       <div class="ss-section active" id="ss-sec-general">
@@ -1192,7 +1300,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <p class="ss-section-desc">Los stickers son los emojis grandes del servidor. Próximamente.</p>
         </div>
         <div style="text-align:center;padding:40px 0;color:var(--text-3);">
-          <div style="font-size:3rem;margin-bottom:12px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10"/><path d="M12 22C6.48 22 2 17.52 2 12"/><path d="M12 22c5.52 0 10-4.48 10-10"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg></div>
+          <div style="font-size:3rem;margin-bottom:12px;">🎭</div>
           <div style="font-size:.9rem;font-weight:600;color:var(--text-2);">Próximamente</div>
         </div>
       </div>
@@ -1241,7 +1349,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
 <div class="modal-overlay" id="image-url-modal">
   <div class="modal">
-    <button class="close-btn" onclick="closeModal('image-url-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button class="close-btn" onclick="closeModal('image-url-modal')">✕</button>
     <h2>Enviar imagen</h2>
     <label>URL de la imagen</label>
     <input type="url" id="image-url-input" placeholder="https://ejemplo.com/imagen.png">
@@ -1255,7 +1363,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <!-- ROLE EDITOR MODAL -->
 <div class="modal-overlay" id="role-editor-modal">
   <div class="modal" style="width:580px;max-height:85vh;">
-    <button class="close-btn" onclick="closeModal('role-editor-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button class="close-btn" onclick="closeModal('role-editor-modal')">✕</button>
     <h2 id="re-title">Editar rol</h2>
     <div style="display:flex;gap:20px;margin-top:4px;">
       <!-- Left: role list -->
@@ -1274,8 +1382,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <!-- THREAD MODAL -->
 <div class="modal-overlay" id="thread-modal">
   <div class="modal" style="width:500px;">
-    <button class="close-btn" onclick="closeModal('thread-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Nuevo hilo</h2>
+    <button class="close-btn" onclick="closeModal('thread-modal')">✕</button>
+    <h2>💬 Nuevo hilo</h2>
     <p class="sub">Los hilos son conversaciones separadas dentro de este canal.</p>
     <label>Nombre del hilo</label>
     <input type="text" id="thread-name" placeholder="Ej: Discusión sobre el evento...">
@@ -1291,8 +1399,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <!-- POLL MODAL -->
 <div class="modal-overlay" id="poll-modal">
   <div class="modal" style="width:500px;">
-    <button class="close-btn" onclick="closeModal('poll-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Crear encuesta</h2>
+    <button class="close-btn" onclick="closeModal('poll-modal')">✕</button>
+    <h2>📊 Crear encuesta</h2>
     <label>Pregunta</label>
     <input type="text" id="poll-question" placeholder="¿Cuál es tu color favorito?">
     <label>Opciones</label>
@@ -1318,8 +1426,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <!-- EVENT MODAL -->
 <div class="modal-overlay" id="event-modal">
   <div class="modal" style="width:500px;">
-    <button class="close-btn" onclick="closeModal('event-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Crear evento</h2>
+    <button class="close-btn" onclick="closeModal('event-modal')">✕</button>
+    <h2>📅 Crear evento</h2>
     <label>Nombre del evento</label>
     <input type="text" id="event-name" placeholder="Noche de juegos...">
     <label>Descripción</label>
@@ -1344,8 +1452,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <!-- SEARCH MODAL -->
 <div class="modal-overlay" id="search-modal">
   <div class="modal" style="width:560px;">
-    <button class="close-btn" onclick="closeModal('search-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <h2><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Buscar mensajes</h2>
+    <button class="close-btn" onclick="closeModal('search-modal')">✕</button>
+    <h2>🔍 Buscar mensajes</h2>
     <input type="text" id="search-input" placeholder="Buscar en este canal..." oninput="searchMessages(this.value)" style="margin-top:8px;">
     <div id="search-results" style="margin-top:14px;max-height:400px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;"></div>
   </div>
@@ -1354,13 +1462,13 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <!-- AUDIO MESSAGE MODAL -->
 <div class="modal-overlay" id="audio-modal">
   <div class="modal" style="width:380px;text-align:center;">
-    <button class="close-btn" onclick="closeAudioModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
-    <h2><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Mensaje de audio</h2>
+    <button class="close-btn" onclick="closeAudioModal()">✕</button>
+    <h2>🎙️ Mensaje de audio</h2>
     <p class="sub">Graba un mensaje de voz para enviar</p>
     <div id="audio-timer" style="font-size:2rem;font-weight:700;color:var(--accent);font-family:monospace;margin:16px 0;">00:00</div>
     <div id="audio-visualizer" style="height:40px;display:flex;align-items:center;justify-content:center;gap:3px;margin-bottom:16px;"></div>
     <div style="display:flex;gap:10px;justify-content:center;">
-      <button class="btn btn-danger" id="audio-record-btn" onclick="toggleAudioRecording()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Grabar</button>
+      <button class="btn btn-danger" id="audio-record-btn" onclick="toggleAudioRecording()">🎙️ Grabar</button>
       <button class="btn btn-primary" id="audio-send-btn" onclick="sendAudioMessage()" style="display:none;">📤 Enviar</button>
     </div>
     <audio id="audio-preview" controls style="margin-top:14px;width:100%;display:none;"></audio>
@@ -1369,7 +1477,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
 <div class="modal-overlay" id="edit-msg-modal">
   <div class="modal">
-    <button class="close-btn" onclick="closeModal('edit-msg-modal')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <button class="close-btn" onclick="closeModal('edit-msg-modal')">✕</button>
     <h2>Editar mensaje</h2>
     <textarea id="edit-msg-input" rows="4"></textarea>
     <div class="modal-actions">
@@ -1383,8 +1491,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 const STATUS_COLORS={online:'#3ba55d',idle:'#faa81a',dnd:'#ed4245',offline:'#72767d'};
 const CHAN_ICONS={text:'#',voice:'🔊',announcement:'📢'};
 const ROLE_COLORS=['#ed4245','#faa81a','#3ba55d','#5865f2','#eb459e','#00b0f4'];
-const DEFAULT_EMOJIS=['😀','😂','🤣','😍','🥰','😎','🤔','😴','🤯','🥳','🎉','🔥','💯','✅','❤️','💙','💚','💜','🌟','⚡','🎮','🎵','🍕','🚀','👋','👏','🙌','💪','🤝','👀','🐸','🦜','🐶','🐱','🦊','🐻','🎂','🌈','☀️','🌙','⭐','❄️','🌺','🍀','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>','💎','📢','🎯','😅','😭','🤦','🤷','👌','✌️','🫡','🫠','🥹','😤','🤬','💀','👻','🤡','🎃','🫶','🫂'];
-const DEFAULT_STICKERS=[{n:'Baile',e:'💃'},{n:'Fuego',e:'🔥'},{n:'Shock',e:'😱'},{n:'Sueño',e:'😴'},{n:'Risa',e:'🤣'},{n:'Fuerza',e:'💪'},{n:'Amor',e:'❤️'},{n:'GG',e:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>'},{n:'Hype',e:'🎉'},{n:'Pog',e:'😮'},{n:'NoWay',e:'🙅'},{n:'Palmas',e:'👏'}];
+const DEFAULT_EMOJIS=['😀','😂','🤣','😍','🥰','😎','🤔','😴','🤯','🥳','🎉','🔥','💯','✅','❤️','💙','💚','💜','🌟','⚡','🎮','🎵','🍕','🚀','👋','👏','🙌','💪','🤝','👀','🐸','🦜','🐶','🐱','🦊','🐻','🎂','🌈','☀️','🌙','⭐','❄️','🌺','🍀','🏆','💎','📢','🎯','😅','😭','🤦','🤷','👌','✌️','🫡','🫠','🥹','😤','🤬','💀','👻','🤡','🎃','🫶','🫂'];
+const DEFAULT_STICKERS=[{n:'Baile',e:'💃'},{n:'Fuego',e:'🔥'},{n:'Shock',e:'😱'},{n:'Sueño',e:'😴'},{n:'Risa',e:'🤣'},{n:'Fuerza',e:'💪'},{n:'Amor',e:'❤️'},{n:'GG',e:'🏆'},{n:'Hype',e:'🎉'},{n:'Pog',e:'😮'},{n:'NoWay',e:'🙅'},{n:'Palmas',e:'👏'}];
 // Bots son extensiones externas — ver bot-*.html
 
 let state={
@@ -1597,7 +1705,7 @@ function subscribeChannel(channelId){
           state.unreadCounts[channelId]=(state.unreadCounts[channelId]||0)+1;
           renderChannelsPanel();
         }
-        const preview=m.audioData?'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Mensaje de voz':m.imageData?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Imagen':(m.content||'').substring(0,60);
+        const preview=m.audioData?'🎙️ Mensaje de voz':m.imageData?'🖼️ Imagen':(m.content||'').substring(0,60);
         sendDesktopNotif(m.name, preview, m.avatarUrl||'');
       });
     }
@@ -1690,7 +1798,7 @@ function renderChannelsPanel(){
       const unread=state.unreadCounts[ch.id]||0;
       const item=document.createElement('div');
       item.className='channel-item'+(ch.id===state.currentChannelId?' active':'');
-      item.innerHTML=`<span class="ch-icon">${CHAN_ICONS[ch.type]||'#'}</span>${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}${unread?`<div class="unread-badge">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}</div>`;
+      item.innerHTML=`<span class="ch-icon">${CHAN_ICONS[ch.type]||'#'}</span>${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;">🔒</span>':''}${unread?`<div class="unread-badge">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')">🗑️</button>`:''}</div>`;
       item.onclick=e=>{if(!e.target.closest('.ch-actions'))selectChannel(ch.id);};
       group.appendChild(item);
       // Render threads under channel
@@ -1720,7 +1828,7 @@ function renderChatArea(){
 function renderMessages(){
   const el=document.getElementById('messages');
   const msgs=state.messages[state.currentChannelId]||[];
-  if(!msgs.length){el.innerHTML='<div class="empty-state"><div class="big-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>¡Sé el primero en escribir!</h3></div>';return;}
+  if(!msgs.length){el.innerHTML='<div class="empty-state"><div class="big-icon">💬</div><h3>¡Sé el primero en escribir!</h3></div>';return;}
   el.innerHTML='';
   let prevUid=null;
   msgs.forEach(msg=>{
@@ -1738,7 +1846,7 @@ function renderMessages(){
     }else{
       const avatarStyle=`background:${msg.avatarUrl?'#000':msg.color}`;
       const avatarContent=msg.avatarUrl?`<img src="${msg.avatarUrl}" onerror="this.style.display='none'">`:(msg.name||'?')[0].toUpperCase();
-      wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.color}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="msg-content">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
+      wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.color}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);">📌</span>':''}</div><div class="msg-content">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
     }
     el.appendChild(wrap);prevUid=msg.uid;
   });
@@ -1746,7 +1854,7 @@ function renderMessages(){
 }
 function buildReplyPreview(replyId,msgs){
   const orig=msgs.find(m=>m.id===replyId);
-  return `<div class="reply-preview"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg> <strong>${orig?.name||'?'}</strong>: ${(orig?.content||'...').substring(0,60)}</div>`;
+  return `<div class="reply-preview">↩️ <strong>${orig?.name||'?'}</strong>: ${(orig?.content||'...').substring(0,60)}</div>`;
 }
 function mediaHtml(msg){
   if(msg.poll){
@@ -1755,7 +1863,7 @@ function mediaHtml(msg){
     const myVote=p.options.find(o=>o.votes?.includes(state.currentUser?.uid));
     const ended=p.endsAt&&Date.now()>p.endsAt;
     return`<div class="poll-card">
-      <div class="poll-question"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> ${p.question}</div>
+      <div class="poll-question">📊 ${p.question}</div>
       ${p.options.map((o,i)=>{
         const pct=total?Math.round((o.votes?.length||0)/total*100):0;
         const voted=o.votes?.includes(state.currentUser?.uid);
@@ -1777,13 +1885,13 @@ function mediaHtml(msg){
     const attending=ev.attendees?.includes(state.currentUser?.uid);
     const d=new Date(ev.date);
     return`<div class="event-card">
-      <div class="event-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> ${ev.name}</div>
+      <div class="event-title">📅 ${ev.name}</div>
       <div class="event-date-str">${d.toLocaleDateString('es',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · ${d.toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})}</div>
       ${ev.desc?`<div class="event-desc-txt">${ev.desc}</div>`:''}
-      ${ev.location?`<div style="font-size:.78rem;color:var(--text-2);margin-bottom:10px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> ${ev.location}</div>`:''}
+      ${ev.location?`<div style="font-size:.78rem;color:var(--text-2);margin-bottom:10px;">📍 ${ev.location}</div>`:''}
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <button class="btn ${attending?'btn-ghost':'btn-primary'} btn-sm" onclick="toggleAttendEvent('${msg.id}')">
-          ${attending?'✅ Asistiré':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Asistir'}
+          ${attending?'✅ Asistiré':'📌 Asistir'}
         </button>
         <span style="font-size:.72rem;color:var(--text-3);">${ev.attendees?.length||0} asistente${ev.attendees?.length!==1?'s':''}</span>
       </div>
@@ -1814,12 +1922,12 @@ function hoverBtns(msg,isMe){
   const canDelete=isMe||isServerAdmin(srv);
   const canPin=isServerAdmin(srv);
   const inServer=state.currentServerId&&state.currentServerId!=='__dm__';
-  return`<button class="icon-btn" onclick="quickReact('${msg.id}')" title="Reaccionar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
-    <button class="icon-btn" onclick="setReply('${msg.id}')" title="Responder"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></button>
-    ${inServer?`<button class="icon-btn" onclick="openThreadModal('${msg.id}')" title="Crear hilo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>`:''}
-    ${isMe?`<button class="icon-btn" onclick="startEditMsg('${msg.id}')" title="Editar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:''}
-    ${canPin?`<button class="icon-btn" onclick="pinMessage('${msg.id}')" title="${msg.pinned?'Desfijar':'Fijar'}">${msg.pinned?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>'}</button>`:''}
-    ${canDelete?`<button class="icon-btn" onclick="deleteMsg('${msg.id}')" title="Eliminar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}`;
+  return`<button class="icon-btn" onclick="quickReact('${msg.id}')" title="Reaccionar">😄</button>
+    <button class="icon-btn" onclick="setReply('${msg.id}')" title="Responder">↩️</button>
+    ${inServer?`<button class="icon-btn" onclick="openThreadModal('${msg.id}')" title="Crear hilo">💬</button>`:''}
+    ${isMe?`<button class="icon-btn" onclick="startEditMsg('${msg.id}')" title="Editar">✏️</button>`:''}
+    ${canPin?`<button class="icon-btn" onclick="pinMessage('${msg.id}')" title="${msg.pinned?'Desfijar':'Fijar'}">${msg.pinned?'📌':'📍'}</button>`:''}
+    ${canDelete?`<button class="icon-btn" onclick="deleteMsg('${msg.id}')" title="Eliminar">🗑️</button>`:''}`;
 }
 function renderTyping(){
   const el=document.getElementById('typing-indicator');
@@ -1940,7 +2048,7 @@ function togglePin(id){
   const msg=(state.messages[ch]||[]).find(m=>m.id===id);if(!msg)return;
   const newVal=!msg.pinned;
   fbUpdate('state/messages/'+ch+'/'+id,{pinned:newVal});
-  msg.pinned=newVal;renderMessages();showToast(newVal?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Fijado':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Desfijado');
+  msg.pinned=newVal;renderMessages();showToast(newVal?'📌 Fijado':'📌 Desfijado');
 }
 function setReply(id){
   const msg=(state.messages[state.currentChannelId]||[]).find(m=>m.id===id);if(!msg)return;
@@ -2017,7 +2125,7 @@ function deleteChannel(chId,srvId){
   if(!confirm('¿Eliminar canal?'))return;
   const srv=getServer(srvId);
   srv.channels.forEach(cat=>{cat.children=cat.children.filter(c=>c.id!==chId);});
-  saveServers();if(state.currentChannelId===chId)state.currentChannelId=null;renderAll();showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Canal eliminado');
+  saveServers();if(state.currentChannelId===chId)state.currentChannelId=null;renderAll();showToast('🗑️ Canal eliminado');
 }
 
 // ── SERVERS ──
@@ -2119,7 +2227,7 @@ function removeServerTag(tag){
 }
 function renderSsTags(tags){
   const el=document.getElementById('ss-tags-list');if(!el)return;
-  el.innerHTML=tags.map(t=>`<div class="ss-tag">${t}<button onclick="removeServerTag('${t}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>`).join('');
+  el.innerHTML=tags.map(t=>`<div class="ss-tag">${t}<button onclick="removeServerTag('${t}')">✕</button></div>`).join('');
 }
 function renderSsMembers(srv){
   const el=document.getElementById('ss-members-list');if(!el)return;
@@ -2139,7 +2247,7 @@ function renderSsMembers(srv){
         <div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${m.name||'?'}${isOwner?'<span style="font-size:.6rem;background:rgba(245,158,11,.2);color:var(--yellow);border-radius:4px;padding:1px 5px;margin-left:6px;font-weight:700;">DUEÑO</span>':''}</div>
         <div style="font-size:.72rem;color:var(--text-3);">${(m.roles||[]).slice(0,3).join(', ')||'Sin roles'}</div>
       </div>
-      ${!isOwner&&isServerAdmin(srv)?`<button class="btn btn-ghost btn-sm" onclick="manageRoles('${uid}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg> Roles</button>`:''}`
+      ${!isOwner&&isServerAdmin(srv)?`<button class="btn btn-ghost btn-sm" onclick="manageRoles('${uid}')">👑 Roles</button>`:''}`
     el.appendChild(row);
   });
   if(!members.length)el.innerHTML='<div style="color:var(--text-3);padding:20px 0;font-size:.875rem;">Sin miembros.</div>';
@@ -2154,7 +2262,7 @@ function renderSsChannels(srv){
     (cat.children||[]).forEach(ch=>{
       const row=document.createElement('div');
       row.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--bg-3);border-radius:var(--r-xs);margin-bottom:4px;';
-      row.innerHTML=`<span style="color:var(--text-3);">${CHAN_ICONS[ch.type]||'#'}</span><span style="flex:1;font-size:.875rem;color:var(--text-1);">${ch.name}</span>${isServerAdmin(srv)?`<button class="btn btn-ghost btn-sm" onclick="deleteChannel('${ch.id}','${srv.id}');renderSsChannels(getServer(state.currentServerId))"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`:''}`;
+      row.innerHTML=`<span style="color:var(--text-3);">${CHAN_ICONS[ch.type]||'#'}</span><span style="flex:1;font-size:.875rem;color:var(--text-1);">${ch.name}</span>${isServerAdmin(srv)?`<button class="btn btn-ghost btn-sm" onclick="deleteChannel('${ch.id}','${srv.id}');renderSsChannels(getServer(state.currentServerId))">🗑️</button>`:''}`;
       catDiv.appendChild(row);
     });
     el.appendChild(catDiv);
@@ -2166,7 +2274,7 @@ function renderAuditLog(srv){
   if(!log.length){el.innerHTML='<div style="color:var(--text-3);font-size:.875rem;padding:20px 0;">Sin acciones registradas.</div>';return;}
   el.innerHTML=log.slice(-50).reverse().map(e=>`
     <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);">
-      <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-4);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${e.icon||'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>'}</div>
+      <div style="width:36px;height:36px;border-radius:10px;background:var(--bg-4);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${e.icon||'📋'}</div>
       <div><div style="font-size:.875rem;color:var(--text-0);">${e.action}</div><div style="font-size:.72rem;color:var(--text-3);">${e.user} · ${fmtDateTime(e.ts)}</div></div>
     </div>`).join('');
 }
@@ -2190,7 +2298,7 @@ function saveServerSettings(){
   if(newIconB64)srv.iconImg=newIconB64;
   const newBannerB64=document.getElementById('ss-banner-b64').value;
   if(newBannerB64)srv.bannerUrl=newBannerB64;
-  if(oldName!==name)logAudit(`Nombre cambiado: "${oldName}" → "${name}"`,'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>');
+  if(oldName!==name)logAudit(`Nombre cambiado: "${oldName}" → "${name}"`,'✏️');
   // Update preview card
   document.getElementById('ss-server-name-sidebar').textContent=name;
   document.getElementById('ss-preview-name').textContent=name;
@@ -2199,7 +2307,7 @@ function saveServerSettings(){
 function deleteCurrentServer(){
   if(!confirm('¿Eliminar servidor permanentemente?'))return;
   state.servers=state.servers.filter(s=>s.id!==state.currentServerId);
-  saveServers();state.currentServerId='__dm__';state.currentChannelId=null;closeModal('server-settings-modal');renderAll();showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Servidor eliminado');
+  saveServers();state.currentServerId='__dm__';state.currentChannelId=null;closeModal('server-settings-modal');renderAll();showToast('🗑️ Servidor eliminado');
 }
 function saveServers(){fbSet('state/servers',state.servers);}
 function isServerAdmin(srv){
@@ -2262,8 +2370,8 @@ function renderRolesList(srv){
       <span style="flex:1;font-size:.875rem;font-weight:600;color:var(--text-0);">${role.name}</span>
       ${role.permissions?.admin?'<span style="font-size:.65rem;background:rgba(244,63,94,.15);color:var(--red);border-radius:4px;padding:2px 6px;font-weight:700;">ADMIN</span>':''}
       <span style="font-size:.72rem;color:var(--text-3);">${Object.values(role.permissions||{}).filter(Boolean).length} permisos</span>
-      <button class="icon-btn" onclick="event.stopPropagation();openRoleEditor(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-      <button class="icon-btn" onclick="event.stopPropagation();deleteRole(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`;
+      <button class="icon-btn" onclick="event.stopPropagation();openRoleEditor(${i})">✏️</button>
+      <button class="icon-btn" onclick="event.stopPropagation();deleteRole(${i})">🗑️</button>`;
     div.onclick=()=>openRoleEditor(i);
     el.appendChild(div);
   });
@@ -2366,7 +2474,7 @@ function deleteRole(idx){
     _editingRoleIdx=null;renderRoleEditorList(srv);
     document.getElementById('re-role-settings').innerHTML='<div style="color:var(--text-3);font-size:.85rem;padding:40px 0;text-align:center;">Selecciona un rol para editarlo</div>';
   }
-  showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Rol eliminado');
+  showToast('🗑️ Rol eliminado');
 }
 
 // ══ THREADS ══
@@ -2402,7 +2510,7 @@ function createThread(){
   }
   closeModal('thread-modal');renderChannelsPanel();
   selectChannel(threadId);
-  showToast('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Hilo "'+name+'" creado');
+  showToast('💬 Hilo "'+name+'" creado');
 }
 
 // ══ POLLS ══
@@ -2422,7 +2530,7 @@ function createPoll(){
   const u=state.currentUser;
   const poll={id:'poll'+genId(8),question:q,options:opts.map((o,i)=>({id:i,text:o,votes:[]})),createdBy:u.uid,createdAt:Date.now(),endsAt:duration?Date.now()+duration*1000:0};
   const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',poll,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
-  sendMsg(msg);closeModal('poll-modal');showToast('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Encuesta creada');
+  sendMsg(msg);closeModal('poll-modal');showToast('📊 Encuesta creada');
 }
 function votePoll(msgId,optId){
   const msgs=state.messages[state.currentChannelId]||[];
@@ -2446,7 +2554,7 @@ function createEvent(){
   const u=state.currentUser;
   const ev={id:'ev'+genId(8),name,desc,date,location:loc,createdBy:u.uid,attendees:[u.uid],ts:Date.now()};
   const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',event:ev,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
-  sendMsg(msg);closeModal('event-modal');showToast('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Evento creado');
+  sendMsg(msg);closeModal('event-modal');showToast('📅 Evento creado');
 }
 function toggleAttendEvent(msgId){
   const msgs=state.messages[state.currentChannelId]||[];
@@ -2494,7 +2602,7 @@ function checkAutoRoles(level){
   const uid=state.currentUser.uid;
   const member=(srv.members||[]).find(m=>(m.uid||m.id)===uid);if(!member)return;
   autoRoles.forEach(r=>{
-    if(!member.roles.includes(r.id)){member.roles.push(r.id);showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg> Obtuviste el rol "'+r.name+'"');}
+    if(!member.roles.includes(r.id)){member.roles.push(r.id);showToast('👑 Obtuviste el rol "'+r.name+'"');}
   });
   saveServers();
 }
@@ -2527,8 +2635,8 @@ function openLeaderboard(){
     overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);';
     overlay.innerHTML=`<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:20px;padding:28px;width:480px;max-width:95vw;max-height:80vh;overflow-y:auto;box-shadow:0 32px 64px rgba(0,0,0,.6);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-        <h2 style="color:var(--text-0);font-size:1.1rem;font-weight:700;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg> Tabla de líderes</h2>
-        <button onclick="this.closest('.fixed-overlay').remove()||this.closest('[style*=fixed]').remove()" style="background:var(--bg-4);border:none;color:var(--text-2);cursor:pointer;width:28px;height:28px;border-radius:50%;font-size:.85rem;" onclick="this.parentElement.parentElement.parentElement.remove()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        <h2 style="color:var(--text-0);font-size:1.1rem;font-weight:700;">🏆 Tabla de líderes</h2>
+        <button onclick="this.closest('.fixed-overlay').remove()||this.closest('[style*=fixed]').remove()" style="background:var(--bg-4);border:none;color:var(--text-2);cursor:pointer;width:28px;height:28px;border-radius:50%;font-size:.85rem;" onclick="this.parentElement.parentElement.parentElement.remove()">✕</button>
       </div>
       ${rows||'<div style="text-align:center;color:var(--text-3);padding:20px;">Nadie ha enviado mensajes aún</div>'}
     </div>`;
@@ -2571,7 +2679,7 @@ function renderCustomEmojiList(srv){
       <img src="${e.url}" style="width:44px;height:44px;object-fit:contain;border-radius:6px;display:block;margin:0 auto 6px;">
       <div style="font-size:.62rem;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;" title=":${e.name}:">:${e.name}:</div>
       <button onclick="deleteCustomEmoji(${i})" title="Eliminar"
-        style="position:absolute;top:4px;right:4px;background:rgba(244,63,94,.15);border:none;color:var(--red);cursor:pointer;font-size:.65rem;border-radius:4px;padding:2px 5px;line-height:1;opacity:0;transition:opacity .15s;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+        style="position:absolute;top:4px;right:4px;background:rgba(244,63,94,.15);border:none;color:var(--red);cursor:pointer;font-size:.65rem;border-radius:4px;padding:2px 5px;line-height:1;opacity:0;transition:opacity .15s;">✕</button>`;
     div.onmouseenter=()=>{div.style.borderColor='var(--accent)';div.querySelector('button').style.opacity='1';};
     div.onmouseleave=()=>{div.style.borderColor='var(--border)';div.querySelector('button').style.opacity='0';};
     el.appendChild(div);
@@ -2582,16 +2690,150 @@ function deleteCustomEmoji(idx){const srv=getServer(state.currentServerId);if(!s
 // ── INVITE ──
 function copyInviteCode(){const code=document.getElementById('invite-code-text').textContent;navigator.clipboard.writeText(code).then(()=>showToast('✅ Código copiado'));}
 function regenerateInvite(){const srv=getServer(state.currentServerId);if(!srv)return;srv.inviteCode=genId(8);saveServers();document.getElementById('invite-code-text').textContent=srv.inviteCode;showToast('🔄 Código regenerado');}
-function joinByInvite(){
-  const code=document.getElementById('join-invite-input').value.trim();
-  const srv=state.servers.find(s=>s.inviteCode===code);
-  if(!srv){showToast('❌ Código inválido');return;}
-  if(!(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid)){
-    if(!srv.members)srv.members=[];
+
+// ── ADD SERVER MENU ──
+function toggleAddServerMenu(e) {
+  const menu = document.getElementById('add-server-menu');
+  const btn = document.getElementById('add-server-btn');
+  const rect = btn.getBoundingClientRect();
+  menu.style.top = rect.top + 'px';
+  menu.style.left = (rect.right + 8) + 'px';
+  const isOpen = menu.style.display !== 'none';
+  menu.style.display = isOpen ? 'none' : 'block';
+  // Show/hide invite option based on whether a server is selected
+  const hasServer = state.currentServerId && state.currentServerId !== '__dm__';
+  document.getElementById('invite-people-menu-item').style.display = hasServer ? 'flex' : 'none';
+  e.stopPropagation();
+}
+function closeAddServerMenu() {
+  document.getElementById('add-server-menu').style.display = 'none';
+}
+
+// ── JOIN SERVER ──
+function previewJoinServer(code) {
+  const preview = document.getElementById('join-preview');
+  const errEl = document.getElementById('join-error');
+  errEl.style.display = 'none';
+  code = code.trim();
+  if (!code) { preview.style.display = 'none'; return; }
+  const srv = state.servers.find(s => s.inviteCode === code);
+  if (!srv) { preview.style.display = 'none'; return; }
+  const alreadyIn = (srv.members || []).find(m => (m.uid || m.id) === state.currentUser.uid);
+  const iconEl = document.getElementById('join-preview-icon');
+  if (srv.icon && srv.icon.startsWith('data:')) {
+    iconEl.innerHTML = `<img src="${srv.icon}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+  } else {
+    iconEl.textContent = srv.icon || srv.name[0].toUpperCase();
+    iconEl.style.background = srv.color || 'var(--accent)';
+  }
+  document.getElementById('join-preview-name').textContent = srv.name;
+  document.getElementById('join-preview-members').textContent = (srv.members || []).length + ' miembro' + ((srv.members || []).length !== 1 ? 's' : '');
+  const statusEl = document.getElementById('join-preview-status');
+  if (alreadyIn) {
+    statusEl.textContent = '✓ Ya eres miembro';
+    statusEl.style.color = 'var(--green)';
+  } else {
+    statusEl.textContent = '+ Unirse';
+    statusEl.style.color = 'var(--accent-g)';
+  }
+  preview.style.display = 'flex';
+}
+function joinByInviteNew() {
+  const code = document.getElementById('join-code-input').value.trim();
+  const errEl = document.getElementById('join-error');
+  errEl.style.display = 'none';
+  const srv = state.servers.find(s => s.inviteCode === code);
+  if (!srv) { errEl.style.display = 'block'; return; }
+  if (!(srv.members || []).find(m => (m.uid || m.id) === state.currentUser.uid)) {
+    if (!srv.members) srv.members = [];
     srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
     saveServers();
   }
-  selectServer(srv.id);closeModal('server-settings-modal');showToast('✅ Te uniste a "'+srv.name+'"');
+  document.getElementById('join-code-input').value = '';
+  document.getElementById('join-preview').style.display = 'none';
+  closeModal('join-server-modal');
+  selectServer(srv.id);
+  showToast('✅ Te uniste a "' + srv.name + '"');
+}
+// Keep old function for server settings compatibility
+function joinByInvite() {
+  const code = document.getElementById('join-invite-input')?.value?.trim() || '';
+  const srv = state.servers.find(s => s.inviteCode === code);
+  if (!srv) { showToast('❌ Código inválido'); return; }
+  if (!(srv.members || []).find(m => (m.uid || m.id) === state.currentUser.uid)) {
+    if (!srv.members) srv.members = [];
+    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
+    saveServers();
+  }
+  selectServer(srv.id); closeModal('server-settings-modal'); showToast('✅ Te uniste a "' + srv.name + '"');
+}
+
+// ── INVITE PEOPLE ──
+function openInvitePeopleModal() {
+  const srv = getServer(state.currentServerId);
+  if (!srv) { showToast('⚠️ Selecciona un servidor primero'); return; }
+  if (!srv.inviteCode) { srv.inviteCode = genId(8); saveServers(); }
+  // Server icon
+  const iconEl = document.getElementById('inv-server-icon');
+  if (srv.icon && srv.icon.startsWith('data:')) {
+    iconEl.innerHTML = `<img src="${srv.icon}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+  } else {
+    iconEl.textContent = srv.icon || srv.name[0].toUpperCase();
+    iconEl.style.background = srv.color || 'var(--accent)';
+  }
+  document.getElementById('inv-server-name').textContent = srv.name;
+  document.getElementById('inv-code-text').textContent = srv.inviteCode;
+  const link = `nova.app/invite/${srv.inviteCode}`;
+  document.getElementById('inv-link-text').value = link;
+  // Members list
+  const membersEl = document.getElementById('inv-members-list');
+  membersEl.innerHTML = '';
+  (srv.members || []).forEach(m => {
+    const isMe = (m.uid || m.id) === state.currentUser.uid;
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;transition:background .1s;';
+    row.onmouseover = () => row.style.background = 'var(--bg-3)';
+    row.onmouseout = () => row.style.background = '';
+    const bg = m.avatarUrl ? '#000' : (m.color || m.avatarColor || 'var(--accent)');
+    const ava = m.avatarUrl ? `<img src="${m.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.style.display='none'">` : (m.name || '?')[0].toUpperCase();
+    row.innerHTML = `
+      <div style="width:32px;height:32px;border-radius:10px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;overflow:hidden;">${ava}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:.85rem;font-weight:600;color:var(--text-0);">${m.name || '?'}${isMe ? ' <span style="font-size:.62rem;color:var(--accent-g);">(tú)</span>' : ''}</div>
+        <div style="font-size:.7rem;color:var(--text-3);">${(m.roles || [])[0] || 'Miembro'}</div>
+      </div>
+      ${!isMe ? `<button class="btn btn-ghost btn-sm" style="font-size:.72rem;" onclick="showToast('Invitación enviada a ${m.name}')">Mencionar</button>` : ''}`;
+    membersEl.appendChild(row);
+  });
+  openModal('invite-people-modal');
+}
+function copyInviteNew() {
+  const code = document.getElementById('inv-code-text').textContent;
+  navigator.clipboard.writeText(code).then(() => showToast('✅ Código copiado al portapapeles'));
+}
+function copyInviteLink() {
+  const link = document.getElementById('inv-link-text').value;
+  navigator.clipboard.writeText(link).then(() => showToast('✅ Enlace copiado'));
+}
+function regenerateInviteNew() {
+  const srv = getServer(state.currentServerId);
+  if (!srv) return;
+  srv.inviteCode = genId(8);
+  saveServers();
+  document.getElementById('inv-code-text').textContent = srv.inviteCode;
+  document.getElementById('inv-link-text').value = `nova.app/invite/${srv.inviteCode}`;
+  document.getElementById('invite-code-text') && (document.getElementById('invite-code-text').textContent = srv.inviteCode);
+  showToast('🔄 Código regenerado');
+}
+function shareInvite(platform) {
+  const code = document.getElementById('inv-code-text').textContent;
+  const srv = getServer(state.currentServerId);
+  const text = encodeURIComponent(`¡Únete a "${srv?.name || 'mi servidor'}" en Nova! Código: ${code} — nova.app/invite/${code}`);
+  const urls = {
+    whatsapp: `https://wa.me/?text=${text}`,
+    telegram: `https://t.me/share/url?url=${encodeURIComponent('nova.app/invite/'+code)}&text=${text}`,
+  };
+  window.open(urls[platform], '_blank');
 }
 
 // ── PROFILE POPUP ──
@@ -2637,8 +2879,8 @@ function showProfilePopupByUid(event,uid,info){
   const member=(srv?.members||[]).find(m=>(m.uid||m.id)===uid);
   document.getElementById('pp-roles').innerHTML=(member?.roles||[]).map(r=>{const role=srv?.roles?.find(ro=>ro.id===r||ro.name===r);return role?`<span class="role-badge" style="background:${role.color}25;color:${role.color}">${role.name}</span>`:`<span class="role-badge" style="background:var(--bg-4);color:var(--text-2)">${r}</span>`;}).join('');
   const actEl=document.getElementById('pp-actions');
-  if(uid!==state.currentUser.uid){actEl.innerHTML=`<button class="btn btn-primary" style="font-size:.8rem;padding:7px;" onclick="openDM('${uid}')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Mensaje</button>${isServerAdmin(srv)?`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;" onclick="manageRoles('${uid}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg> Roles</button>`:''}`;
-  }else{actEl.innerHTML=`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;width:100%;" onclick="openMyProfile()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Editar perfil</button>`;}
+  if(uid!==state.currentUser.uid){actEl.innerHTML=`<button class="btn btn-primary" style="font-size:.8rem;padding:7px;" onclick="openDM('${uid}')">💬 Mensaje</button>${isServerAdmin(srv)?`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;" onclick="manageRoles('${uid}')">👑 Roles</button>`:''}`;
+  }else{actEl.innerHTML=`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;width:100%;" onclick="openMyProfile()">⚙️ Editar perfil</button>`;}
   popup.style.left=Math.min(event.clientX+10,window.innerWidth-300)+'px';
   popup.style.top=Math.min(event.clientY-20,window.innerHeight-360)+'px';
   popup.classList.add('open');
@@ -2722,14 +2964,14 @@ let _recentEmojis=[];try{_recentEmojis=JSON.parse(localStorage.getItem('nova_rec
 function addRecentEmoji(e){_recentEmojis=[e,..._recentEmojis.filter(x=>x!==e)].slice(0,24);try{localStorage.setItem('nova_recent_emojis',JSON.stringify(_recentEmojis));}catch(e){}}
 
 const EMOJI_CATS={
-  '🔥 Popular':['🔥','💯','✅','⚡','🎉','🚀','💎','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>','🌟','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg>','💫','🎯','🎮','🎵','🍕','🍔','☕','🎂','🌈','❄️','🌊','🌺','🍀','🦄','🐸','💀','😭','🤌','💅','🫡','🥺','😤','🤡','🎃','🫶','🥹'],
-  '😀 Caras':['😀','😃','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 13s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘','☺️','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
+  '🔥 Popular':['🔥','💯','✅','⚡','🎉','🚀','💎','🏆','🌟','👑','💫','🎯','🎮','🎵','🍕','🍔','☕','🎂','🌈','❄️','🌊','🌺','🍀','🦄','🐸','💀','😭','🤌','💅','🫡','🥺','😤','🤡','🎃','🫶','🥹'],
+  '😀 Caras':['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','😉','😊','😇','🥰','😍','🤩','😘','☺️','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨','😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒','🤕','🤢','🤮','🤧','🥵','🥶','🥴','😵','🤯','🤠','🥳','🥸','😎','🤓','🧐','😕','😟','🙁','☹️','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖','😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩','🤡','👹','👺','👻','👽','👾','🤖'],
   '👋 Gestos':['👋','🤚','🖐️','✋','🖖','👌','🤌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','👀','👅','👄'],
   '🐶 Animales':['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🐔','🐧','🐦','🐤','🦆','🦅','🦉','🦇','🐺','🐴','🦄','🐝','🦋','🐌','🐞','🐜','🕷️','🦂','🐢','🐍','🦎','🐙','🦑','🦐','🦀','🐡','🐠','🐟','🐬','🐳','🐋','🦈','🦭','🐊','🐅','🐆','🦓','🐘','🦛','🦏','🐪','🦒','🦬','🐕','🐈','🐓','🦜','🦢','🕊️','🐇','🦝','🦦','🦥','🦔'],
   '🍕 Comida':['🍕','🍔','🌮','🌯','🥙','🥚','🍳','🍲','🥘','🍱','🍘','🍙','🍚','🍛','🍜','🍝','🍣','🍤','🍥','🥮','🍡','🥟','🦀','🦞','🦐','🦑','🍦','🍧','🍨','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🥛','☕','🫖','🍵','🧃','🥤','🧋','🍶','🍺','🍻','🥂','🍷','🥃','🍸','🍹','🧉','🍾'],
-  '🎉 Celebración':['🎉','🎊','🎈','🎀','🎁','🎗️','🎟️','🎫','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>','🥇','🥈','🥉','🎖️','🏅','🎪','🤹','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10"/><path d="M12 22C6.48 22 2 17.52 2 12"/><path d="M12 22c5.52 0 10-4.48 10-10"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>','🎨','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>','<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>','<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3z"/><path d="M3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>','🎼','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🎲','🧩','🎮','🕹️','🎯','🎳','🏓','🏸','🎰','🎱'],
-  '🌈 Naturaleza':['🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','🌪️','🌫️','🌊','💧','💦','🌺','🌸','🌼','🌻','🌹','🥀','🌷','🌱','🌿','☘️','🍀','🎋','🎍','🍃','🍂','🍁','🍄','🌾','💐','🌵','🎄','🌲','🌳','🌴','🪨','🪵','🌙','⭐','🌟','💫','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>','⚡','🔥','💥','🌈'],
-  '💎 Símbolos':['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','✅','❌','⭕','🛑','⚠️','🔥','💯','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>','🌟','⚡','🎯','🔑','🗝️','<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>','🔓','💡','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>','🔕','🎵','🎶','💤','🚀','🛸','🌐','🔮','💎','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg>','<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>','🎪','🎨','<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12C2 6.48 6.48 2 12 2s10 4.48 10 10"/><path d="M12 22C6.48 22 2 17.52 2 12"/><path d="M12 22c5.52 0 10-4.48 10-10"/><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/></svg>'],
+  '🎉 Celebración':['🎉','🎊','🎈','🎀','🎁','🎗️','🎟️','🎫','🏆','🥇','🥈','🥉','🎖️','🏅','🎪','🤹','🎭','🎨','🎬','🎤','🎧','🎼','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🎲','🧩','🎮','🕹️','🎯','🎳','🏓','🏸','🎰','🎱'],
+  '🌈 Naturaleza':['🌈','☀️','🌤️','⛅','🌥️','☁️','🌦️','🌧️','⛈️','🌩️','🌨️','❄️','☃️','⛄','🌬️','💨','🌪️','🌫️','🌊','💧','💦','🌺','🌸','🌼','🌻','🌹','🥀','🌷','🌱','🌿','☘️','🍀','🎋','🎍','🍃','🍂','🍁','🍄','🌾','💐','🌵','🎄','🌲','🌳','🌴','🪨','🪵','🌙','⭐','🌟','💫','✨','⚡','🔥','💥','🌈'],
+  '💎 Símbolos':['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💘','💝','✅','❌','⭕','🛑','⚠️','🔥','💯','✨','🌟','⚡','🎯','🔑','🗝️','🔒','🔓','💡','🔔','🔕','🎵','🎶','💤','🚀','🛸','🌐','🔮','💎','👑','🏆','🎪','🎨','🎭'],
 };
 
 function togglePicker(mode){
@@ -2767,14 +3009,14 @@ function renderPicker(tab){
   } else if(tab==='custom'){
     const srv=getServer(state.currentServerId);const emojis=srv?.customEmojis||[];
     if(!emojis.length){
-      content.innerHTML=`<div style="text-align:center;padding:32px 16px;"><div style="font-size:2.5rem;margin-bottom:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></div><div style="color:var(--text-2);font-size:.875rem;font-weight:600;margin-bottom:4px;">Sin emojis personalizados</div><div style="color:var(--text-3);font-size:.78rem;margin-bottom:14px;">Sube PNG o GIF animados en configuración del servidor</div><button class="btn btn-primary" style="font-size:.78rem;padding:7px 14px;" onclick="openServerSettings();closePicker();"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Configuración</button></div>`;
+      content.innerHTML=`<div style="text-align:center;padding:32px 16px;"><div style="font-size:2.5rem;margin-bottom:8px;">✨</div><div style="color:var(--text-2);font-size:.875rem;font-weight:600;margin-bottom:4px;">Sin emojis personalizados</div><div style="color:var(--text-3);font-size:.78rem;margin-bottom:14px;">Sube PNG o GIF animados en configuración del servidor</div><button class="btn btn-primary" style="font-size:.78rem;padding:7px 14px;" onclick="openServerSettings();closePicker();">⚙️ Configuración</button></div>`;
     } else {
       content.innerHTML=`<div class="custom-emoji-grid">${emojis.map((e,i)=>`<div class="custom-emoji-item" onclick="insertCustomEmoji(${i})" title=":${e.name}:"><img src="${e.url}" alt="${e.name}" loading="lazy"><span class="ce-label">:${e.name}:</span></div>`).join('')}</div>`;
     }
   } else if(tab==='sticker'){
     content.innerHTML=`<div class="sticker-grid">${DEFAULT_STICKERS.map(s=>`<div class="sticker-item" onclick="sendSticker('${s.e}','${s.n}')">${s.e}<span class="sticker-label">${s.n}</span></div>`).join('')}</div>`;
   } else if(tab==='gif'){
-    content.innerHTML=`<div style="text-align:center;padding:32px 16px;"><div style="font-size:2.5rem;margin-bottom:8px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg></div><div style="color:var(--text-2);font-size:.875rem;font-weight:600;margin-bottom:6px;">GIFs animados</div><div style="color:var(--text-3);font-size:.78rem;margin-bottom:14px;">Sube GIFs personalizados desde configuración del servidor. Los GIFs subidos aparecen en la pestaña <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> Custom.</div><button class="btn btn-ghost" style="font-size:.78rem;" onclick="switchPickerTab('custom',document.querySelector('[data-tab=custom]'))">Ver emojis custom →</button></div>`;
+    content.innerHTML=`<div style="text-align:center;padding:32px 16px;"><div style="font-size:2.5rem;margin-bottom:8px;">🎬</div><div style="color:var(--text-2);font-size:.875rem;font-weight:600;margin-bottom:6px;">GIFs animados</div><div style="color:var(--text-3);font-size:.78rem;margin-bottom:14px;">Sube GIFs personalizados desde configuración del servidor. Los GIFs subidos aparecen en la pestaña ✨ Custom.</div><button class="btn btn-ghost" style="font-size:.78rem;" onclick="switchPickerTab('custom',document.querySelector('[data-tab=custom]'))">Ver emojis custom →</button></div>`;
   }
 }
 function filterEmojis(q){
@@ -2820,7 +3062,7 @@ async function startVoiceCall(){
       const parts=snap.exists()?Object.values(snap.val()):[];
       document.getElementById('call-participants').innerHTML=parts.map(p=>`<div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;border:2px solid var(--bg-0);margin-left:-6px;">${(p.name||'?')[0]}</div>`).join('');
     });
-    showToast('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Llamada iniciada');
+    showToast('📞 Llamada iniciada');
   }catch(e){showToast('❌ No se pudo acceder al micrófono');}
 }
 function endCall(){
@@ -2831,11 +3073,11 @@ function endCall(){
   clearInterval(state.callTimerInterval);
   document.getElementById('call-bar').classList.remove('active');
   document.getElementById('call-timer').textContent='00:00';
-  state.callChannelId=null;showToast('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Llamada terminada');
+  state.callChannelId=null;showToast('📞 Llamada terminada');
 }
 function startCallTimer(){state.callTimerInterval=setInterval(()=>{const e=Math.floor((Date.now()-state.callStartTime)/1000);document.getElementById('call-timer').textContent=String(Math.floor(e/60)).padStart(2,'0')+':'+String(e%60).padStart(2,'0');},1000);}
-function toggleCallMute(){if(!state.localStream)return;state.isMuted=!state.isMuted;state.localStream.getAudioTracks().forEach(t=>t.enabled=!state.isMuted);document.getElementById('call-mute-btn').textContent=state.isMuted?'🔇 Silenciado':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Silenciar';}
-function toggleMute(){state.isMuted=!state.isMuted;if(state.localStream)state.localStream.getAudioTracks().forEach(t=>t.enabled=!state.isMuted);document.getElementById('mute-btn').textContent=state.isMuted?'🔇':'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>';}
+function toggleCallMute(){if(!state.localStream)return;state.isMuted=!state.isMuted;state.localStream.getAudioTracks().forEach(t=>t.enabled=!state.isMuted);document.getElementById('call-mute-btn').textContent=state.isMuted?'🔇 Silenciado':'🎤 Silenciar';}
+function toggleMute(){state.isMuted=!state.isMuted;if(state.localStream)state.localStream.getAudioTracks().forEach(t=>t.enabled=!state.isMuted);document.getElementById('mute-btn').textContent=state.isMuted?'🔇':'🎤';}
 async function openVideoCall(){
   try{
     state.localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:true});
@@ -2861,7 +3103,7 @@ function openModal(id){document.getElementById(id).classList.add('open');}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 function showServerCtx(e,srv){
   const menu=document.getElementById('context-menu');
-  menu.innerHTML=`<div class="ctx-item" onclick="selectServer('${srv.id}');closeCtx()">🏠 Ir al servidor</div><div class="ctx-item" onclick="openServerSettings();closeCtx()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Configuración</div><div class="ctx-sep"></div>${isServerAdmin(srv)?`<div class="ctx-item danger" onclick="state.currentServerId='${srv.id}';deleteCurrentServer();closeCtx()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar</div>`:''}`;
+  menu.innerHTML=`<div class="ctx-item" onclick="selectServer('${srv.id}');closeCtx()">🏠 Ir al servidor</div><div class="ctx-item" onclick="openServerSettings();closeCtx()">⚙️ Configuración</div><div class="ctx-sep"></div>${isServerAdmin(srv)?`<div class="ctx-item danger" onclick="state.currentServerId='${srv.id}';deleteCurrentServer();closeCtx()">🗑️ Eliminar</div>`:''}`;
   menu.style.left=e.clientX+'px';menu.style.top=e.clientY+'px';menu.classList.add('open');
 }
 function closeCtx(){document.getElementById('context-menu').classList.remove('open');}
@@ -3215,7 +3457,7 @@ function toggleAudioRecording(){
   const btn=document.getElementById('audio-record-btn');
   if(_audioRecorder&&_audioRecorder.state==='recording'){
     _audioRecorder.stop();
-    btn.textContent='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Grabar';
+    btn.textContent='🎙️ Grabar';
     btn.style.background='';
     clearInterval(_audioTimerInterval);
     return;
@@ -3244,7 +3486,7 @@ function toggleAudioRecording(){
       const m=String(Math.floor(_audioSeconds/60)).padStart(2,'0');
       const s=String(_audioSeconds%60).padStart(2,'0');
       timerEl.textContent=`${m}:${s}`;
-      if(_audioSeconds>=120){_audioRecorder.stop();btn.textContent='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Grabar';clearInterval(_audioTimerInterval);}
+      if(_audioSeconds>=120){_audioRecorder.stop();btn.textContent='🎙️ Grabar';clearInterval(_audioTimerInterval);}
     },1000);
     // Animated visualizer
     const viz=document.getElementById('audio-visualizer');
@@ -3259,7 +3501,7 @@ function closeAudioModal(){
   document.getElementById('audio-timer').textContent='00:00';
   document.getElementById('audio-preview').style.display='none';
   document.getElementById('audio-send-btn').style.display='none';
-  document.getElementById('audio-record-btn').textContent='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Grabar';
+  document.getElementById('audio-record-btn').textContent='🎙️ Grabar';
   document.getElementById('audio-visualizer').innerHTML='';
   closeModal('audio-modal');
 }
@@ -3273,7 +3515,7 @@ function sendAudioMessage(){
     msg.channelId=state.currentChannelId;
     sendMsg(msg);
     closeAudioModal();
-    showToast('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Audio enviado');
+    showToast('🎙️ Audio enviado');
   };
   reader.readAsDataURL(_audioBlob);
 }
@@ -3291,7 +3533,7 @@ function pinMessage(msgId){
   const msg=msgs.find(m=>m.id===msgId);if(!msg)return;
   msg.pinned=!msg.pinned;
   fbSet('state/messages/'+state.currentChannelId+'/'+msgId+'/pinned',msg.pinned);
-  showToast(msg.pinned?'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Mensaje fijado':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Mensaje desfijado');
+  showToast(msg.pinned?'📌 Mensaje fijado':'📌 Mensaje desfijado');
   renderMessages();
 }
 
@@ -3310,6 +3552,7 @@ function sendMsg(msg){
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),3000);}
 function updateOnlineCount(){document.getElementById('online-count').textContent=Object.keys(state.onlineUsers).length;}
 function handleGlobalClick(e){
+  if(!e.target.closest('#add-server-menu')&&!e.target.closest('#add-server-btn'))closeAddServerMenu();
   if(!e.target.closest('#emoji-picker')&&!e.target.closest('.input-btn'))closePicker();
   if(!e.target.closest('#context-menu')&&!e.target.closest('.server-icon'))closeCtx();
   if(!e.target.closest('#profile-popup')&&!e.target.closest('[data-uid]')&&!e.target.closest('.member-item'))closeProfilePopup();
