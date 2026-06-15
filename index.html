@@ -472,8 +472,12 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   #chat-header .ch-name{font-size:.85rem;}
   #mobile-menu-btn{display:flex!important;}
 
-  /* Hide header actions that don't fit — show in overflow */
-  .header-actions .icon-btn:nth-child(n+5){display:none;}
+  /* Hide overflow header buttons on mobile */
+  .mobile-hide{display:none!important;}
+  #mobile-more-btn{display:flex!important;}
+
+  /* Header actions don't wrap */
+  .header-actions{flex-shrink:0;gap:0;}
 
   /* Members panel hidden on mobile */
   #members-panel{display:none!important;}
@@ -737,13 +741,23 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <span class="ch-name" id="chat-channel-name">Selecciona un canal</span>
       <div class="header-actions">
         <button class="icon-btn" onclick="openSearchModal()" title="Buscar">🔍</button>
-        <button class="icon-btn" onclick="openModal('thread-modal')" title="Nuevo hilo">💬</button>
-        <button class="icon-btn" onclick="openModal('poll-modal')" title="Encuesta">📊</button>
-        <button class="icon-btn" onclick="openModal('event-modal')" title="Evento">📅</button>
-        <button class="icon-btn" onclick="openLeaderboard()" title="Ranking XP">🏆</button>
-        <button class="icon-btn" onclick="startVoiceCall()" title="Llamada de voz">📞</button>
-        <button class="icon-btn" onclick="openVideoCall()" title="Videollamada">📹</button>
-        <button class="icon-btn" onclick="toggleMembers()" title="Miembros">👥</button>
+        <button class="icon-btn mobile-hide" onclick="openModal('thread-modal')" title="Nuevo hilo">💬</button>
+        <button class="icon-btn mobile-hide" onclick="openModal('poll-modal')" title="Encuesta">📊</button>
+        <button class="icon-btn mobile-hide" onclick="openModal('event-modal')" title="Evento">📅</button>
+        <button class="icon-btn mobile-hide" onclick="openLeaderboard()" title="Ranking XP">🏆</button>
+        <button class="icon-btn mobile-hide" onclick="startVoiceCall()" title="Llamada de voz">📞</button>
+        <button class="icon-btn mobile-hide" onclick="openVideoCall()" title="Videollamada">📹</button>
+        <button class="icon-btn mobile-hide" onclick="toggleMembers()" title="Miembros">👥</button>
+        <button class="icon-btn" id="mobile-more-btn" onclick="toggleMobileMoreMenu()" title="Más opciones" style="display:none;">⋯</button>
+      </div>
+      <!-- Mobile overflow menu -->
+      <div id="mobile-more-menu" style="display:none;position:fixed;top:52px;right:8px;background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:6px;z-index:300;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:160px;">
+        <div class="ctx-item" onclick="openModal('thread-modal');closeMobileMore()">💬 Nuevo hilo</div>
+        <div class="ctx-item" onclick="openModal('poll-modal');closeMobileMore()">📊 Encuesta</div>
+        <div class="ctx-item" onclick="openModal('event-modal');closeMobileMore()">📅 Evento</div>
+        <div class="ctx-item" onclick="openLeaderboard();closeMobileMore()">🏆 Ranking XP</div>
+        <div class="ctx-item" onclick="startVoiceCall();closeMobileMore()">📞 Llamada de voz</div>
+        <div class="ctx-item" onclick="openVideoCall();closeMobileMore()">📹 Videollamada</div>
       </div>
     </div>
     <div id="messages"></div>
@@ -1605,9 +1619,7 @@ function subscribeDMChannel(dmId){
 
 // ── RENDER ──
 function renderAll(){renderServerBar();renderChannelsPanel();renderChatArea();renderMembersPanel();}
-// Mobile sidebar
-function toggleMobileSidebar(){document.getElementById('channels-panel').classList.toggle('mobile-open');}
-function closeMobileSidebar(){document.getElementById('channels-panel').classList.remove('mobile-open');}
+// Mobile sidebar — defined later in responsive section
 // Override selectChannel to close sidebar on mobile
 const _origSelectChannel=typeof selectChannel==='function'?selectChannel:null;
 function updateUserBar(){
@@ -2952,6 +2964,22 @@ function adjustPickerPosition(){
   picker.style.right='4px';
   picker.style.width='auto';
 }
+
+function toggleMobileMoreMenu(){
+  const m=document.getElementById('mobile-more-menu');
+  if(!m)return;
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+function closeMobileMore(){
+  const m=document.getElementById('mobile-more-menu');
+  if(m)m.style.display='none';
+}
+// Close more menu on outside click
+document.addEventListener('click',function(e){
+  if(!e.target.closest('#mobile-more-menu')&&!e.target.closest('#mobile-more-btn')){
+    closeMobileMore();
+  }
+});
 
 window.addEventListener('resize',checkMobile);
 document.addEventListener('DOMContentLoaded',checkMobile);
