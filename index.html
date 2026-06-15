@@ -697,12 +697,12 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div class="server-sep"></div>
     <div id="server-icons-list"></div>
     <div class="server-sep"></div>
-    <div class="server-icon" id="add-server-btn" title="Agregar servidor" onclick="toggleAddServerMenu(event)">＋</div>
+    <div class="server-icon" id="add-server-btn" title="Nueva comunidad" onclick="toggleAddServerMenu(event)">＋</div>
     <!-- Add server popup menu -->
     <div id="add-server-menu" style="display:none;position:fixed;left:80px;background:var(--bg-2);border:1px solid var(--border);border-radius:14px;padding:6px;z-index:500;box-shadow:0 12px 40px rgba(0,0,0,.55);min-width:210px;">
       <div class="ctx-item" onclick="closeAddServerMenu();openModal('create-server-modal')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-        Crear un servidor
+        Crear comunidad
       </div>
       <div class="ctx-item" onclick="closeAddServerMenu();openModal('join-server-modal')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
@@ -718,7 +718,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   <div id="channels-panel">
     <div id="channels-header">
       <span id="server-name" onclick="openServerSettings()">Mensajes Directos</span>
-      <button class="icon-btn" id="add-channel-btn" title="Crear canal" onclick="openAddChannelModal()" style="display:none;">＋</button>
+      <button class="icon-btn" id="add-channel-btn" title="Crear canal" onclick="openAddChannelModal()" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
     </div>
     <!-- THEME SWITCHER -->
     <div id="theme-bar">
@@ -740,8 +740,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <div class="uname" id="uname-display">Usuario</div>
         <div class="utag" id="utag-display">#0000</div>
       </div>
-      <button class="icon-btn" title="Micrófono" onclick="toggleMute()" id="mute-btn">🎤</button>
-      <button class="icon-btn" title="Cerrar sesión" onclick="doSignOut()">🚪</button>
+      <button class="icon-btn" title="Micrófono" onclick="toggleMute()" id="mute-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
+      <button class="icon-btn" title="Cerrar sesión" onclick="doSignOut()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
     </div>
   </div>
   <div id="chat-area">
@@ -756,14 +756,15 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <button class="icon-btn" id="mobile-menu-btn" onclick="toggleMobileSidebar()" style="display:none;font-size:1.1rem;">☰</button>
       <span class="ch-name" id="chat-channel-name">Selecciona un canal</span>
       <div class="header-actions">
-        <button class="icon-btn" onclick="openSearchModal()" title="Buscar">🔍</button>
-        <button class="icon-btn mobile-hide" onclick="openModal('thread-modal')" title="Nuevo hilo">💬</button>
-        <button class="icon-btn mobile-hide" onclick="openModal('poll-modal')" title="Encuesta">📊</button>
-        <button class="icon-btn mobile-hide" onclick="openModal('event-modal')" title="Evento">📅</button>
-        <button class="icon-btn mobile-hide" onclick="openLeaderboard()" title="Ranking XP">🏆</button>
-        <button class="icon-btn mobile-hide" onclick="startVoiceCall()" title="Llamada de voz">📞</button>
-        <button class="icon-btn mobile-hide" onclick="openVideoCall()" title="Videollamada">📹</button>
-        <button class="icon-btn mobile-hide" onclick="toggleMembers()" title="Miembros">👥</button>
+        <button class="icon-btn" onclick="openSearchModal()" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="openModal('thread-modal')" title="Nuevo hilo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="openModal('poll-modal')" title="Encuesta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="openModal('event-modal')" title="Evento"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="openLeaderboard()" title="Ranking XP"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="startVoiceCall()" title="Llamada de voz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.36C1.44 2.17 2.37 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="openVideoCall()" title="Videollamada"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+        <button class="icon-btn mobile-hide" onclick="openInvitePeopleModal()" title="Invitar personas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></button>
+        <button class="icon-btn" onclick="toggleMembers()" title="Miembros"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
         <button class="icon-btn" id="mobile-more-btn" onclick="toggleMobileMoreMenu()" title="Más opciones" style="display:none;">⋯</button>
       </div>
       <!-- Mobile overflow menu -->
@@ -784,7 +785,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     </div>
     <div id="input-area">
       <div id="input-box">
-        <button class="input-btn" onclick="document.getElementById('img-file-input').click()" title="Imagen">🖼️</button>
+        <button class="input-btn" onclick="document.getElementById('img-file-input').click()" title="Imagen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
         <input type="file" id="img-file-input" accept="image/*" style="display:none" onchange="handleChatImageUpload(this)">
         <button class="input-btn" onclick="openModal('audio-modal')" title="Mensaje de voz">🎙️</button>
         <textarea id="msg-input" rows="1" placeholder="Escribe un mensaje..."
@@ -834,8 +835,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div style="width:56px;height:56px;border-radius:16px;background:var(--accent-glow);border:1px solid rgba(124,58,237,.3);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent-g)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
       </div>
-      <h2>Unirse a un servidor</h2>
-      <p class="sub">Ingresa el código de invitación para acceder a un servidor.</p>
+      <h2>Unirse a una comunidad</h2>
+      <p class="sub">Ingresa el código de invitación para acceder a una comunidad.</p>
     </div>
     <label>Código de invitación</label>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -865,7 +866,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
       <div id="inv-server-icon" style="width:44px;height:44px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;"></div>
       <div>
-        <h2 style="margin-bottom:2px;">Invitar a <span id="inv-server-name">este servidor</span></h2>
+        <h2 style="margin-bottom:2px;">Invitar a <span id="inv-server-name">esta comunidad</span></h2>
         <p class="sub" style="margin:0;">Comparte el código o enlace para invitar personas.</p>
       </div>
     </div>
@@ -932,7 +933,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <div class="modal-overlay" id="create-server-modal">
   <div class="modal">
     <button class="close-btn" onclick="closeModal('create-server-modal')">✕</button>
-    <h2>Crear servidor</h2>
+    <h2>Crear comunidad</h2>
     <!-- Icon preview + upload -->
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px;">
       <div id="new-server-icon-preview" onclick="document.getElementById('new-server-icon-file').click()"
@@ -945,7 +946,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     </div>
     <input type="file" id="new-server-icon-file" accept="image/*" style="display:none" onchange="handleServerIconUpload(this,'new-server-icon-preview','new-server-icon-b64')">
     <input type="hidden" id="new-server-icon-b64">
-    <label>Nombre</label><input type="text" id="new-server-name" placeholder="Mi servidor">
+    <label>Nombre</label><input type="text" id="new-server-name" placeholder="Mi comunidad">
     <label>Descripción</label><input type="text" id="new-server-desc" placeholder="Opcional">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('create-server-modal')">Cancelar</button>
@@ -963,6 +964,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <option value="text">💬 Texto</option>
       <option value="voice">🔊 Voz</option>
       <option value="announcement">📢 Anuncios</option>
+      <option value="forum">📋 Foro</option>
     </select>
     <label>Nombre</label><input type="text" id="new-channel-name" placeholder="nuevo-canal">
     <label>Categoría</label><select id="new-channel-category"></select>
@@ -1073,7 +1075,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <div style="font-size:.75rem;color:var(--text-3);">Quién puede enviarte DMs</div>
         </div>
         <select id="us-dm-privacy" style="width:auto;background:var(--bg-4);border:1px solid var(--border);border-radius:var(--r-xs);padding:5px 8px;color:var(--text-1);font-family:var(--font);font-size:.8rem;outline:none;">
-          <option value="all">Todos en mis servidores</option>
+          <option value="all">Todos en mis comunidades</option>
           <option value="friends">Solo amigos</option>
           <option value="none">Nadie</option>
         </select>
@@ -1092,7 +1094,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <select id="us-friend-req" style="width:auto;background:var(--bg-4);border:1px solid var(--border);border-radius:var(--r-xs);padding:5px 8px;color:var(--text-1);font-family:var(--font);font-size:.8rem;outline:none;">
           <option value="all">Todos</option>
-          <option value="mutual">Servidores mutuos</option>
+          <option value="mutual">Comunidades mutuas</option>
           <option value="none">Nadie</option>
         </select>
       </div>
@@ -1136,7 +1138,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
       <!-- SERVIDOR -->
       <div class="ss-nav-cat">SERVIDOR</div>
-      <button class="ss-nav-item active" data-section="general" onclick="openSsSection('general',this)">Perfil del servidor</button>
+      <button class="ss-nav-item active" data-section="general" onclick="openSsSection('general',this)">Perfil de la comunidad</button>
       <button class="ss-nav-item" data-section="channels" onclick="openSsSection('channels',this)">Canales</button>
       <button class="ss-nav-item" data-section="invites" onclick="openSsSection('invites',this)">Invitaciones</button>
 
@@ -1156,7 +1158,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <button class="ss-nav-item" data-section="bans" onclick="openSsSection('bans',this)">Baneos</button>
 
       <div style="height:1px;background:var(--border);margin:10px 8px;"></div>
-      <button class="ss-nav-item danger" onclick="deleteCurrentServer()">🗑️ Eliminar servidor</button>
+      <button class="ss-nav-item danger" onclick="deleteCurrentServer()">🗑️ Eliminar comunidad</button>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -1166,13 +1168,13 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <!-- GENERAL / PERFIL -->
       <div class="ss-section active" id="ss-sec-general">
         <div class="ss-section-header">
-          <h2 class="ss-section-title">Perfil del servidor</h2>
-          <p class="ss-section-desc">Personaliza cómo aparece tu servidor.</p>
+          <h2 class="ss-section-title">Perfil de la comunidad</h2>
+          <p class="ss-section-desc">Personaliza cómo aparece tu comunidad.</p>
         </div>
         <!-- Preview card -->
         <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px;">
           <div style="flex:1;min-width:240px;">
-            <div class="ss-field-label">Ícono del servidor</div>
+            <div class="ss-field-label">Ícono de la comunidad</div>
             <div style="display:flex;align-items:center;gap:14px;margin-top:8px;">
               <div id="ss-server-icon-preview" onclick="document.getElementById('ss-server-icon-file').click()"
                 style="width:80px;height:80px;border-radius:20px;background:var(--bg-4);display:flex;align-items:center;justify-content:center;font-size:2.5rem;cursor:pointer;border:2px dashed var(--border);overflow:hidden;flex-shrink:0;transition:all .15s;"
@@ -1206,7 +1208,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <input type="text" id="ss-server-name" style="margin-top:6px;" oninput="document.getElementById('ss-preview-name').textContent=this.value">
 
         <div class="ss-field-label" style="margin-top:14px;">Descripción</div>
-        <textarea id="ss-server-desc" rows="3" placeholder="Sobre este servidor..." style="margin-top:6px;resize:vertical;min-height:60px;width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text-0);font-family:var(--font);font-size:.9rem;outline:none;" oninput="document.getElementById('ss-preview-desc').textContent=this.value"></textarea>
+        <textarea id="ss-server-desc" rows="3" placeholder="Sobre esta comunidad..." style="margin-top:6px;resize:vertical;min-height:60px;width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;color:var(--text-0);font-family:var(--font);font-size:.9rem;outline:none;" oninput="document.getElementById('ss-preview-desc').textContent=this.value"></textarea>
 
         <div class="ss-field-label" style="margin-top:14px;">Cartel (banner)</div>
         <div onclick="document.getElementById('ss-banner-file').click()"
@@ -1328,7 +1330,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div class="ss-section" id="ss-sec-audit">
         <div class="ss-section-header">
           <h2 class="ss-section-title">Registro de auditoría</h2>
-          <p class="ss-section-desc">Historial de acciones en el servidor.</p>
+          <p class="ss-section-desc">Historial de acciones de la comunidad.</p>
         </div>
         <div id="ss-audit-list"></div>
       </div>
@@ -1337,7 +1339,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div class="ss-section" id="ss-sec-bans">
         <div class="ss-section-header">
           <h2 class="ss-section-title">Baneos</h2>
-          <p class="ss-section-desc">Usuarios bloqueados de este servidor.</p>
+          <p class="ss-section-desc">Usuarios bloqueados de esta comunidad.</p>
         </div>
         <div id="ss-bans-list" style="color:var(--text-3);font-size:.875rem;padding:20px 0;">Ningún usuario baneado.</div>
       </div>
@@ -1442,6 +1444,35 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     </div>
   </div>
 </div>
+<!-- EDIT CHANNEL MODAL -->
+<div class="modal-overlay" id="edit-channel-modal">
+  <div class="modal" style="width:460px;">
+    <button class="close-btn" onclick="closeModal('edit-channel-modal')">✕</button>
+    <h2>Editar canal</h2>
+    <input type="hidden" id="edit-ch-id">
+    <input type="hidden" id="edit-ch-srv-id">
+    <label>Nombre</label>
+    <input type="text" id="edit-ch-name" placeholder="nombre-del-canal">
+    <label>Tipo</label>
+    <select id="edit-ch-type">
+      <option value="text">Texto</option>
+      <option value="voice">Voz</option>
+      <option value="announcement">Anuncios</option>
+      <option value="forum">Foro</option>
+    </select>
+    <label>Tema / Descripción</label>
+    <input type="text" id="edit-ch-topic" placeholder="¿De qué trata este canal?">
+    <div style="display:flex;align-items:center;gap:10px;margin-top:14px;">
+      <div class="toggle" id="edit-ch-private" onclick="this.classList.toggle('on')"></div>
+      <span style="font-size:.875rem;color:var(--text-1);">Canal privado</span>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('edit-channel-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditChannel()">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <div id="loading-overlay" style="position:fixed;inset:0;background:var(--bg-0);z-index:99999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
   <div class="auth-logo"><svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L9.5 8.5H3l5.5 4-2 6.5L12 15l5.5 4-2-6.5L21 8.5h-6.5z" fill="#fff"/></svg></div>
   <div id="loading-msg" style="color:var(--text-2);font-size:.9rem;">Cargando...</div>
@@ -1489,7 +1520,13 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 <script>
 // ═══════════════════ CORDIS v2 — JS ═══════════════════
 const STATUS_COLORS={online:'#3ba55d',idle:'#faa81a',dnd:'#ed4245',offline:'#72767d'};
-const CHAN_ICONS={text:'#',voice:'🔊',announcement:'📢'};
+const CHAN_ICONS={
+  text:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>`,
+  voice:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>`,
+  announcement:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 3 2 10l7 3 3 7 10-17z"/></svg>`,
+  thread:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
+  forum:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+};
 const ROLE_COLORS=['#ed4245','#faa81a','#3ba55d','#5865f2','#eb459e','#00b0f4'];
 const DEFAULT_EMOJIS=['😀','😂','🤣','😍','🥰','😎','🤔','😴','🤯','🥳','🎉','🔥','💯','✅','❤️','💙','💚','💜','🌟','⚡','🎮','🎵','🍕','🚀','👋','👏','🙌','💪','🤝','👀','🐸','🦜','🐶','🐱','🦊','🐻','🎂','🌈','☀️','🌙','⭐','❄️','🌺','🍀','🏆','💎','📢','🎯','😅','😭','🤦','🤷','👌','✌️','🫡','🫠','🥹','😤','🤬','💀','👻','🤡','🎃','🫶','🫂'];
 const DEFAULT_STICKERS=[{n:'Baile',e:'💃'},{n:'Fuego',e:'🔥'},{n:'Shock',e:'😱'},{n:'Sueño',e:'😴'},{n:'Risa',e:'🤣'},{n:'Fuerza',e:'💪'},{n:'Amor',e:'❤️'},{n:'GG',e:'🏆'},{n:'Hype',e:'🎉'},{n:'Pog',e:'😮'},{n:'NoWay',e:'🙅'},{n:'Palmas',e:'👏'}];
@@ -1798,7 +1835,7 @@ function renderChannelsPanel(){
       const unread=state.unreadCounts[ch.id]||0;
       const item=document.createElement('div');
       item.className='channel-item'+(ch.id===state.currentChannelId?' active':'');
-      item.innerHTML=`<span class="ch-icon">${CHAN_ICONS[ch.type]||'#'}</span>${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;">🔒</span>':''}${unread?`<div class="unread-badge">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')">🗑️</button>`:''}</div>`;
+      item.innerHTML=`<span class="ch-icon">${CHAN_ICONS[ch.type]||CHAN_ICONS.text}</span>${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}${unread?`<div class="unread-badge">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="openEditChannel('${ch.id}','${srv.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}</div>`;
       item.onclick=e=>{if(!e.target.closest('.ch-actions'))selectChannel(ch.id);};
       group.appendChild(item);
       // Render threads under channel
@@ -1821,9 +1858,76 @@ function renderChatArea(){
   if(state.currentChannelId&&state.currentChannelId.startsWith('dm_')){
     const info=state.dmConversations[state.currentDmUid]||{};
     nameEl.innerHTML=`@ ${info.name||'DM'}`;
-  }else if(ch){nameEl.innerHTML=`${CHAN_ICONS[ch.type]||'#'} ${ch.name}`;}
+  }else if(ch){nameEl.innerHTML=`${CHAN_ICONS[ch.type]||CHAN_ICONS.text} ${ch.name}`;}
   else{nameEl.textContent='Selecciona un canal';}
+  // Forum channel — show posts view
+  if(ch?.type==='forum'){renderForumPosts(ch);return;}
   renderMessages();renderTyping();
+}
+
+// ── FORUM ──
+function renderForumPosts(ch){
+  const el=document.getElementById('messages');
+  const posts=Object.values(state.messages[ch.id]||{})
+    .filter(m=>!m._isReply)
+    .sort((a,b)=>b.ts-a.ts);
+  const inputArea=document.getElementById('input-area');
+  if(inputArea)inputArea.style.display='none';
+  // Header button to create post
+  el.innerHTML=`
+    <div style="padding:16px 0 8px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div style="font-size:.85rem;color:var(--text-2);">${posts.length} publicacion${posts.length!==1?'es':''}</div>
+      <button class="btn btn-primary btn-sm" onclick="openNewForumPost('${ch.id}')">✏️ Nueva publicación</button>
+    </div>
+    ${posts.length?posts.map(p=>`
+      <div onclick="openForumPost('${ch.id}','${p.id}')" style="background:var(--bg-3);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:8px;cursor:pointer;transition:all .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:28px;height:28px;border-radius:8px;background:${p.color};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;">${(p.name||'?')[0].toUpperCase()}</div>
+          <span style="font-size:.8rem;font-weight:600;color:${p.color}">${p.name}</span>
+          <span style="font-size:.72rem;color:var(--text-3);">${fmtDateTime(p.ts)}</span>
+          ${p.tags?.map(t=>`<span style="background:var(--accent-glow);color:var(--accent-g);border-radius:20px;padding:1px 8px;font-size:.65rem;font-weight:700;">${t}</span>`).join('')||''}
+        </div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text-0);margin-bottom:4px;">${p.title||'Sin título'}</div>
+        <div style="font-size:.85rem;color:var(--text-2);line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.content||''}</div>
+        <div style="display:flex;gap:12px;margin-top:10px;font-size:.75rem;color:var(--text-3);">
+          <span>💬 ${(state.messages[p.id]||[]).length} respuestas</span>
+          ${p.reactions?.length?`<span>❤️ ${p.reactions.reduce((s,r)=>s+(r.users?.length||0),0)}</span>`:''}
+        </div>
+      </div>`).join('')
+    :'<div class="empty-state" style="margin-top:40px;"><div class="big-icon">📋</div><h3>Sin publicaciones aún</h3><p style="color:var(--text-3);font-size:.85rem;margin-top:6px;">Sé el primero en crear una publicación</p></div>'}`;
+}
+
+function openNewForumPost(chId){
+  // Reuse thread modal adapted for forum
+  document.getElementById('thread-name').placeholder='Título de la publicación...';
+  document.getElementById('thread-msg').placeholder='Escribe el contenido de tu publicación...';
+  state._forumChannelId=chId;
+  openModal('thread-modal');
+}
+
+function openForumPost(chId, postId){
+  // Select the post as a sub-channel (reuse thread logic)
+  state._forumChannelId=chId;
+  const msgs=state.messages[chId]||[];
+  const post=msgs.find(m=>m.id===postId);
+  if(!post)return;
+  // Show post + replies as a chat
+  state.currentChannelId=postId;
+  subscribeChannel(postId);
+  const inputArea=document.getElementById('input-area');
+  if(inputArea)inputArea.style.display='';
+  document.getElementById('chat-channel-name').innerHTML=`📋 ${post.title||post.content?.substring(0,30)||'Post'}
+    <button onclick="backToForum('${chId}')" style="margin-left:8px;background:var(--bg-4);border:none;color:var(--text-2);cursor:pointer;border-radius:6px;padding:2px 8px;font-size:.72rem;">← Foro</button>`;
+  renderMessages();
+}
+
+function backToForum(chId){
+  state.currentChannelId=chId;
+  const inputArea=document.getElementById('input-area');
+  if(inputArea)inputArea.style.display='none';
+  const srv=getServer(state.currentServerId);
+  const ch=getChannel(chId,srv);
+  if(ch)renderForumPosts(ch);
 }
 function renderMessages(){
   const el=document.getElementById('messages');
@@ -2121,6 +2225,39 @@ function createChannel(){
   const cat=srv.channels.find(c=>c.id===catId);if(cat)cat.children.push(ch);
   saveServers();closeModal('add-channel-modal');selectChannel(ch.id);showToast('✅ Canal #'+name+' creado');
 }
+// ── EDIT CHANNEL ──
+function openEditChannel(chId, srvId){
+  const srv=getServer(srvId);if(!srv)return;
+  let ch=null;
+  srv.channels.forEach(cat=>(cat.children||[]).forEach(c=>{if(c.id===chId)ch=c;}));
+  if(!ch)return;
+  document.getElementById('edit-ch-id').value=chId;
+  document.getElementById('edit-ch-srv-id').value=srvId;
+  document.getElementById('edit-ch-name').value=ch.name;
+  document.getElementById('edit-ch-type').value=ch.type||'text';
+  document.getElementById('edit-ch-topic').value=ch.topic||'';
+  const tog=document.getElementById('edit-ch-private');
+  ch.private?tog.classList.add('on'):tog.classList.remove('on');
+  openModal('edit-channel-modal');
+}
+function saveEditChannel(){
+  const chId=document.getElementById('edit-ch-id').value;
+  const srvId=document.getElementById('edit-ch-srv-id').value;
+  const srv=getServer(srvId);if(!srv)return;
+  let ch=null;
+  srv.channels.forEach(cat=>(cat.children||[]).forEach(c=>{if(c.id===chId)ch=c;}));
+  if(!ch)return;
+  const name=document.getElementById('edit-ch-name').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if(!name){showToast('⚠️ Nombre requerido');return;}
+  ch.name=name;
+  ch.type=document.getElementById('edit-ch-type').value;
+  ch.topic=document.getElementById('edit-ch-topic').value.trim();
+  ch.private=document.getElementById('edit-ch-private').classList.contains('on');
+  saveServers();closeModal('edit-channel-modal');
+  renderChannelsPanel();
+  if(state.currentChannelId===chId)renderChatArea();
+  showToast('✅ Canal actualizado');
+}
 function deleteChannel(chId,srvId){
   if(!confirm('¿Eliminar canal?'))return;
   const srv=getServer(srvId);
@@ -2150,7 +2287,7 @@ function createServer(){
   const prev=document.getElementById('new-server-icon-preview');
   prev.innerHTML='<span style="font-size:1.5rem;color:var(--text-3);">📷</span>';
   prev.style.background='var(--bg-4)';
-  selectServer(id);showToast('✅ Servidor "'+name+'" creado');
+  selectServer(id);showToast('✅ Comunidad "'+name+'" creado');
 }
 function openSsSection(section, btn){
   document.querySelectorAll('.ss-section').forEach(s=>s.classList.remove('active'));
@@ -2305,7 +2442,7 @@ function saveServerSettings(){
   saveServers();renderAll();showToast('✅ Servidor actualizado');
 }
 function deleteCurrentServer(){
-  if(!confirm('¿Eliminar servidor permanentemente?'))return;
+  if(!confirm('¿Eliminar comunidad permanentemente?'))return;
   state.servers=state.servers.filter(s=>s.id!==state.currentServerId);
   saveServers();state.currentServerId='__dm__';state.currentChannelId=null;closeModal('server-settings-modal');renderAll();showToast('🗑️ Servidor eliminado');
 }
@@ -2487,24 +2624,33 @@ function openThreadModal(msgId){
 function createThread(){
   const name=document.getElementById('thread-name').value.trim();
   const msg=document.getElementById('thread-msg').value.trim();
-  if(!name){showToast('⚠️ Nombre requerido');return;}
+  if(!name){showToast('⚠️ Título requerido');return;}
+  const u=state.currentUser;
+  // Forum post mode
+  if(state._forumChannelId){
+    const fChId=state._forumChannelId;
+    const postMsg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',
+      title:name,content:msg,ts:Date.now(),reactions:[],pinned:false,channelId:fChId};
+    if(!state.messages[fChId])state.messages[fChId]=[];
+    state.messages[fChId].push(postMsg);
+    fbSet('state/messages/'+fChId+'/'+postMsg.id,postMsg);
+    state._forumChannelId=null;
+    closeModal('thread-modal');
+    const srv=getServer(state.currentServerId);
+    const ch=getChannel(state.currentChannelId,srv);
+    if(ch?.type==='forum')renderForumPosts(ch);
+    showToast('📋 Publicación creada');return;
+  }
   if(!state.currentChannelId)return;
   const srv=getServer(state.currentServerId);if(!srv)return;
-  // Add thread as sub-channel
   const threadId='ch'+genId(8);
-  const thread={id:threadId,name,type:'thread',parentId:state.currentChannelId,private:false,createdAt:Date.now(),createdBy:state.currentUser.uid};
-  // Find parent category and add thread
+  const thread={id:threadId,name,type:'thread',parentId:state.currentChannelId,private:false,createdAt:Date.now(),createdBy:u.uid};
   srv.channels.forEach(cat=>{
     const parent=cat.children?.find(c=>c.id===state.currentChannelId);
-    if(parent){
-      if(!parent.threads)parent.threads=[];
-      parent.threads.push(thread);
-    }
+    if(parent){if(!parent.threads)parent.threads=[];parent.threads.push(thread);}
   });
   saveServers();
-  // Send first message in thread
   if(msg){
-    const u=state.currentUser;
     const threadMsg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:msg,ts:Date.now(),reactions:[],pinned:false,channelId:threadId};
     fbSet('state/messages/'+threadId+'/'+threadMsg.id,threadMsg);
   }
@@ -2590,7 +2736,7 @@ function awardXP(){
     const oldLvl=getLevelFromXP(current),newLvl=getLevelFromXP(newXP);
     if(newLvl>oldLvl){
       showToast('🎉 ¡Subiste al nivel '+newLvl+'!');
-      sendDesktopNotif('¡Subiste de nivel!','Ahora eres nivel '+newLvl+' en este servidor.');
+      sendDesktopNotif('¡Subiste de nivel!','Ahora eres nivel '+newLvl+' en esta comunidad.');
       checkAutoRoles(newLvl);
     }
   }).catch(()=>{});
@@ -2655,7 +2801,7 @@ function addCustomEmoji(){
   const srv=getServer(state.currentServerId);if(!srv)return;
   if(!srv.customEmojis)srv.customEmojis=[];
   if(srv.customEmojis.length>=50){showToast('⚠️ Máximo 50 emojis por servidor');return;}
-  srv.customEmojis.push({name,url:b64});
+  srv.customEmojis.push({name,url:b64,uploadedBy:state.currentUser?.name||'?',uploadedAt:Date.now()});
   saveServers();
   document.getElementById('ce-name').value='';
   document.getElementById('ce-b64').value='';
@@ -2664,26 +2810,20 @@ function addCustomEmoji(){
 }
 function renderCustomEmojiList(srv){
   const el=document.getElementById('ce-list');if(!el)return;
-  el.innerHTML='';
   const emojis=srv?.customEmojis||[];
   const countEl=document.getElementById('ce-count');
   if(countEl)countEl.textContent=emojis.length;
   if(!emojis.length){
-    el.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--text-3);padding:24px;font-size:.85rem;">Sin emojis aún — sube el primero arriba 👆</div>';
+    el.innerHTML='<div class="ce-table-row" style="justify-content:center;color:var(--text-3);font-size:.85rem;padding:24px;">Sin emojis aún — sube el primero arriba 👆</div>';
     return;
   }
-  emojis.forEach((e,i)=>{
-    const div=document.createElement('div');
-    div.style.cssText='background:var(--bg-3);border-radius:10px;padding:10px 6px;text-align:center;position:relative;border:1.5px solid var(--border);transition:all .15s;';
-    div.innerHTML=`
-      <img src="${e.url}" style="width:44px;height:44px;object-fit:contain;border-radius:6px;display:block;margin:0 auto 6px;">
-      <div style="font-size:.62rem;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;" title=":${e.name}:">:${e.name}:</div>
-      <button onclick="deleteCustomEmoji(${i})" title="Eliminar"
-        style="position:absolute;top:4px;right:4px;background:rgba(244,63,94,.15);border:none;color:var(--red);cursor:pointer;font-size:.65rem;border-radius:4px;padding:2px 5px;line-height:1;opacity:0;transition:opacity .15s;">✕</button>`;
-    div.onmouseenter=()=>{div.style.borderColor='var(--accent)';div.querySelector('button').style.opacity='1';};
-    div.onmouseleave=()=>{div.style.borderColor='var(--border)';div.querySelector('button').style.opacity='0';};
-    el.appendChild(div);
-  });
+  el.innerHTML=emojis.map((e,i)=>`
+    <div class="ce-table-row">
+      <div><img src="${e.url}" style="width:36px;height:36px;object-fit:contain;border-radius:6px;"></div>
+      <div style="font-size:.875rem;color:var(--text-1);font-weight:600;">:${e.name}:</div>
+      <div style="font-size:.78rem;color:var(--text-3);">${e.uploadedBy||state.currentUser?.name||'?'}</div>
+      <button onclick="deleteCustomEmoji(${i})" style="background:rgba(244,63,94,.12);border:none;color:var(--red);cursor:pointer;border-radius:6px;padding:4px 8px;font-size:.75rem;font-weight:600;">Eliminar</button>
+    </div>`).join('');
 }
 function deleteCustomEmoji(idx){const srv=getServer(state.currentServerId);if(!srv)return;srv.customEmojis.splice(idx,1);saveServers();renderCustomEmojiList(srv);}
 
