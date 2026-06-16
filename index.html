@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nova — Chat en tiempo real</title>
+<title>Nova: Chat and Communities</title>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getDatabase, ref, set, push, onValue, onChildAdded, onDisconnect, remove, get, off, update }
@@ -645,6 +645,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 </style>
 
 
+<link rel="icon" href="data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="%237c3aed"/><path d="M8 10h16M8 16h10M8 22h13" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>">
 </head>
 <body>
 
@@ -1208,6 +1209,18 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <div class="ss-section-header">
           <h2 class="ss-section-title">Perfil de la comunidad</h2>
           <p class="ss-section-desc">Personaliza cómo aparece tu comunidad.</p>
+        </div>
+        <div class="ss-field-label" style="margin-bottom:6px;">Tipo de comunidad</div>
+        <select id="ss-server-type" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text-0);font-family:var(--font);font-size:.9rem;outline:none;margin-bottom:20px;">
+          <option value="public">🌐 Pública</option>
+          <option value="private">🔒 Privada</option>
+          <option value="request">📋 Por solicitud</option>
+        </select>
+        <div id="ss-pending-section" style="display:none;margin-bottom:20px;">
+          <div class="ss-field-label" style="margin-bottom:8px;">Solicitudes pendientes</div>
+          <div id="ss-pending-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+        <div class="ss-section-header" style="display:none;">
         </div>
         <!-- Preview card -->
         <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:24px;">
@@ -1871,7 +1884,8 @@ function updateUserBar(){
 }
 function renderServerBar(){
   const el=document.getElementById('server-icons-list');el.innerHTML='';
-  state.servers.forEach(srv=>{
+  const uid=state.currentUser?.uid;
+  state.servers.filter(srv=>(srv.members||[]).some(m=>(m.uid||m.id)===uid)).forEach(srv=>{
     const div=document.createElement('div');
     div.className='server-icon'+(srv.id===state.currentServerId?' active':'');
     div.title=srv.name;
@@ -2103,7 +2117,7 @@ function renderMessages(){
     }else{
       const avatarStyle=`background:${msg.avatarUrl?'#000':msg.color}`;
       const avatarContent=msg.avatarUrl?`<img src="${msg.avatarUrl}" onerror="this.style.display='none'">`:(msg.name||'?')[0].toUpperCase();
-      wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.color}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);">📌</span>':''}</div><div class="msg-content">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
+      wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.roleColor||'var(--text-1)'}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);">📌</span>':''}</div><div class="msg-content">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
     }
     el.appendChild(wrap);prevUid=msg.uid;prevTs=msg.ts;
   });
@@ -2247,7 +2261,8 @@ function sendMessage(){
   const content=input.value.trim();
   if(!content||!state.currentChannelId)return;
   const u=state.currentUser;
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content,ts:Date.now(),reactions:[],pinned:false,edited:false,replyTo:state.replyToMsg?.id||null};
+  const _srv=getServer(state.currentServerId);const _mem=(_srv?.members||[]).find(m=>(m.uid||m.id)===u.uid);const _rc=(_mem?.roles||[]).reduce((c,rn)=>{const ro=(_srv?.roles||[]).find(r=>r.name===rn);return (ro&&ro.color&&!c)?ro.color:c;},'');
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,roleColor:_rc,avatarUrl:u.avatarUrl||'',content,ts:Date.now(),reactions:[],pinned:false,edited:false,replyTo:state.replyToMsg?.id||null};
   const isDM=state.currentChannelId.startsWith('dm_');
   if(isDM){
     const dmId=state.currentChannelId.replace('dm_','');
@@ -2478,14 +2493,14 @@ function createServer(){
   const desc=document.getElementById('new-server-desc').value.trim();
   const id='s'+genId(10);
   const srv={id,name,icon,iconImg,color:state.serverSelectedColor||'#7c3aed',desc,ownerId:state.currentUser.uid,
-    private:true, // all servers private by default
+    serverType:document.getElementById('new-server-type').value||'public',
     channels:[{id:'cat'+id+'0',name:'TEXTO',type:'category',children:[{id:'ch'+genId(8),name:'general',type:'text',private:false},{id:'ch'+genId(8),name:'anuncios',type:'announcement',private:false}]},{id:'cat'+id+'1',name:'VOZ',type:'category',children:[{id:'ch'+genId(8),name:'General',type:'voice',private:false}]}],
     members:[{uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Admin']}],
     roles:[{id:'r1',name:'Admin',color:'#f43f5e',hoist:true},{id:'r2',name:'Moderador',color:'#f59e0b',hoist:true},{id:'r3',name:'Miembro',color:'#7c3aed',hoist:false}],
     customEmojis:[],inviteCode:genId(8)};
   state.servers.push(srv);saveServers();closeModal('create-server-modal');
   document.getElementById('new-server-name').value='';
-  document.getElementById('new-server-icon-b64').value='';
+  document.getElementById('new-server-icon-b64').value='';document.getElementById('new-server-type').value='public';
   document.getElementById('new-server-icon-emoji').value='';
   const prev=document.getElementById('new-server-icon-preview');
   prev.innerHTML='<span style="font-size:1.5rem;color:var(--text-3);">📷</span>';
@@ -2512,6 +2527,11 @@ function openServerSettings(){
   document.getElementById('ss-server-name-sidebar').textContent=srv.name;
   // Fill general fields
   document.getElementById('ss-server-name').value=srv.name;
+  if(document.getElementById('ss-server-type'))document.getElementById('ss-server-type').value=srv.serverType||'public';
+  // Pending requests
+  const pendSec=document.getElementById('ss-pending-section');
+  const pendList=document.getElementById('ss-pending-list');
+  if(pendSec&&pendList){const pend=srv.pendingMembers||[];pendSec.style.display=pend.length?'block':'none';pendList.innerHTML=pend.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg-3);border-radius:8px;"><div style="width:32px;height:32px;border-radius:50%;background:${p.avatarColor||'var(--accent)'};display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;overflow:hidden;">${p.avatarUrl?`<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`:(p.name||'?')[0].toUpperCase()}</div><div style="flex:1;font-size:.875rem;color:var(--text-1);">${p.name}</div><button class="btn btn-primary btn-sm" onclick="approvePending('${p.uid}')">Aceptar</button><button class="btn btn-ghost btn-sm" onclick="rejectPending('${p.uid}')">Rechazar</button></div>`).join('');}
   document.getElementById('ss-server-desc').value=srv.desc||'';
   document.getElementById('ss-server-icon').value=typeof srv.icon==='string'&&srv.icon!==srv.name[0]?srv.icon:'';
   document.getElementById('ss-server-icon-b64').value='';
@@ -2627,6 +2647,7 @@ function logAudit(action, icon){
 }
 function saveServerSettings(){
   const srv=getServer(state.currentServerId);if(!srv)return;
+  const ssTypeEl=document.getElementById('ss-server-type');if(ssTypeEl)srv.serverType=ssTypeEl.value;
   const name=document.getElementById('ss-server-name').value.trim();
   if(!name){showToast('⚠️ Nombre requerido');return;}
   const oldName=srv.name;
@@ -3035,6 +3056,20 @@ function deleteCustomEmoji(idx){const srv=getServer(state.currentServerId);if(!s
 
 // ── INVITE ──
 function copyInviteCode(){const code=document.getElementById('invite-code-text').textContent;navigator.clipboard.writeText(code).then(()=>showToast('✅ Código copiado'));}
+function approvePending(uid){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  const p=srv.pendingMembers?.find(m=>m.uid===uid);if(!p)return;
+  srv.pendingMembers=srv.pendingMembers.filter(m=>m.uid!==uid);
+  if(!srv.members)srv.members=[];
+  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',avatarColor:p.avatarColor,color:p.avatarColor,roles:['Miembro']});
+  saveServers();openServerSettings();showToast('✅ '+p.name+' aceptado');
+}
+function rejectPending(uid){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  const p=srv.pendingMembers?.find(m=>m.uid===uid);
+  srv.pendingMembers=(srv.pendingMembers||[]).filter(m=>m.uid!==uid);
+  saveServers();openServerSettings();showToast('❌ Solicitud rechazada');
+}
 function regenerateInvite(){const srv=getServer(state.currentServerId);if(!srv)return;srv.inviteCode=genId(8);saveServers();document.getElementById('invite-code-text').textContent=srv.inviteCode;showToast('🔄 Código regenerado');}
 
 // ── ADD SERVER MENU ──
@@ -3075,11 +3110,11 @@ function previewJoinServer(code) {
   document.getElementById('join-preview-name').textContent = srv.name;
   document.getElementById('join-preview-members').textContent = (srv.members || []).length + ' miembro' + ((srv.members || []).length !== 1 ? 's' : '');
   const statusEl = document.getElementById('join-preview-status');
+  const typeLabel={'public':'🌐 Pública','private':'🔒 Privada','request':'📋 Por solicitud'}[srv.serverType||'public'];
   if (alreadyIn) {
-    statusEl.textContent = '✓ Ya eres miembro';
-    statusEl.style.color = 'var(--green)';
+    statusEl.innerHTML = '<span style="color:var(--green)">✓ Ya eres miembro</span> &nbsp;<span style="font-size:.7rem;color:var(--text-3)">'+typeLabel+'</span>';
   } else {
-    statusEl.textContent = '+ Unirse';
+    statusEl.innerHTML = (srv.serverType==='request'?'📋 Solicitar acceso':'+ Unirse')+'&nbsp;<span style="font-size:.7rem;color:var(--text-3)">'+typeLabel+'</span>';
     statusEl.style.color = 'var(--accent-g)';
   }
   preview.style.display = 'flex';
@@ -3091,6 +3126,17 @@ function joinByInviteNew() {
   const srv = state.servers.find(s => s.inviteCode === code);
   if (!srv) { errEl.style.display = 'block'; return; }
   if (!(srv.members || []).find(m => (m.uid || m.id) === state.currentUser.uid)) {
+    if(srv.serverType==='request'){
+      if(!srv.pendingMembers) srv.pendingMembers=[];
+      if(!srv.pendingMembers.find(p=>p.uid===state.currentUser.uid)){
+        srv.pendingMembers.push({uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,ts:Date.now()});
+        saveServers();
+      }
+      document.getElementById('join-code-input').value='';
+      document.getElementById('join-preview').style.display='none';
+      closeModal('join-server-modal');
+      showToast('📋 Solicitud enviada a "'+srv.name+'"');return;
+    }
     if (!srv.members) srv.members = [];
     srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
     saveServers();
