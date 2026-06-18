@@ -2384,6 +2384,7 @@ function renderTyping(){
 }
 function renderMembersPanel(){
   const el=document.getElementById('members-list');el.innerHTML='';
+  if(!state.currentUser)return;
   const srv=getServer(state.currentServerId);
   if(state.currentServerId==='__dm__'){
     // In DM view: only show friends and members of mutual servers
@@ -4090,7 +4091,7 @@ function switchFriendsTab(tab){
 function listenFriends(){
   if(_friendsUnsub){_friendsUnsub();_friendsUnsub=null;}
   const uid=state.currentUser?.uid;if(!uid)return;
-  _friendsUnsub=fbOnValue(fbRef(window._db,'friends/'+uid),snap=>{
+  _friendsUnsub=window._fbOnValue(fbRef(window._db,'friends/'+uid),snap=>{
     state.friends=snap.val()||{};
     renderFriendsList();
     renderFriendRequests();
