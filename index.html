@@ -651,6 +651,10 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 .link-embed-domain{font-size:.82rem;font-weight:600;color:var(--text-0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .link-embed-path{font-size:.74rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px;}
 .link-embed-arrow{color:var(--text-3);flex-shrink:0;}
+/* ── USERNAME HANDLE ── */
+.pp-handle{font-size:.78rem;color:var(--accent-g);font-weight:600;letter-spacing:.01em;margin-top:1px;}
+#img-preview-bar{animation:fadeIn .2s ease;}
+
 
 </style>
 
@@ -699,7 +703,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 </div>
 
 <div class="live-badge" id="live-badge" style="display:none;">
-  <div class="online-badge"><div class="online-pulse"></div><span id="online-count">0</span> en línea · <span class="nova-tag">✦ Nova</span></div>
+  <div class="online-badge"><div class="online-pulse"></div><span id="online-count">0</span> <span id="online-badge-txt" style="color:var(--text-2);font-weight:400;">en línea</span> · <span class="nova-tag">✦ Nova</span></div>
 </div>
 <div id="profile-popup">
   <button onclick="closeProfilePopup()" style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(0,0,0,.45);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);">✕</button>
@@ -963,8 +967,6 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         style="width:64px;height:64px;border-radius:16px;background:var(--bg-4);display:flex;align-items:center;justify-content:center;font-size:2rem;cursor:pointer;border:2px dashed var(--border);overflow:hidden;flex-shrink:0;transition:border-color .15s;"
         title="Subir imagen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
       <div style="flex:1;">
-        <div style="font-size:.78rem;color:var(--text-2);margin-bottom:6px;">Haz clic en el ícono para subir una imagen, o escribe un emoji:</div>
-        <input type="text" id="new-server-icon-emoji" placeholder="🎮" maxlength="2" style="width:80px;" oninput="previewServerIconEmoji(this.value)">
       </div>
     </div>
     <input type="file" id="new-server-icon-file" accept="image/*" style="display:none" onchange="handleServerIconUpload(this,'new-server-icon-preview','new-server-icon-b64')">
@@ -1238,8 +1240,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
               <div>
                 <button class="btn btn-primary btn-sm" onclick="document.getElementById('ss-server-icon-file').click()">Cambiar ícono</button>
                 <button class="btn btn-ghost btn-sm" style="margin-top:6px;" onclick="clearServerIcon()">Eliminar ícono</button>
-                <div style="font-size:.72rem;color:var(--text-3);margin-top:6px;">O usa un emoji:</div>
-                <input type="text" id="ss-server-icon" maxlength="2" placeholder="🎮" style="width:60px;margin-top:4px;" oninput="previewServerIconEmoji(this.value,'ss-server-icon-preview')">
+                
               </div>
             </div>
             <input type="file" id="ss-server-icon-file" accept="image/*" style="display:none" onchange="handleServerIconUpload(this,'ss-server-icon-preview','ss-server-icon-b64')">
@@ -2097,7 +2098,7 @@ function renderChatArea(){
     const info=state.dmConversations[state.currentDmUid]||{};
     nameEl.innerHTML=`@ ${info.name||'DM'}`;
   }else if(ch){nameEl.innerHTML=`${CHAN_ICONS[ch.type]||CHAN_ICONS.text} ${ch.name}`;}
-  else{nameEl.textContent='Selecciona un canal';}
+  else{nameEl.textContent=state.currentServerId==='__dm__'?'Mensajes Directos':'Selecciona un canal';}
   if(ch?.type==='forum'){renderForumPosts(ch);return;}
   renderMessages();renderTyping();
 }
@@ -3529,7 +3530,13 @@ function renderPicker(tab){
   } else if(tab==='sticker'){
     content.innerHTML=`<div class="sticker-grid">${DEFAULT_STICKERS.map(s=>`<div class="sticker-item" onclick="sendSticker('${s.e}','${s.n}')">${s.e}<span class="sticker-label">${s.n}</span></div>`).join('')}</div>`;
   } else if(tab==='gif'){
-    content.innerHTML=`<div style="text-align:center;padding:32px 16px;"><div style="font-size:2.5rem;margin-bottom:8px;">🎬</div><div style="color:var(--text-2);font-size:.875rem;font-weight:600;margin-bottom:6px;">GIFs animados</div><div style="color:var(--text-3);font-size:.78rem;margin-bottom:14px;">Sube GIFs personalizados desde configuración del servidor. Los GIFs subidos aparecen en la pestaña ✨ Custom.</div><button class="btn btn-ghost" style="font-size:.78rem;" onclick="switchPickerTab('custom',document.querySelector('[data-tab=custom]'))">Ver emojis custom →</button></div>`;
+    content.innerHTML=`<div style="padding:10px 8px 6px;">
+  <div style="display:flex;gap:6px;margin-bottom:8px;">
+    <input id="gif-search-input" type="text" placeholder="Buscar GIFs..." style="flex:1;background:var(--bg-4);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-0);font-size:.82rem;outline:none;" oninput="searchGifs(this.value)">
+  </div>
+  <div id="gif-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:280px;overflow-y:auto;"></div>
+</div>`;
+loadTrendingGifs();
   }
 }
 function filterEmojis(q){
@@ -3964,17 +3971,33 @@ function jumpToMessage(id){
 }
 
 // ── CHAT IMAGE UPLOAD ──
+let _pendingImgB64=null;
 function handleChatImageUpload(input){
   const file=input.files[0];if(!file)return;
   if(file.size>8*1024*1024){showToast('⚠️ Imagen muy grande (máx 8MB)');return;}
   compressImage(file,800,800,400,b64=>{
     if(!state.currentChannelId)return;
-    const u=state.currentUser;
-    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',imageData:b64,ts:Date.now(),reactions:[],pinned:false};
-    msg.channelId=state.currentChannelId;
-    sendMsg(msg);
+    _pendingImgB64=b64;
+    showImgPreviewBar(b64);
   });
   input.value='';
+}
+function showImgPreviewBar(b64){
+  let bar=document.getElementById('img-preview-bar');
+  if(!bar){bar=document.createElement('div');bar.id='img-preview-bar';
+    bar.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg-3);border-top:1px solid var(--border);';
+    document.getElementById('input-area').prepend(bar);}
+  bar.innerHTML=`<img src="${b64}" style="height:50px;border-radius:6px;object-fit:cover;">
+    <span style="font-size:.8rem;color:var(--text-2);flex:1;">Listo para enviar</span>
+    <button class="btn btn-ghost btn-sm" onclick="cancelPendingImg()">Cancelar</button>
+    <button class="btn btn-primary btn-sm" onclick="sendPendingImg()">Enviar</button>`;
+}
+function cancelPendingImg(){_pendingImgB64=null;const b=document.getElementById('img-preview-bar');if(b)b.remove();}
+function sendPendingImg(){
+  if(!_pendingImgB64)return;
+  const u=state.currentUser;
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',imageData:_pendingImgB64,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
+  sendMsg(msg);cancelPendingImg();
 }
 
 // ── AUDIO RECORDING ──
@@ -4085,7 +4108,21 @@ function showToast(msg){
   }
   t.textContent=msg;t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),3000);
 }
-function updateOnlineCount(){document.getElementById('online-count').textContent=Object.keys(state.onlineUsers).length;}
+function updateOnlineCount(){
+  const el=document.getElementById('online-count');
+  const txt=document.getElementById('online-badge-txt');
+  const srv=getServer(state.currentServerId);
+  let count;
+  if(srv){
+    const memberIds=new Set((srv.members||[]).map(m=>m.uid||m.id));
+    count=Object.values(state.onlineUsers).filter(u=>memberIds.has(u.uid)&&u.uid!==state.currentUser?.uid).length;
+    if(txt)txt.textContent=count+' en '+srv.name;
+  }else{
+    count=Math.max(0,Object.keys(state.onlineUsers).length-1);
+    if(txt)txt.textContent=count+' en línea';
+  }
+  if(el)el.textContent=count;
+}
 function handleGlobalClick(e){
   if(!e.target.closest('#add-server-menu')&&!e.target.closest('#add-server-btn'))closeAddServerMenu();
   if(!e.target.closest('#emoji-picker')&&!e.target.closest('.input-btn'))closePicker();
@@ -4181,7 +4218,34 @@ setInterval(()=>{
   }
 },60000);
 
+// ── GIF SEARCH (Tenor) ──
+const TENOR_KEY='AIzaSyD8E3wqWsS9bvjwFd_u8VdLTOD1Cxri-xY'; // free demo key — replace with your own
+let _gifTimer=null;
+function loadTrendingGifs(){fetchGifs('trending','',r=>renderGifGrid(r));}
+function searchGifs(q){clearTimeout(_gifTimer);if(!q){loadTrendingGifs();return;}_gifTimer=setTimeout(()=>fetchGifs('search',q,renderGifGrid),400);}
+function fetchGifs(type,q,cb){
+  const url=type==='trending'
+    ?`https://tenor.googleapis.com/v2/featured?key=${TENOR_KEY}&limit=20&media_filter=gif`
+    :`https://tenor.googleapis.com/v2/search?key=${TENOR_KEY}&q=${encodeURIComponent(q)}&limit=20&media_filter=gif`;
+  fetch(url).then(r=>r.json()).then(d=>cb(d.results||[])).catch(()=>cb([]));
+}
+function renderGifGrid(results){
+  const grid=document.getElementById('gif-grid');if(!grid)return;
+  if(!results.length){grid.innerHTML='<div style="grid-column:span 2;text-align:center;padding:24px;color:var(--text-3);font-size:.82rem;">Sin resultados</div>';return;}
+  grid.innerHTML=results.map(g=>{
+    const url=g.media_formats?.tinygif?.url||g.media_formats?.gif?.url||'';
+    const preview=g.media_formats?.nanogif?.url||url;
+    return `<img src="${preview}" data-gif="${url}" alt="${g.title||'gif'}" style="width:100%;border-radius:6px;cursor:pointer;aspect-ratio:16/9;object-fit:cover;" onclick="sendGif('${url}')" loading="lazy">`;
+  }).join('');
+}
+function sendGif(url){
+  if(!state.currentChannelId){showToast('Selecciona un canal');return;}
+  const u=state.currentUser;
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',imageUrl:url,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
+  sendMsg(msg);closePicker();
+}
 document.addEventListener('click',handleGlobalClick);
+if(typeof loadCustomThemeIfSaved==='function')loadCustomThemeIfSaved();
 </script>
 </body>
 </html>
