@@ -291,6 +291,7 @@ select option{background:var(--bg-3);color:var(--text-0);}
 /* MEMBERS — tarjetas compactas */
 #members-panel{width:var(--members-w);background:var(--bg-1);display:flex;flex-direction:column;flex-shrink:0;transition:width .2s;}
 #members-panel.hidden{width:0;overflow:hidden;}
+#members-panel.dm-mode{width:0;overflow:hidden;display:none;}
 #members-header{height:52px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);font-size:.67rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);flex-shrink:0;}
 #members-list{flex:1;overflow-y:auto;padding:8px 0;}
 .members-category{padding:14px 8px 4px 14px;font-size:.65rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);}
@@ -763,6 +764,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <span id="server-name" onclick="openServerSettings()">Mensajes Directos</span>
       <button class="icon-btn" id="add-channel-btn" title="Crear canal" onclick="openAddChannelModal()" style="display:none;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
       <button class="icon-btn" id="friends-btn" title="Amigos" onclick="openFriendsModal()" style="display:none;position:relative;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg><span id="friends-notif" style="display:none;position:absolute;top:2px;right:2px;width:8px;height:8px;border-radius:50%;background:var(--red);"></span></button>
+      <button class="icon-btn" id="add-friend-panel-btn" title="Añadir amigo" onclick="switchFriendsTab('add');openFriendsModal()" style="display:none;" title="Añadir amigo"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></button>
     </div>
     <div id="channels-list"></div>
     <div id="user-bar">
@@ -791,14 +793,18 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <span class="ch-name" id="chat-channel-name">Selecciona un canal</span>
       <div class="header-actions">
         <button class="icon-btn" onclick="openSearchModal()" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openModal('thread-modal')" title="Nuevo hilo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openModal('poll-modal')" title="Encuesta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openModal('event-modal')" title="Evento"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openLeaderboard()" title="Ranking XP"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="startVoiceCall()" title="Llamada de voz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.36C1.44 2.17 2.37 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openVideoCall()" title="Videollamada"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
-        <button class="icon-btn mobile-hide" onclick="openInvitePeopleModal()" title="Invitar personas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></button>
-        <button class="icon-btn" onclick="toggleMembers()" title="Miembros"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+        <!-- Community-only buttons (hidden in DM) -->
+        <button class="icon-btn mobile-hide community-only" onclick="openModal('thread-modal')" title="Nuevo hilo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
+        <button class="icon-btn mobile-hide community-only" onclick="openModal('poll-modal')" title="Encuesta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
+        <button class="icon-btn mobile-hide community-only" onclick="openModal('event-modal')" title="Evento"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
+        <button class="icon-btn mobile-hide community-only" onclick="openLeaderboard()" title="Ranking XP"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></button>
+        <button class="icon-btn mobile-hide community-only" onclick="startVoiceCall()" title="Llamada de voz"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.62 3.36C1.44 2.17 2.37 1 3.58 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.69a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16z"/></svg></button>
+        <button class="icon-btn mobile-hide community-only" onclick="openVideoCall()" title="Videollamada"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></button>
+        <button class="icon-btn mobile-hide community-only" onclick="openInvitePeopleModal()" title="Invitar personas"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></button>
+        <button class="icon-btn community-only" onclick="toggleMembers()" title="Miembros"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+        <!-- DM-only buttons (only shown in DM) -->
+        <button class="icon-btn mobile-hide dm-only" style="display:none;" onclick="openFriendsModal()" title="Amigos" id="dm-header-friends-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+        <button class="icon-btn dm-only" style="display:none;" onclick="switchFriendsTab('add');openFriendsModal()" title="Añadir amigo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg></button>
         <button class="icon-btn" id="mobile-more-btn" onclick="toggleMobileMoreMenu()" title="Más opciones" style="display:none;"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg></button>
       </div>
       <!-- Mobile overflow menu -->
@@ -2055,6 +2061,7 @@ function renderChannelsPanel(){
   document.getElementById('server-name').textContent=isDM?'Mensajes Directos':(srv?srv.name:'');
   document.getElementById('add-channel-btn').style.display=(!isDM&&srv)?'':'none';
   document.getElementById('friends-btn').style.display=isDM?'':'none';
+  document.getElementById('add-friend-panel-btn') && (document.getElementById('add-friend-panel-btn').style.display=isDM?'':'none');
   const list=document.getElementById('channels-list');list.innerHTML='';
   if(isDM){
     const dms=Object.entries(state.dmConversations);
@@ -2159,6 +2166,23 @@ function renderChatArea(){
   // Always restore input area first — forum hides it
   const inputArea=document.getElementById('input-area');
   if(inputArea)inputArea.style.display='';
+
+  // Toggle members panel DM mode
+  const membersPanel=document.getElementById('members-panel');
+  if(membersPanel){
+    if(isDM){membersPanel.classList.add('dm-mode');}
+    else{membersPanel.classList.remove('dm-mode');}
+  }
+
+  // Toggle header actions for DM vs community
+  const headerActions=document.getElementById('chat-header');
+  if(headerActions){
+    const communityBtns=headerActions.querySelectorAll('.community-only');
+    const dmBtns=headerActions.querySelectorAll('.dm-only');
+    communityBtns.forEach(b=>b.style.display=isDM?'none':'');
+    dmBtns.forEach(b=>b.style.display=isDM?'':'none');
+  }
+
   if(state.currentChannelId&&state.currentChannelId.startsWith('dm_')){
     const info=state.dmConversations[state.currentDmUid]||{};
     nameEl.innerHTML=`@ ${info.name||'DM'}`;
@@ -2173,7 +2197,68 @@ function renderChatArea(){
   renderMessages();renderTyping();
 }
 
-// ── FORUM ──
+function renderDMWelcome(){
+  const el=document.getElementById('messages');
+  const dms=Object.entries(state.dmConversations);
+  const friends=Object.entries(state.friends||{}).filter(([,f])=>f.status==='accepted');
+  
+  let recentHtml='';
+  if(dms.length){
+    recentHtml=`<div style="margin-top:24px;width:100%;max-width:480px;">
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;">Conversaciones recientes</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        ${dms.slice(0,5).map(([uid,info])=>{
+          const dmId=getDMId(state.currentUser.uid,uid);
+          const key='dm_'+dmId;
+          const unread=state.unreadCounts[key]||0;
+          const bg=info.avatarUrl?'#000':(info.avatarColor||'#5865f2');
+          const ava=info.avatarUrl?`<img src="${info.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase();
+          return`<div onclick="openDM('${uid}')" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-3);border-radius:12px;cursor:pointer;transition:all .12s;border:1px solid transparent;" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--bg-4)'" onmouseout="this.style.borderColor='transparent';this.style.background='var(--bg-3)'">
+            <div style="width:38px;height:38px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;overflow:hidden;">${ava}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${info.name||'?'}</div>
+              <div style="font-size:.75rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${info.lastMsg||'Haz clic para chatear'}</div>
+            </div>
+            ${unread?`<div style="background:var(--red);color:#fff;font-size:.6rem;font-weight:700;border-radius:20px;padding:2px 7px;flex-shrink:0;">${unread}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  } else if(friends.length){
+    recentHtml=`<div style="margin-top:24px;width:100%;max-width:480px;">
+      <div style="font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;">Amigos — ${friends.length}</div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        ${friends.slice(0,5).map(([uid,f])=>`<div onclick="openDM('${uid}')" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-3);border-radius:12px;cursor:pointer;transition:all .12s;border:1px solid transparent;" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--bg-4)'" onmouseout="this.style.borderColor='transparent';this.style.background='var(--bg-3)'">
+          <div style="width:38px;height:38px;border-radius:12px;background:${f.avatarColor||'#5865f2'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;">${(f.name||'?')[0].toUpperCase()}</div>
+          <div style="flex:1;">
+            <div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${f.name||'?'}</div>
+            <div style="font-size:.72rem;color:var(--text-3);">@${f.handle||'?'}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="font-size:.75rem;">DM</button>
+        </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  el.innerHTML=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px;min-height:100%;">
+    <div style="width:72px;height:72px;border-radius:22px;background:var(--accent-glow);border:1.5px solid rgba(124,58,237,.25);display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-g)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </div>
+    <h2 style="font-size:1.25rem;font-weight:800;color:var(--text-0);margin-bottom:6px;letter-spacing:-.02em;">Mensajes Directos</h2>
+    <p style="color:var(--text-2);font-size:.875rem;margin-bottom:20px;text-align:center;max-width:320px;line-height:1.5;">Chatea en privado con tus amigos. Haz clic en cualquier usuario para abrir una conversación.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn btn-primary" style="font-size:.85rem;" onclick="openFriendsModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="23" y1="11" x2="17" y2="11"/><line x1="20" y1="8" x2="20" y2="14"/></svg>
+        Amigos
+      </button>
+      <button class="btn btn-ghost" style="font-size:.85rem;" onclick="switchFriendsTab('add');openFriendsModal()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Añadir amigo
+      </button>
+    </div>
+    ${recentHtml}
+  </div>`;
+}
 function renderForumPosts(ch){
   const el=document.getElementById('messages');
   const posts=Object.values(state.messages[ch.id]||{})
@@ -2698,7 +2783,12 @@ function openSsSection(section, btn){
   if(section==='audit')renderAuditLog(srv);
 }
 function openServerSettings(){
-  const srv=getServer(state.currentServerId);if(!srv)return;
+  const srv=getServer(state.currentServerId);
+  if(!srv){
+    // In DM mode — open user settings instead
+    if(state.currentServerId==='__dm__'){openUserSettings();return;}
+    return;
+  }
   // Fill sidebar server name
   document.getElementById('ss-server-name-sidebar').textContent=srv.name;
   // Fill general fields
@@ -3497,7 +3587,21 @@ function renderProfilePopupContent(u,uid,loading){
   const member=(srv?.members||[]).find(m=>(m.uid||m.id)===uid);
   document.getElementById('pp-roles').innerHTML=(member?.roles||[]).map(r=>{const role=srv?.roles?.find(ro=>ro.id===r||ro.name===r);return role?`<span class="role-badge" style="background:${role.color}25;color:${role.color}">${role.name}</span>`:`<span class="role-badge" style="background:var(--bg-4);color:var(--text-2)">${r}</span>`;}).join('');
   const actEl=document.getElementById('pp-actions');
-  if(uid!==state.currentUser.uid){actEl.innerHTML=`<button class="btn btn-primary" style="font-size:.8rem;padding:7px;" onclick="openDM('${uid}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Mensaje</button>${isServerAdmin(srv)?`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;" onclick="manageRoles('${uid}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg> Roles</button>`:''}`;
+  if(uid!==state.currentUser.uid){
+    const alreadyFriend=state.friends?.[uid]?.status==='accepted';
+    const pendingFriend=state.friends?.[uid]?.status==='pending';
+    const incomingFriend=state.friends?.[uid]?.status==='incoming';
+    let friendBtn='';
+    if(alreadyFriend){
+      friendBtn=`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;" onclick="openDM('${uid}');closeProfilePopup()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Amigos</button>`;
+    } else if(pendingFriend){
+      friendBtn=`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;opacity:.6;" disabled>Pendiente</button>`;
+    } else if(incomingFriend){
+      friendBtn=`<button class="btn btn-primary" style="font-size:.8rem;padding:7px;" onclick="acceptFriendRequest('${uid}');closeProfilePopup()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> Aceptar</button>`;
+    } else {
+      friendBtn=`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;" onclick="sendFriendRequestFromProfile('${uid}',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg> Añadir</button>`;
+    }
+    actEl.innerHTML=`<button class="btn btn-primary" style="font-size:.8rem;padding:7px;" onclick="openDM('${uid}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Mensaje</button>${friendBtn}${isServerAdmin(srv)?`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;" onclick="manageRoles('${uid}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg> Roles</button>`:''}`;
   }else{actEl.innerHTML=`<button class="btn btn-ghost" style="font-size:.8rem;padding:7px;width:100%;" onclick="openMyProfile()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Editar perfil</button>`;}
 }
 function closeProfilePopup(){const p=document.getElementById('profile-popup');p.classList.remove('open');delete p.dataset.uid;}
@@ -4071,6 +4175,16 @@ async function checkHandleAvailability(val){
 }
 function generateHandle(name){
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'').substring(0,20)||'usuario';
+}
+
+async function sendFriendRequestFromProfile(uid, btn){
+  const tSnap=await fbGet('users/'+uid).catch(()=>null);
+  const tUser=tSnap?.val()||{name:'Usuario',handle:''};
+  const me=state.currentUser;
+  await fbSet('friends/'+me.uid+'/'+uid,{uid,name:tUser.name,handle:tUser.handle||'',avatarColor:tUser.avatarColor||'#5865f2',avatarUrl:tUser.avatarUrl||'',status:'pending',ts:Date.now()});
+  await fbSet('friends/'+uid+'/'+me.uid,{uid:me.uid,name:me.name,handle:me.handle||'',avatarColor:me.avatarColor||'#5865f2',avatarUrl:me.avatarUrl||'',status:'incoming',ts:Date.now()});
+  if(btn){btn.textContent='Enviada';btn.disabled=true;btn.style.opacity='.6';}
+  showToast('✅ Solicitud de amistad enviada');
 }
 
 // ── FRIENDS ──
