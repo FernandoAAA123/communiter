@@ -1837,83 +1837,79 @@ async function migrateUidReferences(oldUid,newUid){
 // current profile, then re-points any servers/DMs that still reference the old UID.
 async function mergeProfileDuplicate(){
   const currentUser=state.currentUser;
-  if(!currentUser?.uid||!currentUser?.email){
-    showToast('❌ Debes estar autenticado para fusionar perfiles');return;
-  }
-  if(!confirm('¿Fusionar perfiles duplicados?\n\nEsto unificará ambas cuentas en tu perfil actual, conservando tus datos más recientes. La operación no se puede deshacer.'))return;
+  if(!currentUser?.uid){showToast('❌ Debes estar autenticado');return;}
 
-  showToast('🔄 Buscando perfil duplicado…');
+  // Known duplicate UIDs from the Firebase project migration
+  const NEW_UID='DpGqEhYwhpcMCAZgpCMz6cBtNo23'; // UID actual (Auth actual)
+  const OLD_UID='O3AFfnSv7KUQlUgzX3b6TxWbsX93'; // UID original (a conservar datos)
+
+  // Make sure the logged-in user is one of the two
+  if(currentUser.uid!==NEW_UID&&currentUser.uid!==OLD_UID){
+    showToast('ℹ️ Tu cuenta no es la afectada por el duplicado');return;
+  }
+
+  if(!confirm('¿Fusionar perfiles duplicados?\n\nEl perfil original (O3AF…) se fusionará en tu cuenta actual (DpGq…), conservando sus datos. El nodo duplicado se eliminará.\n\nEsta acción no se puede deshacer.'))return;
+
+  showToast('🔄 Fusionando perfiles…');
 
   try{
-    const eKey=emailToKey(currentUser.email);
-    if(!eKey){showToast('❌ No se pudo obtener tu correo');return;}
-
-    // Get the backup profile stored by email (may point to an older UID)
-    const emailSnap=await fbGet('usersByEmail/'+eKey);
-    if(!emailSnap.exists()){showToast('ℹ️ No se encontró perfil de respaldo para fusionar');return;}
-
-    const backupProfile=emailSnap.val();
-    const oldUid=backupProfile.uid;
-
-    if(!oldUid||oldUid===currentUser.uid){
-      // Both UIDs are the same — check if there is literally a different users/ entry
-      showToast('ℹ️ No se detectó un perfil duplicado con UID diferente');return;
-    }
-
-    // Load both profiles
-    const [currentSnap,oldSnap]=await Promise.all([
-      fbGet('users/'+currentUser.uid),
-      fbGet('users/'+oldUid)
+    const [newSnap,oldSnap]=await Promise.all([
+      fbGet('users/'+NEW_UID),
+      fbGet('users/'+OLD_UID)
     ]);
 
-    const currentProfile=currentSnap.exists()?currentSnap.val():{};
+    const newProfile=newSnap.exists()?newSnap.val():{};
     const oldProfile=oldSnap.exists()?oldSnap.val():{};
 
-    // Merge strategy: current profile wins for most fields;
-    // pick the older createdAt, and keep non-empty fields from old profile
-    // when the current profile has blanks.
+    if(!oldSnap.exists()){
+      showToast('ℹ️ El perfil original ya no existe, nada que fusionar');return;
+    }
+
+    // Merge: OLD_UID profile is the "real" one — it wins on most fields.
+    // NEW_UID wins only on fields that were explicitly set after migration.
     const merged={
-      ...oldProfile,           // base: old profile
-      ...currentProfile,       // current profile overwrites
-      uid:currentUser.uid,     // always keep current UID
-      email:currentUser.email,
+      ...oldProfile,
+      ...newProfile,
+      uid:NEW_UID,                           // Auth UID must be the new one
+      email:newProfile.email||oldProfile.email,
       createdAt:Math.min(
         oldProfile.createdAt||Date.now(),
-        currentProfile.createdAt||Date.now()
+        newProfile.createdAt||Date.now()
       ),
-      // Keep old name/avatar only if current is blank
-      name:currentProfile.name||(oldProfile.name||'Usuario'),
-      avatarUrl:currentProfile.avatarUrl||(oldProfile.avatarUrl||''),
-      avatarColor:currentProfile.avatarColor||(oldProfile.avatarColor||'#7c3aed'),
-      customStatus:currentProfile.customStatus||(oldProfile.customStatus||''),
-      handle:currentProfile.handle||(oldProfile.handle||''),
+      name:oldProfile.name||(newProfile.name||'Usuario'),
+      avatarUrl:oldProfile.avatarUrl||(newProfile.avatarUrl||''),
+      avatarColor:oldProfile.avatarColor||(newProfile.avatarColor||'#7c3aed'),
+      customStatus:oldProfile.customStatus||(newProfile.customStatus||''),
+      handle:oldProfile.handle||(newProfile.handle||''),
+      bannerUrl:oldProfile.bannerUrl||newProfile.bannerUrl||'',
     };
 
-    // Write merged profile under current UID
-    await fbSet('users/'+currentUser.uid,merged);
+    // 1. Write merged profile under the active (new) UID
+    await fbSet('users/'+NEW_UID,merged);
 
-    // Update email backup to current UID
-    await fbSet('usersByEmail/'+eKey,merged);
+    // 2. Update usersByEmail backup
+    const eKey=emailToKey(merged.email||'');
+    if(eKey) await fbSet('usersByEmail/'+eKey,merged);
 
-    // Remove the orphaned old profile node (if it was a different path)
-    if(oldSnap.exists()) await fbRemove('users/'+oldUid);
+    // 3. Delete the orphaned old profile node
+    await fbRemove('users/'+OLD_UID);
 
-    // Re-point servers and DMs that still reference the old UID
-    await migrateUidReferences(oldUid,currentUser.uid);
+    // 4. Re-point servers/DMs that still reference OLD_UID → NEW_UID
+    await migrateUidReferences(OLD_UID,NEW_UID);
 
-    // Also fix handles
+    // 5. Fix handle registry
     if(oldProfile.handle&&oldProfile.handle!==merged.handle){
       await fbRemove('handles/'+oldProfile.handle).catch(()=>{});
     }
     if(merged.handle){
-      await fbSet('handles/'+merged.handle,currentUser.uid);
+      await fbSet('handles/'+merged.handle,NEW_UID);
     }
 
-    // Update in-memory state
+    // 6. Update in-memory state and re-render settings
     state.currentUser={...state.currentUser,...merged};
     renderUserSettings(state.currentUser);
 
-    showToast('✅ Perfiles fusionados correctamente');
+    showToast('✅ Perfiles fusionados. Recarga la página para ver los cambios.');
   }catch(err){
     console.error('mergeProfileDuplicate error',err);
     showToast('❌ Error al fusionar: '+err.message);
