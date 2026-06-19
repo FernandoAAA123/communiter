@@ -806,6 +806,9 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div class="header-actions">
         <button class="icon-btn" onclick="openSearchModal()" title="Buscar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
         <!-- Community-only buttons (hidden in DM) -->
+        <button class="icon-btn mobile-hide community-only" onclick="toggleChannelNote()" title="Nota del canal">📝</button>
+        <button class="icon-btn mobile-hide community-only" onclick="openFocusMode()" title="Modo enfoque">🎯</button>
+        <button class="icon-btn mobile-hide community-only" onclick="openGlobalSearch()" title="Búsqueda global"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
         <button class="icon-btn mobile-hide community-only" onclick="openModal('thread-modal')" title="Nuevo hilo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>
         <button class="icon-btn mobile-hide community-only" onclick="openModal('poll-modal')" title="Encuesta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></button>
         <button class="icon-btn mobile-hide community-only" onclick="openModal('event-modal')" title="Evento"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></button>
@@ -829,11 +832,26 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <div class="ctx-item" onclick="openVideoCall();closeMobileMore()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Videollamada</div>
       </div>
     </div>
+    <!-- Featured channel banner (admin-set, shown above messages) -->
+    <div id="featured-banner" style="display:none;flex-shrink:0;margin:8px 16px 0;padding:10px 14px;background:linear-gradient(90deg,var(--accent-glow),transparent);border:1px solid rgba(124,58,237,.25);border-radius:10px;font-size:.82rem;color:var(--text-1);align-items:center;gap:8px;">
+      <span style="font-size:1rem;">📌</span>
+      <span id="featured-banner-text" style="flex:1;margin:0 8px;"></span>
+      <span onclick="closeFeaturedBanner()" style="color:var(--text-3);font-size:.75rem;cursor:pointer;">✕</span>
+    </div>
     <div id="messages"></div>
     <div class="typing-indicator" id="typing-indicator"></div>
     <div class="reply-bar" id="reply-bar">
       <span id="reply-text">Respondiendo a...</span>
       <button class="icon-btn" onclick="cancelReply()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <!-- Channel note bar (personal, per channel) -->
+    <div id="channel-note-bar" style="display:none;flex-shrink:0;margin:0 16px 6px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);overflow:hidden;">
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);">
+        <span style="font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">📝 Nota del canal</span>
+        <button onclick="saveChannelNote()" style="margin-left:auto;font-size:.7rem;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Guardar</button>
+        <button onclick="toggleChannelNote()" style="font-size:.7rem;padding:2px 8px;background:var(--bg-4);color:var(--text-2);border:none;border-radius:6px;cursor:pointer;">✕</button>
+      </div>
+      <textarea id="channel-note-input" rows="2" placeholder="Escribe tu nota privada para este canal..." style="width:100%;background:transparent;border:none;padding:8px 10px;color:var(--text-0);font-family:var(--font);font-size:.82rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
     </div>
     <div id="input-area">
       <div id="input-box">
@@ -845,6 +863,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <button class="input-btn" onclick="togglePicker('emoji')" title="Emojis"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
         <button class="input-btn" onclick="togglePicker('custom')" title="Emojis custom"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>
         <button class="input-btn" onclick="togglePicker('sticker')" title="Stickers"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><path d="M9 13h6"/><path d="M9 17h3"/><polyline points="14 2 14 8 20 8"/></svg></button>
+        <button class="input-btn" onclick="openScheduledMessage()" title="Programar mensaje">🕐</button>
         <button class="input-btn" onclick="sendMessage()" title="Enviar" style="color:var(--accent);"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9l20-7z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       </div>
       <!-- PICKER PREMIUM -->
@@ -1272,6 +1291,10 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <button class="ss-nav-item" data-section="audit" onclick="openSsSection('audit',this)">Registro de auditoría</button>
       <button class="ss-nav-item" data-section="bans" onclick="openSsSection('bans',this)">Baneos</button>
 
+      <!-- FUNCIONES NOVA -->
+      <div class="ss-nav-cat">NOVA</div>
+      <button class="ss-nav-item" data-section="nova" onclick="openSsSection('nova',this)">✦ Funciones Nova</button>
+
       <div style="height:1px;background:var(--border);margin:10px 8px;"></div>
       <button class="ss-nav-item danger" onclick="deleteCurrentServer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar comunidad</button>
     </div>
@@ -1469,6 +1492,15 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <p class="ss-section-desc">Usuarios bloqueados de esta comunidad.</p>
         </div>
         <div id="ss-bans-list" style="color:var(--text-3);font-size:.875rem;padding:20px 0;">Ningún usuario baneado.</div>
+      </div>
+
+      <!-- ══ FUNCIONES NOVA ══ -->
+      <div class="ss-section" id="ss-sec-nova">
+        <div class="ss-section-header">
+          <h2 class="ss-section-title">✦ Funciones Nova</h2>
+          <p class="ss-section-desc">Herramientas exclusivas de Nova para enriquecer tu comunidad.</p>
+        </div>
+        <div id="ss-nova-content"></div>
       </div>
 
     </div><!-- end main content -->
@@ -4170,13 +4202,15 @@ function handleServerIconUpload(input, previewId, hiddenId) {
     showToast('✅ Imagen cargada');
   });
 }
-function compressImagePNG(file, maxSize, maxKB, cb) {
+function compressImagePNG(file, maxW, maxH, maxKB, cb) {
+  // Support 4-arg call: compressImagePNG(file, maxSize, maxKB, cb)
+  if (typeof maxKB === 'function') { cb = maxKB; maxKB = maxH; maxH = maxW; }
   const reader = new FileReader();
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const ratio = Math.min(maxSize/img.width, maxSize/img.height, 1);
+      const ratio = Math.min(maxW/img.width, maxH/img.height, 1);
       canvas.width = Math.round(img.width*ratio);
       canvas.height = Math.round(img.height*ratio);
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -4748,6 +4782,792 @@ setInterval(()=>{
 },60000);
 
 document.addEventListener('click',handleGlobalClick);
+
+// ═══════════════════════════════════════════════
+// ✦ NOVA FEATURES
+// ═══════════════════════════════════════════════
+
+// ── HISTORIAL DE ACTIVIDAD PERSONAL ──
+const _activityHistory = JSON.parse(localStorage.getItem('nova_activity_history') || '[]');
+function trackChannelVisit(chId) {
+  const srv = getServer(state.currentServerId);
+  const ch = srv ? getChannel(chId, srv) : null;
+  if (!ch || !srv) return;
+  const entry = { chId, srvId: srv.id, chName: ch.name, srvName: srv.name, ts: Date.now() };
+  const idx = _activityHistory.findIndex(e => e.chId === chId);
+  if (idx !== -1) _activityHistory.splice(idx, 1);
+  _activityHistory.unshift(entry);
+  if (_activityHistory.length > 50) _activityHistory.length = 50;
+  try { localStorage.setItem('nova_activity_history', JSON.stringify(_activityHistory)); } catch(e) {}
+}
+// Hook selectChannel to track visits AND hide note bar
+const _origSelectChannelNova = window.selectChannel;
+window.selectChannel = function(id) {
+  _origSelectChannelNova(id);
+  trackChannelVisit(id);
+  const bar = document.getElementById('channel-note-bar');
+  if (bar) bar.style.display = 'none';
+};
+
+// ── TEMAS POR SERVIDOR ──
+function applyServerTheme(srv) {
+  if (!srv) return;
+  const color = srv.novaThemeColor || srv.color || null;
+  if (color) {
+    document.documentElement.style.setProperty('--accent', color);
+    // derive glow
+    document.documentElement.style.setProperty('--accent-glow', color + '22');
+  }
+}
+const _origSelectServerNova = window.selectServer;
+window.selectServer = function(id) {
+  _origSelectServerNova(id);
+  const srv = getServer(id);
+  if (srv) { applyServerTheme(srv); checkJoinCard(srv); }
+};
+
+// ── ESTADÍSTICAS DE USUARIO ──
+function incrementUserStat(field, delta = 1) {
+  const uid = state.currentUser?.uid; if (!uid) return;
+  fbGet('userStats/' + uid).then(stats => {
+    const s = stats || {};
+    s[field] = (s[field] || 0) + delta;
+    // racha de días
+    const today = new Date().toDateString();
+    if (field === 'messages') {
+      if (s.lastDay !== today) {
+        s.streak = (s.lastDay === new Date(Date.now() - 86400000).toDateString()) ? (s.streak || 0) + 1 : 1;
+        s.lastDay = today;
+      }
+    }
+    fbSet('userStats/' + uid, s);
+  }).catch(() => {});
+}
+function openUserStats() {
+  const uid = state.currentUser?.uid; if (!uid) return;
+  document.getElementById('user-stats-content').innerHTML = '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px;">Cargando...</div>';
+  openModal('user-stats-modal');
+  fbGet('userStats/' + uid).then(s => {
+    s = s || {};
+    document.getElementById('user-stats-content').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${[
+          ['💬','Mensajes enviados', s.messages || 0],
+          ['👍','Reacciones dadas', s.reactions || 0],
+          ['🔥','Racha de días', (s.streak || 0) + ' días'],
+          ['📅','Activo desde', s.joinedDate ? new Date(s.joinedDate).toLocaleDateString('es') : 'hoy'],
+        ].map(([ico,label,val]) => `
+          <div style="background:var(--bg-3);border-radius:12px;padding:14px;text-align:center;">
+            <div style="font-size:1.6rem;margin-bottom:4px;">${ico}</div>
+            <div style="font-size:1.2rem;font-weight:800;color:var(--text-0);">${val}</div>
+            <div style="font-size:.72rem;color:var(--text-3);margin-top:2px;">${label}</div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:14px;padding:12px;background:var(--bg-3);border-radius:12px;">
+        <div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">Últimos canales visitados</div>
+        ${_activityHistory.slice(0,5).map(e=>`<div style="font-size:.82rem;color:var(--text-1);padding:4px 0;">
+          <span style="color:var(--text-3);">${e.srvName} › </span>#${e.chName}
+          <span style="float:right;color:var(--text-3);font-size:.72rem;">${_relTime(e.ts)}</span>
+        </div>`).join('') || '<div style="color:var(--text-3);font-size:.8rem;">Sin historial aún</div>'}
+      </div>`;
+  }).catch(() => {
+    document.getElementById('user-stats-content').innerHTML = '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px;">No se pudo cargar</div>';
+  });
+}
+function _relTime(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return 'ahora';
+  if (d < 3600000) return Math.floor(d/60000) + 'm';
+  if (d < 86400000) return Math.floor(d/3600000) + 'h';
+  return Math.floor(d/86400000) + 'd';
+}
+// Hook sendMessage to count stats
+const _origSendMessageNova = window.sendMessage;
+window.sendMessage = function() {
+  incrementUserStat('messages');
+  _origSendMessageNova();
+};
+
+// ── NOTAS PERSONALES POR CANAL ──
+let _noteDebounce = null;
+function toggleChannelNote() {
+  const bar = document.getElementById('channel-note-bar');
+  if (!bar) return;
+  const visible = bar.style.display !== 'none';
+  if (visible) { bar.style.display = 'none'; return; }
+  bar.style.display = '';
+  loadChannelNote();
+}
+function loadChannelNote() {
+  const uid = state.currentUser?.uid;
+  const chId = state.currentChannelId;
+  if (!uid || !chId) return;
+  fbGet('notes/' + uid + '/' + chId).then(val => {
+    const inp = document.getElementById('channel-note-input');
+    if (inp) inp.value = val || '';
+  }).catch(() => {});
+}
+function saveChannelNote() {
+  const uid = state.currentUser?.uid;
+  const chId = state.currentChannelId;
+  if (!uid || !chId) return;
+  const val = document.getElementById('channel-note-input')?.value || '';
+  fbSet('notes/' + uid + '/' + chId, val).then(() => showToast('📝 Nota guardada')).catch(() => showToast('⚠️ Error al guardar'));
+}
+// (note bar hiding handled in selectChannel hook above)
+
+// ── CANAL DESTACADO (FEATURED BANNER) ──
+function renderFeaturedBanner() {
+  const srv = getServer(state.currentServerId);
+  const ch = getChannel(state.currentChannelId, srv);
+  const banner = document.getElementById('featured-banner');
+  const bannerText = document.getElementById('featured-banner-text');
+  if (!banner) return;
+  const dismissed = JSON.parse(sessionStorage.getItem('nova_dismissed_banners') || '[]');
+  if (ch?.featuredMsg && !dismissed.includes(state.currentChannelId)) {
+    bannerText.textContent = ch.featuredMsg;
+    banner.style.display = 'flex';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+function closeFeaturedBanner() {
+  const dismissed = JSON.parse(sessionStorage.getItem('nova_dismissed_banners') || '[]');
+  dismissed.push(state.currentChannelId);
+  sessionStorage.setItem('nova_dismissed_banners', JSON.stringify(dismissed));
+  document.getElementById('featured-banner').style.display = 'none';
+}
+// Hook renderChatArea to show banner
+const _origRenderChatAreaNova = window.renderChatArea;
+window.renderChatArea = function() {
+  _origRenderChatAreaNova();
+  renderFeaturedBanner();
+};
+
+// ── TEMPERATURA DE CANAL ──
+function getChannelTemp(chId) {
+  const msgs = Object.values(state.messages[chId] || {});
+  const hour = Date.now() - 3600000;
+  const count = msgs.filter(m => m.ts > hour).length;
+  if (count === 0) return '🧊';
+  if (count < 5) return '🌤️';
+  if (count < 15) return '☀️';
+  if (count < 30) return '🌶️';
+  return '🔥';
+}
+
+// ── MODO ENFOQUE ──
+let _focusInterval = null;
+let _focusEndTs = null;
+function openFocusMode() {
+  if (_focusInterval) {
+    // already running — show overlay again
+    document.getElementById('focus-overlay').style.display = 'flex';
+    return;
+  }
+  openModal('focus-modal');
+}
+function setFocusPreset(min) {
+  document.getElementById('focus-minutes').value = min;
+}
+function startFocusTimer() {
+  const min = parseInt(document.getElementById('focus-minutes').value) || 25;
+  _focusEndTs = Date.now() + min * 60000;
+  closeModal('focus-modal');
+  document.getElementById('focus-overlay').style.display = 'flex';
+  document.getElementById('focus-start-btn').style.display = 'none';
+  document.getElementById('focus-stop-btn').style.display = '';
+  document.getElementById('focus-timer-display').style.display = '';
+  _focusInterval = setInterval(() => {
+    const rem = _focusEndTs - Date.now();
+    if (rem <= 0) {
+      stopFocusTimer();
+      showToast('🎯 ¡Sesión de enfoque completada!');
+      try { new Notification('Nova', { body: '¡Sesión de enfoque completada!' }); } catch(e) {}
+      return;
+    }
+    const m = String(Math.floor(rem / 60000)).padStart(2, '0');
+    const s = String(Math.floor((rem % 60000) / 1000)).padStart(2, '0');
+    const txt = m + ':' + s;
+    const d1 = document.getElementById('focus-overlay-timer');
+    const d2 = document.getElementById('focus-timer-display');
+    if (d1) d1.textContent = txt;
+    if (d2) d2.textContent = txt;
+  }, 1000);
+}
+function stopFocusTimer() {
+  clearInterval(_focusInterval); _focusInterval = null; _focusEndTs = null;
+  document.getElementById('focus-overlay').style.display = 'none';
+  document.getElementById('focus-start-btn').style.display = '';
+  document.getElementById('focus-stop-btn').style.display = 'none';
+  document.getElementById('focus-timer-display').style.display = 'none';
+}
+
+// ── BÚSQUEDA GLOBAL ──
+let _globalSearchTimeout = null;
+function openGlobalSearch() {
+  openModal('global-search-modal');
+  setTimeout(() => document.getElementById('global-search-input')?.focus(), 80);
+}
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); openGlobalSearch(); }
+  if (e.key === 'Escape') closeModal('global-search-modal');
+});
+function runGlobalSearch(query) {
+  clearTimeout(_globalSearchTimeout);
+  const el = document.getElementById('global-search-results');
+  if (!query.trim()) { el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:.85rem;">Escribe para buscar mensajes</div>'; return; }
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-3);font-size:.85rem;">Buscando...</div>';
+  _globalSearchTimeout = setTimeout(() => {
+    const q = query.toLowerCase();
+    const results = [];
+    Object.values(state.servers || {}).forEach(srv => {
+      (srv.channels || []).forEach(cat => {
+        (cat.children || []).forEach(ch => {
+          Object.values(state.messages[ch.id] || {}).forEach(msg => {
+            if (msg.text && msg.text.toLowerCase().includes(q)) {
+              results.push({ srv, ch, msg });
+            }
+          });
+        });
+      });
+    });
+    results.sort((a, b) => b.msg.ts - a.msg.ts);
+    if (!results.length) {
+      el.innerHTML = '<div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:.85rem;">Sin resultados para "' + query + '"</div>';
+      return;
+    }
+    el.innerHTML = results.slice(0, 40).map(({ srv, ch, msg }) => {
+      const ava = (msg.userName || '?')[0].toUpperCase();
+      const hiText = msg.text.replace(new RegExp('(' + query.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + ')', 'gi'), '<mark style="background:var(--accent);color:#fff;border-radius:3px;padding:0 2px;">$1</mark>');
+      return `<div onclick="closeModal('global-search-modal');selectServer('${srv.id}');setTimeout(()=>selectChannel('${ch.id}'),100);" style="padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background=''">
+        <div style="font-size:.68rem;color:var(--text-3);margin-bottom:4px;font-weight:600;">${srv.name} › #${ch.name}</div>
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <div style="width:26px;height:26px;border-radius:50%;background:${msg.avatarColor||'var(--accent)'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;">${ava}</div>
+          <div>
+            <span style="font-size:.78rem;font-weight:700;color:var(--text-1);">${msg.userName || 'Usuario'}</span>
+            <span style="font-size:.72rem;color:var(--text-3);margin-left:6px;">${_relTime(msg.ts)}</span>
+            <div style="font-size:.82rem;color:var(--text-1);margin-top:2px;line-height:1.4;">${hiText.substring(0, 200)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }, 300);
+}
+
+// ── MENSAJES PROGRAMADOS ──
+const _scheduledMessages = JSON.parse(localStorage.getItem('nova_scheduled') || '[]');
+function openScheduledMessage() {
+  document.getElementById('scheduled-msg-text').value = '';
+  const now = new Date(Date.now() + 60000);
+  document.getElementById('scheduled-msg-time').value = now.toISOString().slice(0,16);
+  document.getElementById('scheduled-list').style.display = 'none';
+  openModal('scheduled-modal');
+}
+function saveScheduledMessage() {
+  const text = document.getElementById('scheduled-msg-text').value.trim();
+  const timeVal = document.getElementById('scheduled-msg-time').value;
+  if (!text) { showToast('⚠️ Escribe un mensaje'); return; }
+  if (!timeVal) { showToast('⚠️ Selecciona fecha/hora'); return; }
+  const ts = new Date(timeVal).getTime();
+  if (ts <= Date.now()) { showToast('⚠️ La hora debe ser en el futuro'); return; }
+  const entry = { id: genId(8), text, ts, srvId: state.currentServerId, chId: state.currentChannelId, created: Date.now() };
+  _scheduledMessages.push(entry);
+  try { localStorage.setItem('nova_scheduled', JSON.stringify(_scheduledMessages)); } catch(e) {}
+  scheduleDispatch(entry);
+  closeModal('scheduled-modal');
+  showToast('🕐 Mensaje programado para ' + new Date(ts).toLocaleString('es'));
+}
+function scheduleDispatch(entry) {
+  const delay = entry.ts - Date.now();
+  if (delay < 0) return;
+  setTimeout(async () => {
+    // Only send if still in same server/channel? No — always send
+    const srv = getServer(entry.srvId);
+    const ch = srv ? getChannel(entry.chId, srv) : null;
+    if (!ch) return;
+    const uid = state.currentUser?.uid;
+    const msg = { id: 'm' + genId(10), text: entry.text, uid, userName: state.currentUser.displayName || 'Tú', ts: Date.now(), avatarColor: state.currentUser.avatarColor || 'var(--accent)' };
+    await fbSet('messages/' + entry.chId + '/' + msg.id, msg);
+    showToast('📨 Mensaje programado enviado en #' + ch.name);
+    // Remove from list
+    const idx = _scheduledMessages.findIndex(e => e.id === entry.id);
+    if (idx !== -1) _scheduledMessages.splice(idx, 1);
+    try { localStorage.setItem('nova_scheduled', JSON.stringify(_scheduledMessages)); } catch(e) {}
+  }, delay);
+}
+function openScheduledList() {
+  const el = document.getElementById('scheduled-list');
+  el.style.display = '';
+  if (!_scheduledMessages.length) { el.innerHTML = '<div style="color:var(--text-3);font-size:.82rem;">No hay mensajes programados.</div>'; return; }
+  el.innerHTML = '<div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">Programados</div>' +
+    _scheduledMessages.map(e => `<div style="background:var(--bg-3);border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:.8rem;">
+      <div style="color:var(--text-1);">${e.text.substring(0,80)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:4px;">
+        <span style="color:var(--text-3);">${new Date(e.ts).toLocaleString('es')}</span>
+        <button onclick="cancelScheduled('${e.id}')" style="font-size:.7rem;padding:2px 7px;background:var(--bg-4);border:none;border-radius:5px;color:var(--red);cursor:pointer;">Cancelar</button>
+      </div>
+    </div>`).join('');
+}
+function cancelScheduled(id) {
+  const idx = _scheduledMessages.findIndex(e => e.id === id);
+  if (idx !== -1) _scheduledMessages.splice(idx, 1);
+  try { localStorage.setItem('nova_scheduled', JSON.stringify(_scheduledMessages)); } catch(e) {}
+  openScheduledList();
+  showToast('🗑️ Mensaje programado cancelado');
+}
+// Re-schedule on load
+_scheduledMessages.forEach(e => scheduleDispatch(e));
+
+// ── RESUMEN DIARIO (DIGEST) ──
+function openDailyDigest() {
+  openModal('digest-modal');
+  const el = document.getElementById('digest-content');
+  el.innerHTML = '<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px;">Generando resumen...</div>';
+  const since = Date.now() - 86400000;
+  const sections = [];
+  Object.values(state.servers || {}).forEach(srv => {
+    const srvMsgs = [];
+    (srv.channels || []).forEach(cat => {
+      (cat.children || []).forEach(ch => {
+        const msgs = Object.values(state.messages[ch.id] || {}).filter(m => m.ts > since && m.text);
+        if (msgs.length) srvMsgs.push({ ch, count: msgs.length, last: msgs.sort((a,b)=>b.ts-a.ts)[0] });
+      });
+    });
+    if (srvMsgs.length) sections.push({ srv, channels: srvMsgs });
+  });
+  if (!sections.length) {
+    el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-3);">Sin actividad en las últimas 24 horas.</div>';
+    return;
+  }
+  el.innerHTML = sections.map(({ srv, channels }) => `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:.78rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:8px;">${srv.name}</div>
+      ${channels.map(({ ch, count, last }) => `
+        <div onclick="closeModal('digest-modal');selectServer('${srv.id}');setTimeout(()=>selectChannel('${ch.id}'),100);" style="padding:8px 10px;background:var(--bg-3);border-radius:8px;margin-bottom:4px;cursor:pointer;transition:background .1s;" onmouseover="this.style.background='var(--bg-4)'" onmouseout="this.style.background='var(--bg-3)'">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <span style="font-size:.85rem;font-weight:600;color:var(--text-0);">#${ch.name}</span>
+            <span style="font-size:.72rem;color:var(--text-3);background:var(--bg-4);padding:2px 7px;border-radius:10px;">${count} msg${count>1?'s':''}</span>
+          </div>
+          <div style="font-size:.75rem;color:var(--text-2);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${last.userName}: ${last.text.substring(0,60)}</div>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+// ── OBJETIVOS DE SERVIDOR ──
+function renderServerGoals(srv, container) {
+  const goals = srv.novaGoals || [];
+  container.innerHTML = `
+    <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">Objetivos del servidor</span>
+      ${isServerAdmin(srv) ? `<button onclick="addServerGoal('${srv.id}')" class="btn btn-ghost btn-sm" style="font-size:.72rem;">+ Añadir</button>` : ''}
+    </div>
+    ${goals.length ? goals.map((g, i) => {
+      const pct = Math.min(100, Math.round((g.current / g.target) * 100));
+      return `<div style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:.82rem;color:var(--text-1);font-weight:600;">${g.title}</span>
+          <span style="font-size:.75rem;color:var(--text-3);">${g.current}/${g.target}</span>
+        </div>
+        <div style="height:8px;background:var(--bg-4);border-radius:10px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--accent),var(--accent-g));border-radius:10px;transition:width .4s;"></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:3px;">
+          <span style="font-size:.7rem;color:var(--text-3);">${pct}%</span>
+          ${isServerAdmin(srv) ? `<button onclick="editServerGoalProgress('${srv.id}',${i})" style="font-size:.68rem;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;">editar</button>` : ''}
+        </div>
+      </div>`;
+    }).join('') : '<div style="color:var(--text-3);font-size:.82rem;">No hay objetivos aún.</div>'}`;
+}
+function addServerGoal(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:16px;padding:24px;width:360px;max-width:95vw;">
+    <h3 style="color:var(--text-0);margin-bottom:16px;font-size:1rem;">Nuevo objetivo</h3>
+    <input id="_goal-title" type="text" placeholder="Título del objetivo" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;box-sizing:border-box;margin-bottom:10px;">
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <input id="_goal-cur" type="number" placeholder="Actual" min="0" value="0" style="flex:1;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;">
+      <input id="_goal-target" type="number" placeholder="Meta" min="1" value="100" style="flex:1;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="this.closest('[style*=fixed]').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="(function(){
+        const title=document.getElementById('_goal-title').value.trim();
+        const cur=parseInt(document.getElementById('_goal-cur').value)||0;
+        const target=parseInt(document.getElementById('_goal-target').value)||100;
+        if(!title)return;
+        const srv=getServer('${srvId}');if(!srv)return;
+        srv.novaGoals=srv.novaGoals||[];
+        srv.novaGoals.push({title,current:cur,target});
+        saveServers();
+        document.querySelector('[style*=fixed]').remove();
+        openSsSection('nova',document.querySelector('.ss-nav-item[data-section=nova]'));
+        showToast('✅ Objetivo añadido');
+      })()">Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('_goal-title')?.focus(), 50);
+}
+function editServerGoalProgress(srvId, idx) {
+  const srv = getServer(srvId); if (!srv) return;
+  const g = srv.novaGoals?.[idx]; if (!g) return;
+  const val = prompt(`Progreso actual de "${g.title}" (máx ${g.target}):`, g.current);
+  if (val === null) return;
+  const n = parseInt(val);
+  if (isNaN(n)) return;
+  g.current = Math.min(g.target, Math.max(0, n));
+  saveServers();
+  openSsSection('nova', document.querySelector('.ss-nav-item[data-section="nova"]'));
+  showToast('✅ Progreso actualizado');
+}
+
+// ── PLANTILLAS DE RESPUESTA RÁPIDA ──
+function renderQuickReplies(srv, container) {
+  const templates = srv.novaQuickReplies || [];
+  container.innerHTML = `
+    <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">Respuestas Rápidas</span>
+      ${isServerAdmin(srv) ? `<button onclick="addQuickReply('${srv.id}')" class="btn btn-ghost btn-sm" style="font-size:.72rem;">+ Añadir</button>` : ''}
+    </div>
+    ${templates.length ? templates.map((t, i) => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-3);border-radius:8px;margin-bottom:6px;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:.82rem;font-weight:600;color:var(--text-0);">${t.label}</div>
+          <div style="font-size:.75rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.text}</div>
+        </div>
+        <button onclick="useQuickReply(${i},'${srv.id}')" class="btn btn-ghost btn-sm" style="font-size:.72rem;flex-shrink:0;">Usar</button>
+        ${isServerAdmin(srv) ? `<button onclick="deleteQuickReply('${srv.id}',${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85rem;">✕</button>` : ''}
+      </div>`).join('') : '<div style="color:var(--text-3);font-size:.82rem;">No hay plantillas aún.</div>'}`;
+}
+function addQuickReply(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  overlay.innerHTML = `<div style="background:var(--bg-2);border:1px solid var(--border);border-radius:16px;padding:24px;width:380px;max-width:95vw;">
+    <h3 style="color:var(--text-0);margin-bottom:16px;font-size:1rem;">Nueva respuesta rápida</h3>
+    <input id="_qr-label" type="text" placeholder="Nombre (ej: Bienvenida)" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;box-sizing:border-box;margin-bottom:10px;">
+    <textarea id="_qr-text" rows="3" placeholder="Texto del mensaje..." style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;resize:none;box-sizing:border-box;"></textarea>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+      <button class="btn btn-ghost" onclick="this.closest('[style*=fixed]').remove()">Cancelar</button>
+      <button class="btn btn-primary" onclick="(function(){
+        const label=document.getElementById('_qr-label').value.trim();
+        const text=document.getElementById('_qr-text').value.trim();
+        if(!label||!text)return;
+        const srv=getServer('${srvId}');if(!srv)return;
+        srv.novaQuickReplies=srv.novaQuickReplies||[];
+        srv.novaQuickReplies.push({label,text});
+        saveServers();
+        document.querySelector('[style*=fixed]').remove();
+        openSsSection('nova',document.querySelector('.ss-nav-item[data-section=nova]'));
+        showToast('✅ Plantilla guardada');
+      })()">Guardar</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  setTimeout(() => document.getElementById('_qr-label')?.focus(), 50);
+}
+function useQuickReply(idx, srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  const t = srv.novaQuickReplies?.[idx]; if (!t) return;
+  const inp = document.getElementById('msg-input');
+  if (inp) { inp.value = t.text; inp.focus(); autoResize(inp); }
+  closeModal('server-settings-modal');
+}
+function deleteQuickReply(srvId, idx) {
+  const srv = getServer(srvId); if (!srv) return;
+  srv.novaQuickReplies.splice(idx, 1);
+  saveServers();
+  openSsSection('nova', document.querySelector('.ss-nav-item[data-section="nova"]'));
+  showToast('🗑️ Plantilla eliminada');
+}
+
+// ── TARJETA DE PRESENTACIÓN AL UNIRSE ──
+function checkJoinCard(srv) {
+  const fields = srv.novaJoinCardFields;
+  if (!fields || !fields.length) return;
+  const uid = state.currentUser?.uid; if (!uid) return;
+  const key = 'nova_joincard_' + srv.id + '_' + uid;
+  if (localStorage.getItem(key)) return; // ya completó
+  showJoinCardModal(srv);
+}
+function showJoinCardModal(srv) {
+  document.getElementById('join-card-title').textContent = '👋 Bienvenido/a a ' + srv.name;
+  document.getElementById('join-card-desc').textContent = srv.novaJoinCardDesc || 'El servidor quiere conocerte mejor.';
+  const fieldsEl = document.getElementById('join-card-fields');
+  fieldsEl.innerHTML = (srv.novaJoinCardFields || []).map((f, i) => `
+    <div style="margin-bottom:12px;">
+      <label style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">${f}</label>
+      <input type="text" id="join-card-field-${i}" placeholder="${f}..." style="width:100%;margin-top:4px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;box-sizing:border-box;">
+    </div>`).join('');
+  fieldsEl.dataset.srvId = srv.id;
+  openModal('join-card-modal');
+}
+function submitJoinCard() {
+  const srvId = document.getElementById('join-card-fields').dataset.srvId;
+  const srv = getServer(srvId); if (!srv) return;
+  const uid = state.currentUser?.uid;
+  const fields = srv.novaJoinCardFields || [];
+  const data = {};
+  fields.forEach((f, i) => { data[f] = document.getElementById('join-card-field-' + i)?.value || ''; });
+  fbSet('joinCards/' + srvId + '/' + uid, { ...data, ts: Date.now(), userName: state.currentUser.displayName || '' }).catch(() => {});
+  localStorage.setItem('nova_joincard_' + srvId + '_' + uid, '1');
+  closeModal('join-card-modal');
+  showToast('✅ Tarjeta de presentación enviada');
+}
+// (join card check merged into selectServer hook above)
+
+// ── RENDER SECCIÓN NOVA EN SERVER SETTINGS ──
+function renderNovaSection(srv) {
+  const el = document.getElementById('ss-nova-content'); if (!el) return;
+  const isAdmin = isServerAdmin(srv);
+  el.innerHTML = `
+    <!-- Canal Destacado -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">📌 Canal Destacado</div>
+      <p style="font-size:.8rem;color:var(--text-2);margin-bottom:10px;">Mensaje fijo que aparece en el banner del canal seleccionado. Solo admins pueden editar.</p>
+      ${isAdmin ? `
+        <select id="nova-featured-ch" style="background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text-0);font-family:var(--font);font-size:.85rem;margin-bottom:8px;width:100%;">
+          <option value="">— Sin canal destacado —</option>
+          ${(srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>c.type==='text'||!c.type).map(c=>`<option value="${c.id}" ${c.featuredMsg?'style="color:var(--accent)"':''}>#${c.name}${c.featuredMsg?' ✓':''}</option>`).join('')}
+        </select>
+        <input id="nova-featured-msg" type="text" placeholder="Mensaje del banner..." value="" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;box-sizing:border-box;margin-bottom:8px;">
+        <button class="btn btn-primary btn-sm" onclick="saveFeaturedChannel('${srv.id}')">Guardar banner</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearFeaturedChannel('${srv.id}')">Quitar</button>` : '<div style="color:var(--text-3);font-size:.82rem;">Solo admins pueden configurar el canal destacado.</div>'}
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+
+    <!-- Temperatura de canal -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">🌡️ Temperatura de Canales</div>
+      <div style="display:flex;flex-direction:column;gap:6px;">
+        ${(srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>c.type==='text'||!c.type).map(c=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--bg-3);border-radius:8px;">
+            <span style="font-size:1rem;">${getChannelTemp(c.id)}</span>
+            <span style="font-size:.85rem;color:var(--text-1);">#${c.name}</span>
+            <span style="font-size:.72rem;color:var(--text-3);margin-left:auto;">${Object.values(state.messages[c.id]||{}).filter(m=>m.ts>Date.now()-3600000).length} msgs/h</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+
+    <!-- Objetivos del servidor -->
+    <div id="nova-goals-section" style="margin-bottom:28px;"></div>
+    <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+
+    <!-- Respuestas Rápidas -->
+    <div id="nova-quickreply-section" style="margin-bottom:28px;"></div>
+    <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+
+    <!-- Tarjeta de presentación -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">👋 Tarjeta de Presentación</div>
+      <p style="font-size:.8rem;color:var(--text-2);margin-bottom:10px;">Hasta 5 campos que los nuevos miembros llenan al unirse.</p>
+      ${isAdmin ? `
+        <input id="nova-joincard-desc" type="text" placeholder="Descripción (ej: Cuéntanos sobre ti)" value="${(srv.novaJoinCardDesc||'').replace(/"/g,'&quot;')}" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;box-sizing:border-box;margin-bottom:8px;">
+        <div id="nova-joincard-fields">
+          ${(srv.novaJoinCardFields||['']).map((f,i)=>`
+            <input type="text" id="nova-jcf-${i}" placeholder="Campo ${i+1} (ej: ¿De dónde eres?)" value="${f.replace(/"/g,'&quot;')}" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-0);font-family:var(--font);font-size:.85rem;outline:none;box-sizing:border-box;margin-bottom:6px;">`).join('')}
+        </div>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="saveJoinCardConfig('${srv.id}')">Guardar tarjeta</button>` : '<div style="color:var(--text-3);font-size:.82rem;">Solo admins pueden configurar la tarjeta.</div>'}
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+
+    <!-- Tema del servidor -->
+    <div style="margin-bottom:28px;">
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">🎨 Tema del Servidor</div>
+      <p style="font-size:.8rem;color:var(--text-2);margin-bottom:10px;">Color de acento que se aplica al entrar al servidor.</p>
+      ${isAdmin ? `
+        <div style="display:flex;align-items:center;gap:10px;">
+          <input type="color" id="nova-theme-color" value="${srv.novaThemeColor||srv.color||'#7c3aed'}" style="width:40px;height:40px;border:none;background:none;cursor:pointer;border-radius:8px;">
+          <input type="text" id="nova-theme-color-hex" value="${srv.novaThemeColor||srv.color||'#7c3aed'}" placeholder="#7c3aed" style="background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:7px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;width:110px;" oninput="document.getElementById('nova-theme-color').value=this.value">
+          <button class="btn btn-primary btn-sm" onclick="saveServerTheme('${srv.id}')">Aplicar</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetServerTheme('${srv.id}')">Resetear</button>
+        </div>
+        <script>document.getElementById('nova-theme-color').addEventListener('input',function(){document.getElementById('nova-theme-color-hex').value=this.value;});<\/script>` : `<div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;border-radius:50%;background:${srv.novaThemeColor||srv.color||'var(--accent)'};"></div><span style="font-size:.82rem;color:var(--text-1);">${srv.novaThemeColor||'Color por defecto'}</span></div>`}
+    </div>
+    <div style="height:1px;background:var(--border);margin-bottom:24px;"></div>
+
+    <!-- Acciones rápidas Nova -->
+    <div style="margin-bottom:8px;">
+      <div style="font-size:.8rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">⚡ Acciones Rápidas</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openDailyDigest()">📰 Resumen diario</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openUserStats()">📊 Mis estadísticas</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openFocusMode()">🎯 Modo enfoque</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openGlobalSearch()">🔍 Búsqueda global</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openScheduledMessage()">🕐 Programar mensaje</button>
+      </div>
+    </div>
+  `;
+  renderServerGoals(srv, document.getElementById('nova-goals-section'));
+  renderQuickReplies(srv, document.getElementById('nova-quickreply-section'));
+}
+function saveFeaturedChannel(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  const chId = document.getElementById('nova-featured-ch')?.value;
+  const msg = document.getElementById('nova-featured-msg')?.value.trim();
+  if (!chId) { showToast('⚠️ Selecciona un canal'); return; }
+  (srv.channels||[]).forEach(cat=>(cat.children||[]).forEach(ch=>{ if(ch.featuredMsg) delete ch.featuredMsg; }));
+  const ch = getChannel(chId, srv);
+  if (ch) ch.featuredMsg = msg || '';
+  saveServers();
+  showToast('📌 Canal destacado guardado');
+}
+function clearFeaturedChannel(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  (srv.channels||[]).forEach(cat=>(cat.children||[]).forEach(ch=>{ delete ch.featuredMsg; }));
+  saveServers();
+  renderFeaturedBanner();
+  showToast('🗑️ Banner eliminado');
+}
+function saveJoinCardConfig(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  srv.novaJoinCardDesc = document.getElementById('nova-joincard-desc')?.value || '';
+  srv.novaJoinCardFields = [];
+  for (let i = 0; i < 5; i++) {
+    const v = document.getElementById('nova-jcf-' + i)?.value.trim();
+    if (v) srv.novaJoinCardFields.push(v);
+  }
+  saveServers();
+  showToast('✅ Tarjeta guardada');
+}
+function saveServerTheme(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  const color = document.getElementById('nova-theme-color-hex')?.value || document.getElementById('nova-theme-color')?.value;
+  if (!color) return;
+  srv.novaThemeColor = color;
+  saveServers();
+  applyServerTheme(srv);
+  showToast('🎨 Tema aplicado');
+}
+function resetServerTheme(srvId) {
+  const srv = getServer(srvId); if (!srv) return;
+  delete srv.novaThemeColor;
+  saveServers();
+  // restore default accent
+  document.documentElement.style.removeProperty('--accent');
+  document.documentElement.style.removeProperty('--accent-glow');
+  showToast('🎨 Tema reseteado');
+}
+// Hook openSsSection for nova
+const _origOpenSsSection = window.openSsSection;
+window.openSsSection = function(section, btn) {
+  _origOpenSsSection(section, btn);
+  if (section === 'nova') {
+    const srv = getServer(state.currentServerId);
+    if (srv) renderNovaSection(srv);
+  }
+};
 </script>
+
+<!-- ══ FOCUS MODE MODAL ══ -->
+<div class="modal-overlay" id="focus-modal" onclick="if(event.target===this)closeModal('focus-modal')" style="z-index:1100;">
+  <div class="modal" style="max-width:380px;text-align:center;">
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">🎯 Modo Enfoque</h3>
+    <p style="color:var(--text-2);font-size:.83rem;margin-bottom:18px;">Silencia distracciones. El timer te avisará cuando termine.</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;">
+      <button onclick="setFocusPreset(15)" class="btn btn-ghost btn-sm">15 min</button>
+      <button onclick="setFocusPreset(25)" class="btn btn-ghost btn-sm">25 min</button>
+      <button onclick="setFocusPreset(45)" class="btn btn-ghost btn-sm">45 min</button>
+      <button onclick="setFocusPreset(60)" class="btn btn-ghost btn-sm">60 min</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:20px;">
+      <input type="number" id="focus-minutes" min="1" max="180" value="25" style="width:70px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:8px;color:var(--text-0);font-family:var(--font);font-size:1rem;text-align:center;">
+      <span style="color:var(--text-2);font-size:.875rem;">minutos</span>
+    </div>
+    <div id="focus-timer-display" style="display:none;font-size:2.5rem;font-weight:800;color:var(--accent);letter-spacing:.05em;margin-bottom:16px;font-variant-numeric:tabular-nums;">25:00</div>
+    <div style="display:flex;gap:8px;justify-content:center;">
+      <button class="btn btn-ghost" onclick="closeModal('focus-modal')">Cancelar</button>
+      <button class="btn btn-primary" id="focus-start-btn" onclick="startFocusTimer()">Iniciar</button>
+      <button class="btn btn-ghost" id="focus-stop-btn" style="display:none;" onclick="stopFocusTimer()">Detener</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ GLOBAL SEARCH MODAL ══ -->
+<div class="modal-overlay" id="global-search-modal" onclick="if(event.target===this)closeModal('global-search-modal')" style="z-index:1100;">
+  <div class="modal" style="max-width:560px;padding:0;overflow:hidden;">
+    <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--text-2)" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="global-search-input" type="text" placeholder="Buscar en todos los servidores..." style="flex:1;background:transparent;border:none;outline:none;color:var(--text-0);font-family:var(--font);font-size:.95rem;" oninput="runGlobalSearch(this.value)">
+      <kbd style="font-size:.68rem;color:var(--text-3);background:var(--bg-4);padding:2px 6px;border-radius:4px;">Esc</kbd>
+    </div>
+    <div id="global-search-results" style="max-height:420px;overflow-y:auto;padding:8px 0;">
+      <div style="text-align:center;padding:40px 20px;color:var(--text-3);font-size:.85rem;">Escribe para buscar mensajes en todos tus servidores</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ SCHEDULED MESSAGES MODAL ══ -->
+<div class="modal-overlay" id="scheduled-modal" onclick="if(event.target===this)closeModal('scheduled-modal')" style="z-index:1100;">
+  <div class="modal" style="max-width:480px;">
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:4px;">🕐 Mensaje Programado</h3>
+    <p style="color:var(--text-2);font-size:.82rem;margin-bottom:16px;">El mensaje se enviará automáticamente en la fecha y hora indicada.</p>
+    <label style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">Mensaje</label>
+    <textarea id="scheduled-msg-text" rows="3" placeholder="Escribe tu mensaje..." style="width:100%;margin-top:6px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
+    <label style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);display:block;margin-top:12px;">Fecha y hora</label>
+    <input type="datetime-local" id="scheduled-msg-time" style="width:100%;margin-top:6px;background:var(--bg-3);border:1.5px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text-0);font-family:var(--font);font-size:.875rem;outline:none;box-sizing:border-box;">
+    <div style="display:flex;gap:8px;justify-content:space-between;margin-top:16px;align-items:center;">
+      <button class="btn btn-ghost btn-sm" onclick="openScheduledList()">Ver programados</button>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="closeModal('scheduled-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveScheduledMessage()">Programar</button>
+      </div>
+    </div>
+    <div id="scheduled-list" style="display:none;margin-top:16px;border-top:1px solid var(--border);padding-top:12px;"></div>
+  </div>
+</div>
+
+<!-- ══ DAILY DIGEST MODAL ══ -->
+<div class="modal-overlay" id="digest-modal" onclick="if(event.target===this)closeModal('digest-modal')" style="z-index:1100;">
+  <div class="modal" style="max-width:520px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <span style="font-size:1.4rem;">📰</span>
+      <div>
+        <h3 style="font-size:1.1rem;font-weight:800;margin:0;">Resumen Diario</h3>
+        <p style="color:var(--text-2);font-size:.78rem;margin:0;">Últimas 24 horas en tus servidores</p>
+      </div>
+    </div>
+    <div id="digest-content" style="max-height:420px;overflow-y:auto;"></div>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn btn-ghost" onclick="closeModal('digest-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ JOIN CARD MODAL ══ -->
+<div class="modal-overlay" id="join-card-modal" onclick="if(event.target===this)closeModal('join-card-modal')" style="z-index:1100;">
+  <div class="modal" style="max-width:440px;">
+    <h3 style="font-size:1.05rem;font-weight:800;margin-bottom:6px;" id="join-card-title">Presentación</h3>
+    <p style="color:var(--text-2);font-size:.82rem;margin-bottom:16px;" id="join-card-desc">El servidor quiere conocerte. Completa tu tarjeta de presentación.</p>
+    <div id="join-card-fields"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeModal('join-card-modal')">Omitir</button>
+      <button class="btn btn-primary" onclick="submitJoinCard()">Enviar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ USER STATS MODAL ══ -->
+<div class="modal-overlay" id="user-stats-modal" onclick="if(event.target===this)closeModal('user-stats-modal')" style="z-index:1100;">
+  <div class="modal" style="max-width:440px;">
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:16px;">📊 Mis Estadísticas</h3>
+    <div id="user-stats-content"></div>
+    <div style="margin-top:16px;text-align:right;">
+      <button class="btn btn-ghost" onclick="closeModal('user-stats-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ FOCUS MODE OVERLAY ══ -->
+<div id="focus-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:2000;backdrop-filter:blur(8px);flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+  <div style="font-size:.85rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);">MODO ENFOQUE</div>
+  <div id="focus-overlay-timer" style="font-size:5rem;font-weight:900;color:#fff;letter-spacing:.05em;font-variant-numeric:tabular-nums;">25:00</div>
+  <div style="color:var(--text-2);font-size:.875rem;">Silenciando notificaciones...</div>
+  <button onclick="stopFocusTimer()" style="margin-top:8px;padding:10px 24px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;cursor:pointer;font-family:var(--font);font-size:.875rem;">Terminar enfoque</button>
+</div>
+
 </body>
 </html>
