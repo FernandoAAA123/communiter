@@ -1800,12 +1800,12 @@ async function initUserProfile(firebaseUser,displayName,photoURL){
 async function migrateUidReferences(oldUid,newUid){
   // Recursively replace oldUid inside a JS value (object/array/string)
   function replaceDeep(val){
-    if(typeof val==='string') return val===oldUid?newUid:val;
+    if(typeof val==='string') return val.split(oldUid).join(newUid);
     if(Array.isArray(val)) return val.map(replaceDeep);
     if(val&&typeof val==='object'){
       const out={};
       for(const k of Object.keys(val)){
-        const newKey=k===oldUid?newUid:k;
+        const newKey=k.split(oldUid).join(newUid);
         out[newKey]=replaceDeep(val[k]);
       }
       return out;
