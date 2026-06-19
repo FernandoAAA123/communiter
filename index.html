@@ -1197,7 +1197,14 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <button class="btn btn-ghost btn-sm" onclick="copyUID()">Copiar</button>
       </div>
-      <div style="margin-top:20px;padding:14px;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.15);border-radius:var(--r-sm);">
+      <!-- Merge duplicate profile -->
+      <div style="margin-top:16px;padding:14px;background:rgba(124,58,237,.05);border:1px solid rgba(124,58,237,.18);border-radius:var(--r-sm);">
+        <div style="font-size:.875rem;font-weight:600;color:var(--accent-g);margin-bottom:4px;">🔀 Perfil duplicado</div>
+        <div style="font-size:.78rem;color:var(--text-3);margin-bottom:10px;">Si tu perfil se duplicó (dos cuentas distintas para el mismo correo), esto lo fusiona conservando tus datos más recientes.</div>
+        <button class="btn btn-ghost" style="width:100%;" onclick="mergeProfileDuplicate()">Fusionar perfil duplicado</button>
+      </div>
+
+      <div style="margin-top:12px;padding:14px;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.15);border-radius:var(--r-sm);">
         <div style="font-size:.875rem;font-weight:600;color:var(--red);margin-bottom:6px;">⚠️ Zona de peligro</div>
         <div style="font-size:.78rem;color:var(--text-3);margin-bottom:12px;">Esta acción es permanente e irreversible.</div>
         <button class="btn btn-danger" style="width:100%;" onclick="deleteMyAccount()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar cuenta permanentemente</button>
@@ -1822,6 +1829,95 @@ async function migrateUidReferences(oldUid,newUid){
       }
     }
   }catch(e){ console.error('migrateUidReferences failed',e); }
+}
+
+// ── MERGE DUPLICATE PROFILE ──
+// Fixes the bug where two separate profiles exist for the same email address.
+// It finds the "other" profile via usersByEmail and merges its data into the
+// current profile, then re-points any servers/DMs that still reference the old UID.
+async function mergeProfileDuplicate(){
+  const currentUser=state.currentUser;
+  if(!currentUser?.uid||!currentUser?.email){
+    showToast('❌ Debes estar autenticado para fusionar perfiles');return;
+  }
+  if(!confirm('¿Fusionar perfiles duplicados?\n\nEsto unificará ambas cuentas en tu perfil actual, conservando tus datos más recientes. La operación no se puede deshacer.'))return;
+
+  showToast('🔄 Buscando perfil duplicado…');
+
+  try{
+    const eKey=emailToKey(currentUser.email);
+    if(!eKey){showToast('❌ No se pudo obtener tu correo');return;}
+
+    // Get the backup profile stored by email (may point to an older UID)
+    const emailSnap=await fbGet('usersByEmail/'+eKey);
+    if(!emailSnap.exists()){showToast('ℹ️ No se encontró perfil de respaldo para fusionar');return;}
+
+    const backupProfile=emailSnap.val();
+    const oldUid=backupProfile.uid;
+
+    if(!oldUid||oldUid===currentUser.uid){
+      // Both UIDs are the same — check if there is literally a different users/ entry
+      showToast('ℹ️ No se detectó un perfil duplicado con UID diferente');return;
+    }
+
+    // Load both profiles
+    const [currentSnap,oldSnap]=await Promise.all([
+      fbGet('users/'+currentUser.uid),
+      fbGet('users/'+oldUid)
+    ]);
+
+    const currentProfile=currentSnap.exists()?currentSnap.val():{};
+    const oldProfile=oldSnap.exists()?oldSnap.val():{};
+
+    // Merge strategy: current profile wins for most fields;
+    // pick the older createdAt, and keep non-empty fields from old profile
+    // when the current profile has blanks.
+    const merged={
+      ...oldProfile,           // base: old profile
+      ...currentProfile,       // current profile overwrites
+      uid:currentUser.uid,     // always keep current UID
+      email:currentUser.email,
+      createdAt:Math.min(
+        oldProfile.createdAt||Date.now(),
+        currentProfile.createdAt||Date.now()
+      ),
+      // Keep old name/avatar only if current is blank
+      name:currentProfile.name||(oldProfile.name||'Usuario'),
+      avatarUrl:currentProfile.avatarUrl||(oldProfile.avatarUrl||''),
+      avatarColor:currentProfile.avatarColor||(oldProfile.avatarColor||'#7c3aed'),
+      customStatus:currentProfile.customStatus||(oldProfile.customStatus||''),
+      handle:currentProfile.handle||(oldProfile.handle||''),
+    };
+
+    // Write merged profile under current UID
+    await fbSet('users/'+currentUser.uid,merged);
+
+    // Update email backup to current UID
+    await fbSet('usersByEmail/'+eKey,merged);
+
+    // Remove the orphaned old profile node (if it was a different path)
+    if(oldSnap.exists()) await fbRemove('users/'+oldUid);
+
+    // Re-point servers and DMs that still reference the old UID
+    await migrateUidReferences(oldUid,currentUser.uid);
+
+    // Also fix handles
+    if(oldProfile.handle&&oldProfile.handle!==merged.handle){
+      await fbRemove('handles/'+oldProfile.handle).catch(()=>{});
+    }
+    if(merged.handle){
+      await fbSet('handles/'+merged.handle,currentUser.uid);
+    }
+
+    // Update in-memory state
+    state.currentUser={...state.currentUser,...merged};
+    renderUserSettings(state.currentUser);
+
+    showToast('✅ Perfiles fusionados correctamente');
+  }catch(err){
+    console.error('mergeProfileDuplicate error',err);
+    showToast('❌ Error al fusionar: '+err.message);
+  }
 }
 
 async function doSignOut(){
