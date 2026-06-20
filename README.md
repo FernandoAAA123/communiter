@@ -1,1 +1,1 @@
-# Nova:  A Universe of Chats and Communities
+# Nova:  The Universe of Chats and Communities
