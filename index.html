@@ -186,11 +186,11 @@ select option{background:var(--bg-3);color:var(--text-0);}
 .theme-dot:hover,.theme-dot.active{border-color:var(--text-0);transform:scale(1.2);}
 
 /* USER BAR */
-#user-bar{height:56px;background:var(--bg-0);display:flex;align-items:center;padding:0 10px;gap:8px;flex-shrink:0;border-top:1px solid var(--border);}
-.user-avatar{width:34px;height:34px;border-radius:12px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0;cursor:pointer;overflow:hidden;position:relative;transition:all .15s;}
-.user-avatar:hover{border-radius:10px;box-shadow:0 0 0 2px var(--accent);}
+#user-bar{height:56px;background:var(--bg-0);display:flex;align-items:center;padding:0 10px;gap:10px;flex-shrink:0;border-top:1px solid var(--border);}
+.user-avatar{width:32px;height:32px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;cursor:pointer;overflow:hidden;position:relative;transition:all .15s;}
+.user-avatar:hover{box-shadow:0 0 0 2px var(--accent);}
 .user-avatar img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}
-.user-status-dot{position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:4px;background:var(--green);border:2px solid var(--bg-0);}
+.user-status-dot{width:11px;height:11px;}
 #username-display{flex:1;min-width:0;}
 #username-display .uname{font-size:.83rem;font-weight:700;color:var(--text-0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #username-display .utag{font-size:.65rem;color:var(--text-3);}
@@ -835,9 +835,11 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     </div>
     <div id="channels-list"></div>
     <div id="user-bar">
-      <div class="user-avatar" onclick="openMyProfile()" id="my-user-avatar" style="background:var(--accent);">
-        <span id="user-avatar-text">U</span>
-        <div class="user-status-dot" id="user-status-dot"></div>
+      <div class="member-avatar-wrap" onclick="openMyProfile()" style="cursor:pointer;">
+        <div class="user-avatar" id="my-user-avatar" style="background:var(--accent);">
+          <span id="user-avatar-text">U</span>
+        </div>
+        <div class="member-status user-status-dot" id="user-status-dot" style="border-color:var(--bg-0);"></div>
       </div>
       <div id="username-display">
         <div class="uname" id="uname-display">Usuario</div>
@@ -2153,12 +2155,19 @@ const _origSelectChannel=typeof selectChannel==='function'?selectChannel:null;
 function updateUserBar(){
   if(!state.currentUser)return;
   const u=state.currentUser;
-  document.getElementById('uname-display').textContent=u.name;
+  const unameEl=document.getElementById('uname-display');
+  unameEl.textContent=u.name;
+  const srv=getServer(state.currentServerId);
+  const mem=(srv?.members||[]).find(m=>(m.uid||m.id)===u.uid);
+  const roleColor=(mem?.roles||[]).reduce((c,rn)=>{const ro=(srv?.roles||[]).find(r=>r.name===rn||r.id===rn);return (ro&&ro.color&&!c)?ro.color:c;},'');
+  unameEl.style.color=roleColor||'var(--text-0)';
   document.getElementById('utag-display').textContent=u.handle?'@'+u.handle:(u.tag||'');
   const ava=document.getElementById('my-user-avatar');
   ava.style.background=u.avatarUrl?'#000':u.avatarColor;
-  if(u.avatarUrl){ava.innerHTML=`<img src="${u.avatarUrl}" onerror="this.style.display='none'"><div class="user-status-dot" style="background:${STATUS_COLORS[u.status]||STATUS_COLORS.online}"></div>`;}
-  else{ava.innerHTML=`<span>${u.name[0].toUpperCase()}</span><div class="user-status-dot" style="background:${STATUS_COLORS[u.status]||STATUS_COLORS.online}"></div>`;}
+  if(u.avatarUrl){ava.innerHTML=`<img src="${u.avatarUrl}" onerror="this.style.display='none'">`;}
+  else{ava.innerHTML=`<span>${u.name[0].toUpperCase()}</span>`;}
+  const dot=document.getElementById('user-status-dot');
+  if(dot)dot.style.background=STATUS_COLORS[u.status]||STATUS_COLORS.online;
 }
 function toggleServerBarMobile(){
   const hidden=document.body.classList.toggle('server-bar-hidden');
@@ -2777,10 +2786,12 @@ function buildMemberEl(m,isOnline){
   const uid=m.uid||m.id;
   const div=document.createElement('div');div.className='member-item';
   const avatarC=m.avatarUrl?`<img src="${m.avatarUrl}" onerror="this.style.display='none'">`:(m.name||'?')[0].toUpperCase();
-  const bg=m.avatarUrl?'#000':(m.color||m.avatarColor||'#5865f2');
+  const bg=m.avatarUrl?'#000':(m.avatarColor||m.color||'#5865f2');
   const realStatus=state.onlineUsers[uid]?.status||'offline';
   const statusColor=STATUS_COLORS[isOnline?realStatus:'offline'];
-  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="color:${isOnline?(m.color||'var(--text-1)'):'var(--text-3)'}">${m.name||'?'}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}</div></div>`;
+  const srv=getServer(state.currentServerId);
+  const roleColor=(m.roles||[]).reduce((c,rn)=>{const ro=(srv?.roles||[]).find(r=>r.name===rn||r.id===rn);return (ro&&ro.color&&!c)?ro.color:c;},'');
+  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'}">${m.name||'?'}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}</div></div>`;
   div.onclick=e=>{showProfilePopupByUid(e,uid,m);e.stopPropagation();};
   return div;
 }
