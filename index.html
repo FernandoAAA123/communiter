@@ -1547,7 +1547,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div class="ss-section" id="ss-sec-roles">
         <div class="ss-section-header">
           <h2 class="ss-section-title">Roles</h2>
-          <p class="ss-section-desc">Los roles definen qué pueden hacer los miembros. El orden importa — roles superiores tienen más prioridad.</p>
+          <p class="ss-section-desc">Los roles definen qué pueden hacer los miembros. El orden importa — roles superiores tienen más prioridad. Arrastra ⠿ para reordenar.</p>
         </div>
         <button class="btn btn-primary btn-sm" onclick="addRole()" style="margin-bottom:16px;">＋ Crear rol</button>
         <div id="ss-roles-list"></div>
@@ -2095,6 +2095,11 @@ function normalizeServers(servers){
   (servers||[]).forEach(srv=>{
     if(!Array.isArray(srv.channels))srv.channels=[];
     srv.channels.forEach(cat=>{if(cat&&cat.type==='category'&&!Array.isArray(cat.children))cat.children=[];});
+    (srv.roles||[]).forEach(r=>{
+      if(!r.permissions||!Object.keys(r.permissions).length){
+        r.permissions=r.name?.toLowerCase()==='admin'?getDefaultPerms(true):getDefaultPerms(false);
+      }
+    });
   });
   return servers||[];
 }
@@ -2661,9 +2666,9 @@ const _lastRenderedMsgs={};
 let _lastPaintedChannelId=null;
 // "Huella" de un mensaje: cambia si cambia cualquier campo que afecte su render visual.
 function _msgFingerprint(m){
-  const pollSig=m.poll?m.poll.options.map(o=>o.votes.length).join(','):'';
-  const eventSig=m.event?m.event.attendees.length:'';
-  return m.id+'|'+(m.content||'').length+'|'+(m.edited?1:0)+'|'+(m.pinned?1:0)+'|'+(m.deleted?1:0)+'|'+(m.reactions?m.reactions.map(r=>r.emoji+r.users.length).join(','):'')+'|'+pollSig+'|'+eventSig;
+  const pollSig=m.poll&&m.poll.options?m.poll.options.map(o=>(o.votes||[]).length).join(','):'';
+  const eventSig=m.event?(m.event.attendees||[]).length:'';
+  return m.id+'|'+(m.content||'').length+'|'+(m.edited?1:0)+'|'+(m.pinned?1:0)+'|'+(m.deleted?1:0)+'|'+(m.reactions?m.reactions.map(r=>r.emoji+(r.users||[]).length).join(','):'')+'|'+pollSig+'|'+eventSig;
 }
 function renderMessages(opts){
   const el=document.getElementById('messages');
@@ -2983,7 +2988,7 @@ function doReaction(msgId,emoji){
   if(!msg.reactions)msg.reactions=[];
   let r=msg.reactions.find(x=>x.emoji===emoji);
   if(!r){msg.reactions.push({emoji,users:[state.currentUser.uid]});}
-  else{if(r.users.includes(state.currentUser.uid))r.users=r.users.filter(u=>u!==state.currentUser.uid);else r.users.push(state.currentUser.uid);if(!r.users.length)msg.reactions=msg.reactions.filter(x=>x.emoji!==emoji);}
+  else{r.users=r.users||[];if(r.users.includes(state.currentUser.uid))r.users=r.users.filter(u=>u!==state.currentUser.uid);else r.users.push(state.currentUser.uid);if(!r.users.length)msg.reactions=msg.reactions.filter(x=>x.emoji!==emoji);}
   const isDM=ch.startsWith('dm_');
   fbUpdate(isDM?'dmMessages/'+ch.replace('dm_','')+'/'+msgId:'state/messages/'+ch+'/'+msgId,{reactions:msg.reactions});
   renderMessages({force:true});
@@ -3219,7 +3224,11 @@ function createServer(){
     serverType:document.getElementById('new-server-type').value||'public',
     channels:[{id:'cat'+id+'0',name:'TEXTO',type:'category',children:[{id:'ch'+genId(8),name:'general',type:'text',private:false},{id:'ch'+genId(8),name:'anuncios',type:'announcement',private:false}]},{id:'cat'+id+'1',name:'VOZ',type:'category',children:[{id:'ch'+genId(8),name:'General',type:'voice',private:false}]}],
     members:[{uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Admin']}],
-    roles:[{id:'r1',name:'Admin',color:'#f43f5e',hoist:true},{id:'r2',name:'Moderador',color:'#f59e0b',hoist:true},{id:'r3',name:'Miembro',color:'#7c3aed',hoist:false}],
+    roles:[
+      {id:'r1',name:'Admin',color:'#f43f5e',hoist:true,permissions:getDefaultPerms(true)},
+      {id:'r2',name:'Moderador',color:'#f59e0b',hoist:true,permissions:{...getDefaultPerms(false),manage_messages:true,manage_members:true,view_audit_log:true,create_polls:true,create_events:true,mention_everyone:true}},
+      {id:'r3',name:'Miembro',color:'#7c3aed',hoist:false,permissions:getDefaultPerms(false)}
+    ],
     customEmojis:[],customStickers:[],inviteCode:genId(8)};
   state.servers.push(srv);saveServers();closeModal('create-server-modal');
   document.getElementById('new-server-name').value='';
@@ -3448,25 +3457,26 @@ function isServerAdmin(srv){
 // ── ROLES ──
 // ══ PERMISSIONS SYSTEM ══
 const PERMISSIONS = {
-  admin: { name:'Administrador', desc:'Control total del servidor. Sobreescribe todos los demás permisos.', danger:true },
-  manage_server: { name:'Gestionar servidor', desc:'Editar nombre, ícono y configuración del servidor.' },
-  manage_channels: { name:'Gestionar canales', desc:'Crear, editar y eliminar canales.' },
-  manage_roles: { name:'Gestionar roles', desc:'Crear y asignar roles (excepto roles superiores al propio).' },
-  manage_members: { name:'Gestionar miembros', desc:'Expulsar y silenciar miembros.' },
-  manage_messages: { name:'Gestionar mensajes', desc:'Eliminar mensajes de otros usuarios y fijar mensajes.' },
-  send_messages: { name:'Enviar mensajes', desc:'Escribir en canales de texto.' },
-  embed_links: { name:'Insertar enlaces', desc:'Los enlaces se mostrarán como tarjetas.' },
-  attach_files: { name:'Adjuntar archivos', desc:'Subir imágenes y archivos al chat.' },
-  add_reactions: { name:'Añadir reacciones', desc:'Agregar reacciones a mensajes.' },
-  use_custom_emojis: { name:'Usar emojis personalizados', desc:'Usar los emojis del servidor.' },
-  create_polls: { name:'Crear encuestas', desc:'Crear encuestas en canales.' },
-  create_events: { name:'Crear eventos', desc:'Crear y gestionar eventos del servidor.' },
-  create_threads: { name:'Crear hilos', desc:'Abrir hilos en mensajes.' },
-  mention_everyone: { name:'Mencionar @everyone', desc:'Notificar a todos los miembros del servidor.' },
-  view_audit_log: { name:'Ver registro de auditoría', desc:'Ver historial de acciones del servidor.' },
-  connect_voice: { name:'Conectarse a voz', desc:'Unirse a canales de voz.' },
-  speak_voice: { name:'Hablar en voz', desc:'Hablar en canales de voz.' },
+  admin: { name:'Administrador', desc:'Control total del servidor. Sobreescribe todos los demás permisos.', danger:true, cat:'admin' },
+  manage_server: { name:'Gestionar servidor', desc:'Editar nombre, ícono y configuración del servidor.', cat:'general' },
+  manage_channels: { name:'Gestionar canales', desc:'Crear, editar y eliminar canales.', cat:'general' },
+  manage_roles: { name:'Gestionar roles', desc:'Crear y asignar roles (excepto roles superiores al propio).', cat:'general' },
+  manage_members: { name:'Gestionar miembros', desc:'Expulsar y silenciar miembros.', cat:'moderacion' },
+  manage_messages: { name:'Gestionar mensajes', desc:'Eliminar mensajes de otros usuarios y fijar mensajes.', cat:'moderacion' },
+  view_audit_log: { name:'Ver registro de auditoría', desc:'Ver historial de acciones del servidor.', cat:'moderacion' },
+  mention_everyone: { name:'Mencionar @everyone', desc:'Notificar a todos los miembros del servidor.', cat:'moderacion' },
+  send_messages: { name:'Enviar mensajes', desc:'Escribir en canales de texto.', cat:'texto' },
+  embed_links: { name:'Insertar enlaces', desc:'Los enlaces se mostrarán como tarjetas.', cat:'texto' },
+  attach_files: { name:'Adjuntar archivos', desc:'Subir imágenes y archivos al chat.', cat:'texto' },
+  add_reactions: { name:'Añadir reacciones', desc:'Agregar reacciones a mensajes.', cat:'texto' },
+  use_custom_emojis: { name:'Usar emojis personalizados', desc:'Usar los emojis del servidor.', cat:'texto' },
+  create_polls: { name:'Crear encuestas', desc:'Crear encuestas en canales.', cat:'texto' },
+  create_events: { name:'Crear eventos', desc:'Crear y gestionar eventos del servidor.', cat:'texto' },
+  create_threads: { name:'Crear hilos', desc:'Abrir hilos en mensajes.', cat:'texto' },
+  connect_voice: { name:'Conectarse a voz', desc:'Unirse a canales de voz.', cat:'voz' },
+  speak_voice: { name:'Hablar en voz', desc:'Hablar en canales de voz.', cat:'voz' },
 };
+const PERMISSION_CATEGORIES={general:'General',moderacion:'Moderación',texto:'Texto y multimedia',voz:'Voz'};
 
 function getDefaultPerms(isAdmin){
   const p={};
@@ -3489,18 +3499,37 @@ function hasPermission(uid, perm){
 function renderRolesList(srv){
   const el=document.getElementById('ss-roles-list');if(!el)return;
   el.innerHTML='';
+  const admin=isServerAdmin(srv);
   (srv.roles||[]).forEach((role,i)=>{
+    const memberCount=(srv.members||[]).filter(m=>(m.roles||[]).some(rr=>rr===role.id||rr===role.name)).length;
     const div=document.createElement('div');
     div.className='list-item-row';
     div.style.cssText='cursor:pointer;';
+    div.draggable=admin;
     div.innerHTML=`
+      ${admin?'<span style="color:var(--text-3);opacity:.5;font-size:.8rem;cursor:grab;flex-shrink:0;" title="Arrastrar para reordenar">⠿</span>':''}
       <div style="width:14px;height:14px;border-radius:50%;background:${role.color};flex-shrink:0;"></div>
       <span style="flex:1;font-size:.875rem;font-weight:600;color:var(--text-0);">${role.name}</span>
       ${role.permissions?.admin?'<span style="font-size:.65rem;background:rgba(244,63,94,.15);color:var(--red);border-radius:4px;padding:2px 6px;font-weight:700;">ADMIN</span>':''}
+      <span style="font-size:.72rem;color:var(--text-3);">${memberCount} miembro${memberCount!==1?'s':''}</span>
       <span style="font-size:.72rem;color:var(--text-3);">${Object.values(role.permissions||{}).filter(Boolean).length} permisos</span>
       <button class="icon-btn" onclick="event.stopPropagation();openRoleEditor(${i})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
       <button class="icon-btn" onclick="event.stopPropagation();deleteRole(${i})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`;
     div.onclick=()=>openRoleEditor(i);
+    if(admin){
+      div.addEventListener('dragstart',e=>{e.dataTransfer.setData('roleIdx',i);div.style.opacity='.4';});
+      div.addEventListener('dragend',()=>div.style.opacity='');
+      div.addEventListener('dragover',e=>{e.preventDefault();div.style.outline='1px solid var(--accent)';});
+      div.addEventListener('dragleave',()=>div.style.outline='');
+      div.addEventListener('drop',e=>{
+        e.preventDefault();div.style.outline='';
+        const from=parseInt(e.dataTransfer.getData('roleIdx'));
+        if(isNaN(from)||from===i)return;
+        const [moved]=srv.roles.splice(from,1);
+        srv.roles.splice(i,0,moved);
+        saveServers();renderRolesList(srv);
+      });
+    }
     el.appendChild(div);
   });
 }
@@ -3542,14 +3571,23 @@ function renderRoleEditorSettings(srv,idx){
     </div>
     <div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">Permisos</div>
     <div id="re-perms-list">
-      ${Object.entries(PERMISSIONS).map(([key,info])=>`
+        <div class="perm-row" style="border:1px solid rgba(244,63,94,.25);border-radius:8px;padding:10px 12px;margin-bottom:14px;">
+          <div class="perm-info">
+            <div class="perm-name">${PERMISSIONS.admin.name}<span style="color:var(--red);margin-left:6px;font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>PELIGROSO</span></div>
+            <div class="perm-desc">${PERMISSIONS.admin.desc}</div>
+          </div>
+          <div class="toggle ${perms.admin?'on':''}" data-perm="admin" onclick="toggleRolePerm(this,'admin',${idx})"></div>
+        </div>
+      ${Object.entries(PERMISSION_CATEGORIES).map(([catKey,catLabel])=>`
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);margin:14px 0 6px;">${catLabel}</div>
+        ${Object.entries(PERMISSIONS).filter(([,info])=>info.cat===catKey).map(([key,info])=>`
         <div class="perm-row">
           <div class="perm-info">
-            <div class="perm-name">${info.name}${info.danger?'<span style="color:var(--red);margin-left:6px;font-size:.65rem;font-weight:700;display:inline-flex;align-items:center;gap:3px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>PELIGROSO</span>':''}</div>
+            <div class="perm-name">${info.name}</div>
             <div class="perm-desc">${info.desc}</div>
           </div>
           <div class="toggle ${perms[key]?'on':''}" data-perm="${key}" onclick="toggleRolePerm(this,'${key}',${idx})"></div>
-        </div>`).join('')}
+        </div>`).join('')}`).join('')}
     </div>
     <div style="display:flex;gap:8px;margin-top:16px;">
       <button class="btn btn-ghost" onclick="closeModal('role-editor-modal')">Cancelar</button>
@@ -3677,8 +3715,9 @@ function votePoll(msgId,optId){
   const msg=msgs.find(m=>m.id===msgId);if(!msg?.poll)return;
   const uid=state.currentUser.uid;
   // Remove vote from all options
-  msg.poll.options.forEach(o=>{o.votes=o.votes.filter(v=>v!==uid);});
+  msg.poll.options.forEach(o=>{o.votes=(o.votes||[]).filter(v=>v!==uid);});
   // Add vote
+  msg.poll.options[optId].votes=msg.poll.options[optId].votes||[];
   msg.poll.options[optId].votes.push(uid);
   fbSet('state/messages/'+state.currentChannelId+'/'+msgId+'/poll',msg.poll);
   renderMessages({force:true});
