@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nova: A Universe Chat and Communities</title>
+<title>Nova: The Universe of Chat and Communities</title>
 <link rel="icon" type="image/png" href="https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2">
 <link rel="apple-touch-icon" href="https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2">
 <link rel="shortcut icon" type="image/png" href="https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2">
@@ -777,7 +777,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   <div class="online-badge"><div class="online-pulse"></div><span id="online-count">0</span> en línea</div>
 </div>
 <div id="profile-popup">
-  <button onclick="closeProfilePopup()" style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(0,0,0,.45);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;font-size:.8rem;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);">✕</button>
+  <button onclick="closeProfilePopup()" style="position:absolute;top:10px;right:10px;z-index:10;background:rgba(0,0,0,.45);border:none;color:#fff;width:26px;height:26px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
   <div class="profile-banner" id="pp-banner"></div>
   <div class="profile-body">
     <div style="position:relative;width:fit-content;">
@@ -893,7 +893,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div id="featured-banner" style="display:none;flex-shrink:0;margin:8px 16px 0;padding:10px 14px;background:linear-gradient(90deg,var(--accent-glow),transparent);border:1px solid rgba(124,58,237,.25);border-radius:10px;font-size:.82rem;color:var(--text-1);align-items:center;gap:8px;">
       <span style="display:inline-flex;color:var(--accent);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>
       <span id="featured-banner-text" style="flex:1;margin:0 8px;"></span>
-      <span onclick="closeFeaturedBanner()" style="color:var(--text-3);font-size:.75rem;cursor:pointer;">✕</span>
+      <span onclick="closeFeaturedBanner()" style="color:var(--text-3);cursor:pointer;display:inline-flex;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></span>
     </div>
     <div id="voice-room-panel" style="display:none;"></div>
     <div id="messages"></div>
@@ -907,7 +907,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);">
         <span style="font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);display:inline-flex;align-items:center;gap:5px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Nota del canal</span>
         <button onclick="saveChannelNote()" style="margin-left:auto;font-size:.7rem;padding:2px 8px;background:var(--accent);color:#fff;border:none;border-radius:6px;cursor:pointer;">Guardar</button>
-        <button onclick="toggleChannelNote()" style="font-size:.7rem;padding:2px 8px;background:var(--bg-4);color:var(--text-2);border:none;border-radius:6px;cursor:pointer;">✕</button>
+        <button onclick="toggleChannelNote()" style="padding:2px 8px;background:var(--bg-4);color:var(--text-2);border:none;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
       </div>
       <textarea id="channel-note-input" rows="2" placeholder="Escribe tu nota privada para este canal..." style="width:100%;background:transparent;border:none;padding:8px 10px;color:var(--text-0);font-family:var(--font);font-size:.82rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
     </div>
@@ -1090,10 +1090,10 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <h2>Crear canal</h2>
     <label>Tipo</label>
     <select id="new-channel-type">
-      <option value="text">💬 Texto</option>
-      <option value="voice">🔊 Voz</option>
-      <option value="announcement">📢 Anuncios</option>
-      <option value="forum">🗂️ Foro</option>
+      <option value="text">Texto</option>
+      <option value="voice">Voz</option>
+      <option value="announcement">Anuncios</option>
+      <option value="forum">Foro</option>
     </select>
     <label>Nombre</label><input type="text" id="new-channel-name" placeholder="nuevo-canal">
     <label>Categoría</label><select id="new-channel-category"></select>
@@ -1146,10 +1146,10 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <label>Estado personalizado</label><input type="text" id="us-status" placeholder="¿Qué estás haciendo?">
       <label>Presencia</label>
       <select id="us-presence">
-        <option value="online">🟢 En línea</option>
-        <option value="idle">🟡 Ausente</option>
-        <option value="dnd">🔴 No molestar</option>
-        <option value="offline">⚫ Invisible</option>
+        <option value="online">En línea</option>
+        <option value="idle">Ausente</option>
+        <option value="dnd">No molestar</option>
+        <option value="offline">Invisible</option>
       </select>
       <label>Redes sociales <span style="color:var(--text-3);font-size:.75rem;">(hasta 6 enlaces)</span></label>
       <div style="display:flex;flex-direction:column;gap:6px;" id="us-socials-list">
@@ -1217,40 +1217,10 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <h4 style="font-size:.95rem;font-weight:700;color:var(--text-0);margin:0;">Tema personalizado</h4>
         <span id="custom-theme-active-badge" style="display:none;font-size:.65rem;font-weight:700;color:var(--accent-g);background:var(--accent-glow);padding:2px 8px;border-radius:20px;">Activo</span>
       </div>
-      <p style="font-size:.82rem;color:var(--text-3);margin:4px 0 16px;">Crea tus propios colores y un fondo de imagen. Descarga el archivo para guardarlo o compartirlo, y cárgalo cuando quieras.</p>
+      <p style="font-size:.82rem;color:var(--text-3);margin:4px 0 16px;">Carga un archivo de tema (.json) con tus propios colores y, opcionalmente, una imagen de fondo.</p>
 
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
-        <div style="flex:1;min-width:120px;">
-          <label style="font-size:.72rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Color de acento</label>
-          <input type="color" id="ct-accent" value="#7c3aed" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--bg-3);cursor:pointer;margin-top:6px;">
-        </div>
-        <div style="flex:1;min-width:120px;">
-          <label style="font-size:.72rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Fondo base</label>
-          <input type="color" id="ct-bg" value="#0b0b0f" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--bg-3);cursor:pointer;margin-top:6px;">
-        </div>
-        <div style="flex:1;min-width:120px;">
-          <label style="font-size:.72rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Paneles</label>
-          <input type="color" id="ct-panel" value="#141420" style="width:100%;height:38px;border-radius:8px;border:1px solid var(--border);background:var(--bg-3);cursor:pointer;margin-top:6px;">
-        </div>
-      </div>
-
-      <label style="font-size:.72rem;color:var(--text-3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Imagen de fondo (opcional)</label>
-      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;margin-bottom:14px;">
-        <div id="ct-bg-preview" onclick="document.getElementById('ct-bg-file').click()" style="width:64px;height:64px;border-radius:10px;background:var(--bg-3);border:1.5px dashed var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text-3);font-size:1.3rem;overflow:hidden;">＋</div>
-        <input type="file" id="ct-bg-file" accept="image/*" style="display:none" onchange="handleCustomThemeBgUpload(this)">
-        <input type="hidden" id="ct-bg-b64" value="">
-        <div style="display:flex;flex-direction:column;gap:6px;">
-          <button class="btn btn-ghost btn-sm" onclick="document.getElementById('ct-bg-file').click()">Subir imagen</button>
-          <button class="btn btn-ghost btn-sm" onclick="clearCustomThemeBg()">Quitar imagen</button>
-        </div>
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;">
-        <button class="btn btn-primary" style="flex:1;min-width:160px;" onclick="applyCustomTheme()">Aplicar tema</button>
-        <button class="btn btn-ghost" style="flex:1;min-width:140px;" onclick="downloadCustomTheme()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Descargar tema</button>
-        <button class="btn btn-ghost" style="flex:1;min-width:140px;" onclick="document.getElementById('ct-theme-file').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Cargar tema</button>
-        <input type="file" id="ct-theme-file" accept="application/json,.json" style="display:none" onchange="loadCustomThemeFile(this)">
-      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="document.getElementById('ct-theme-file').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Cargar tema</button>
+      <input type="file" id="ct-theme-file" accept="application/json,.json" style="display:none" onchange="loadCustomThemeFile(this)">
     </div>
 
     <!-- TAB 2: PRIVACIDAD -->
@@ -1379,7 +1349,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
       <!-- FUNCIONES NOVA -->
       <div class="ss-nav-cat">NOVA</div>
-      <button class="ss-nav-item" data-section="nova" onclick="openSsSection('nova',this)">✦ Funciones Nova</button>
+      <button class="ss-nav-item" data-section="nova" onclick="openSsSection('nova',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 2l1.5 5L19 9l-5.5 2L12 16l-1.5-5L5 9l5.5-2z"/></svg> Funciones Nova</button>
 
       <div style="height:1px;background:var(--border);margin:10px 8px;"></div>
       <button class="ss-nav-item danger" onclick="deleteCurrentServer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar comunidad</button>
@@ -1397,7 +1367,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <div class="ss-field-label" style="margin-bottom:6px;">Tipo de comunidad</div>
         <select id="ss-server-type" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text-0);font-family:var(--font);font-size:.9rem;outline:none;margin-bottom:20px;">
-          <option value="public">🌐 Pública</option>
+          <option value="public">Pública</option>
           <option value="private"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Privada</option>
           <option value="request"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Por solicitud</option>
         </select>
@@ -1492,7 +1462,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <span id="invite-code-text" style="font-size:1rem;letter-spacing:.05em;"></span>
           <button class="btn btn-ghost btn-sm" onclick="copyInviteCode()">Copiar</button>
         </div>
-        <button class="btn btn-ghost" style="margin-top:8px;" onclick="regenerateInvite()">🔄 Regenerar código</button>
+        <button class="btn btn-ghost" style="margin-top:8px;" onclick="regenerateInvite()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> Regenerar código</button>
         <div style="height:1px;background:var(--border);margin:20px 0;"></div>
         <div class="ss-field-label">Unirse con código</div>
         <div style="display:flex;gap:8px;margin-top:8px;">
@@ -1604,7 +1574,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <!-- ══ FUNCIONES NOVA ══ -->
       <div class="ss-section" id="ss-sec-nova">
         <div class="ss-section-header">
-          <h2 class="ss-section-title">✦ Funciones Nova</h2>
+          <h2 class="ss-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><path d="M12 2l1.5 5L19 9l-5.5 2L12 16l-1.5-5L5 9l5.5-2z"/></svg> Funciones Nova</h2>
           <p class="ss-section-desc">Herramientas exclusivas de Nova para enriquecer tu comunidad.</p>
         </div>
         <div id="ss-nova-content"></div>
@@ -1990,6 +1960,18 @@ async function doSignOut(){
 
 // ── ON LOGIN ──
 async function onUserLoggedIn(firebaseUser){
+  // Firebase Auth puede disparar este callback varias veces en la misma sesión
+  // (refresco de token, reconexión, etc). Si ya inicializamos listeners para
+  // este mismo usuario, solo refrescamos el perfil sin volver a montar nada.
+  if(state._loggedInUid===firebaseUser.uid){
+    const snapQuick=await fbGet('users/'+firebaseUser.uid).catch(()=>null);
+    if(snapQuick&&snapQuick.exists?.()){
+      state.currentUser={...state.currentUser,...snapQuick.val()};
+      updateUserBar();
+    }
+    return;
+  }
+  state._loggedInUid=firebaseUser.uid;
   showLoadingOverlay('Cargando tu perfil...');
   // Timeout helper
   const withTimeout=(promise,ms,fallback)=>Promise.race([promise,new Promise(r=>setTimeout(()=>r(fallback),ms))]);
@@ -2264,7 +2246,7 @@ function renderChannelsPanel(){
     const friendsActive=!state.currentChannelId;
     list.innerHTML=`
       <div style="padding:8px;">
-        <input type="text" id="dm-search-input" placeholder="Buscar o iniciar una conversación" value="${(state.dmSearchQuery||'').replace(/"/g,'&quot;')}" oninput="state.dmSearchQuery=this.value;renderChannelsPanel();const i=document.getElementById('dm-search-input');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}">
+        <input type="text" id="dm-search-input" placeholder="Buscar o iniciar una conversación" value="${(state.dmSearchQuery||'').replace(/"/g,'&quot;')}" oninput="state.dmSearchQuery=this.value;clearTimeout(window._dmSearchDebounce);window._dmSearchDebounce=setTimeout(()=>{renderChannelsPanel();const i=document.getElementById('dm-search-input');if(i){i.focus();i.setSelectionRange(i.value.length,i.value.length);}},180);">
       </div>
       <div class="dm-nav-item${friendsActive?' active':''}" onclick="openFriendsPage()">
         <div class="member-avatar" style="background:var(--bg-4);width:30px;height:30px;color:var(--text-1);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
@@ -2486,7 +2468,6 @@ function renderDMWelcome(){
   </div>`;
 }
 // ── VOICE CHANNEL ROOM (estilo Discord) ──
-const _voiceRoomListeners={};
 function renderVoiceRoom(ch){
   const panel=document.getElementById('voice-room-panel');
   const inputArea=document.getElementById('input-area');
@@ -2511,9 +2492,13 @@ function renderVoiceRoom(ch){
   subscribeVoiceRoom(ch.id);
   renderMessages();renderTyping();
 }
+let _voiceRoomActivePath=null;
+let _voiceRoomActiveCb=null;
 function subscribeVoiceRoom(channelId){
-  if(_voiceRoomListeners[channelId])return;
-  _voiceRoomListeners[channelId]=fbOn('calls/'+channelId+'/participants',snap=>{
+  // Si ya hay un listener activo (de este u otro canal), lo quitamos primero
+  if(_voiceRoomActivePath&&_voiceRoomActiveCb)fbOff(_voiceRoomActivePath,_voiceRoomActiveCb);
+  const path='calls/'+channelId+'/participants';
+  const cb=snap=>{
     const parts=snap.exists()?Object.values(snap.val()):[];
     // Only touch the DOM if the user is still looking at this voice channel
     if(state.currentChannelId!==channelId)return;
@@ -2526,7 +2511,10 @@ function subscribeVoiceRoom(channelId){
         <div class="member-avatar" style="width:56px;height:56px;font-size:1.2rem;background:${p.color||'var(--accent)'};">${p.avatarUrl?`<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">`:(p.name||'?')[0].toUpperCase()}</div>
         <span>${p.name||'?'}</span>
       </div>`).join('');
-  });
+  };
+  fbOn(path,cb);
+  _voiceRoomActivePath=path;
+  _voiceRoomActiveCb=cb;
 }
 async function joinVoiceRoom(channelId){
   if(state.callActive&&state.callChannelId===channelId)return;
@@ -2537,6 +2525,7 @@ async function joinVoiceRoom(channelId){
 }
 function renderForumPosts(ch){
   const el=document.getElementById('messages');
+  _lastPaintedChannelId=null; // este render no pasa por renderMessages; invalida el caché de append incremental
   const posts=Object.values(state.messages[ch.id]||{})
     .filter(m=>!m._isReply)
     .sort((a,b)=>b.ts-a.ts);
@@ -2643,36 +2632,103 @@ function backToForum(chId){
   const ch=getChannel(chId,srv);
   if(ch)renderForumPosts(ch);
 }
-function renderMessages(){
+// Construye el elemento DOM de un solo mensaje. prevUid/prevTs describen el mensaje anterior
+// (para decidir si este es una "continuación" visual del mismo autor).
+function buildMessageEl(msg,msgs,prevUid,prevTs){
+  const wrap=document.createElement('div');
+  wrap.className='msg-wrap'+(msg.pinned?' highlighted':'');
+  wrap.dataset.msgid=msg.id;
+  const isCont=msg.uid===prevUid&&!msg.sticker&&!msg.replyTo&&!msg.poll&&!msg.event&&(msg.ts-prevTs)<5*60*1000;
+  const isMe=msg.uid===state.currentUser.uid;
+  const isBot=(msg.uid||'').startsWith('bot_');
+  const botBadge=isBot?'<span class="bot-badge">BOT</span>':'';
+  const replyHtml=msg.replyTo?buildReplyPreview(msg.replyTo,msgs):'';
+  if(isCont){
+    const contClass='msg-content'+(isEmojiOnlyContent(msg.content)?' emoji-only':'');
+    wrap.innerHTML=replyHtml+`<div class="msg-continuation" style="display:flex;gap:14px;"><span class="cont-time">${fmtTime(msg.ts)}</span><div class="msg-body"><div class="${contClass}">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
+  }else{
+    const avatarStyle=`background:${msg.avatarUrl?'#000':msg.color}`;
+    const avatarContent=msg.avatarUrl?`<img src="${msg.avatarUrl}" onerror="this.style.display='none'">`:(msg.name||'?')[0].toUpperCase();
+    const mainClass='msg-content'+(isEmojiOnlyContent(msg.content)?' emoji-only':'');
+    wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.roleColor||'var(--text-1)'}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="${mainClass}">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
+  }
+  return wrap;
+}
+// Mantiene el último estado pintado por canal, para saber si podemos hacer un
+// append incremental (mensaje nuevo al final) en vez de reconstruir todo.
+const _lastRenderedMsgs={};
+// Qué canal está realmente pintado en el DOM de #messages en este momento.
+let _lastPaintedChannelId=null;
+// "Huella" de un mensaje: cambia si cambia cualquier campo que afecte su render visual.
+function _msgFingerprint(m){
+  const pollSig=m.poll?m.poll.options.map(o=>o.votes.length).join(','):'';
+  const eventSig=m.event?m.event.attendees.length:'';
+  return m.id+'|'+(m.content||'').length+'|'+(m.edited?1:0)+'|'+(m.pinned?1:0)+'|'+(m.deleted?1:0)+'|'+(m.reactions?m.reactions.map(r=>r.emoji+r.users.length).join(','):'')+'|'+pollSig+'|'+eventSig;
+}
+function renderMessages(opts){
   const el=document.getElementById('messages');
   const msgs=state.messages[state.currentChannelId]||[];
   const forumHeader=buildForumPostHeader();
-  if(!msgs.length){el.innerHTML=forumHeader+'<div class="empty-state"><div class="big-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>¡Sé el primero en escribir!</h3></div>';return;}
+  const chId=state.currentChannelId;
+  // Solo podemos hacer append incremental si el DOM actual ya muestra este mismo canal.
+  const sameChannelAsDom=_lastPaintedChannelId===chId;
+  const prevList=sameChannelAsDom?_lastRenderedMsgs[chId]:null;
+
+  if(!msgs.length){
+    el.innerHTML=forumHeader+'<div class="empty-state"><div class="big-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><h3>¡Sé el primero en escribir!</h3></div>';
+    _lastRenderedMsgs[chId]=[];
+    _lastPaintedChannelId=chId;
+    return;
+  }
+
+  const newFingerprints=msgs.map(_msgFingerprint);
+
+  // ¿Podemos hacer un append incremental? Solo si:
+  // - ya habíamos pintado este mismo canal antes,
+  // - hay al menos tantos mensajes como antes (nada se borró/reordenó),
+  // - y la huella de cada mensaje ya pintado es idéntica (nada se editó, fijó,
+  //   recibió una reacción, o se borró entre los que ya estaban).
+  const canAppend=!opts?.force && !!prevList && prevList.length>0 &&
+    prevList.length<=newFingerprints.length &&
+    prevList.every((fp,i)=>newFingerprints[i]===fp);
+
+  if(canAppend && prevList.length===newFingerprints.length){
+    // Nada cambió desde el último render; no hace falta tocar el DOM.
+    _lastPaintedChannelId=chId;
+    return;
+  }
+
+  if(canAppend){
+    // Solo agregamos los mensajes nuevos al final, sin tocar el resto del DOM.
+    const newOnes=msgs.slice(prevList.length);
+    let prevUid=null,prevTs=0;
+    const lastPrev=msgs[prevList.length-1];
+    if(lastPrev){prevUid=lastPrev.uid;prevTs=lastPrev.ts;}
+    const wasNearBottom=el.scrollHeight-el.scrollTop-el.clientHeight<120;
+    newOnes.forEach(msg=>{
+      if(msg.deleted)return;
+      const wrap=buildMessageEl(msg,msgs,prevUid,prevTs);
+      el.appendChild(wrap);
+      prevUid=msg.uid;prevTs=msg.ts;
+    });
+    if(wasNearBottom)el.scrollTop=el.scrollHeight;
+    _lastRenderedMsgs[chId]=newFingerprints;
+    _lastPaintedChannelId=chId;
+    return;
+  }
+
+  // Render completo (carga inicial del canal, edición, borrado, mensaje insertado en medio, etc.)
   el.innerHTML=forumHeader;
   let prevUid=null,prevTs=0;
   msgs.forEach(msg=>{
     if(msg.deleted)return;
-    // Continuation: same user, within 5 minutes, no special content
-    const isCont=msg.uid===prevUid&&!msg.sticker&&!msg.replyTo&&!msg.poll&&!msg.event&&(msg.ts-prevTs)<5*60*1000;
-    const wrap=document.createElement('div');
-    wrap.className='msg-wrap'+(msg.pinned?' highlighted':'');
-    wrap.dataset.msgid=msg.id;
-    const isMe=msg.uid===state.currentUser.uid;
-    const isBot=(msg.uid||'').startsWith('bot_');
-    const botBadge=isBot?'<span class="bot-badge">BOT</span>':'';
-    const replyHtml=msg.replyTo?buildReplyPreview(msg.replyTo,msgs):'';
-    if(isCont){
-      const contClass='msg-content'+(isEmojiOnlyContent(msg.content)?' emoji-only':'');
-      wrap.innerHTML=replyHtml+`<div class="msg-continuation" style="display:flex;gap:14px;"><span class="cont-time">${fmtTime(msg.ts)}</span><div class="msg-body"><div class="${contClass}">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
-    }else{
-      const avatarStyle=`background:${msg.avatarUrl?'#000':msg.color}`;
-      const avatarContent=msg.avatarUrl?`<img src="${msg.avatarUrl}" onerror="this.style.display='none'">`:(msg.name||'?')[0].toUpperCase();
-      const mainClass='msg-content'+(isEmojiOnlyContent(msg.content)?' emoji-only':'');
-      wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.roleColor||'var(--text-1)'}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="${mainClass}">${formatContent(msg.content)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
-    }
-    el.appendChild(wrap);prevUid=msg.uid;prevTs=msg.ts;
+    const wrap=buildMessageEl(msg,msgs,prevUid,prevTs);
+    el.appendChild(wrap);
+    prevUid=msg.uid;prevTs=msg.ts;
   });
   el.scrollTop=el.scrollHeight;
+  _lastRenderedMsgs[chId]=newFingerprints;
+  _lastPaintedChannelId=chId;
 }
 function buildReplyPreview(replyId,msgs){
   const orig=msgs.find(m=>m.id===replyId);
@@ -2903,14 +2959,14 @@ function saveEditMsg(){
   fbUpdate(isDM?'dmMessages/'+ch.replace('dm_','')+'/'+state.editingMsgId:'state/messages/'+ch+'/'+state.editingMsgId,{content,edited:true});
   const msg=(state.messages[ch]||[]).find(m=>m.id===state.editingMsgId);
   if(msg){msg.content=content;msg.edited=true;}
-  renderMessages();closeModal('edit-msg-modal');state.editingMsgId=null;
+  renderMessages({force:true});closeModal('edit-msg-modal');state.editingMsgId=null;
 }
 function togglePin(id){
   const ch=state.currentChannelId;
   const msg=(state.messages[ch]||[]).find(m=>m.id===id);if(!msg)return;
   const newVal=!msg.pinned;
   fbUpdate('state/messages/'+ch+'/'+id,{pinned:newVal});
-  msg.pinned=newVal;renderMessages();showToast(newVal?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Fijado':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Desfijado');
+  msg.pinned=newVal;renderMessages({force:true});showToast(newVal?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Fijado':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Desfijado');
 }
 function setReply(id){
   const msg=(state.messages[state.currentChannelId]||[]).find(m=>m.id===id);if(!msg)return;
@@ -2930,7 +2986,7 @@ function doReaction(msgId,emoji){
   else{if(r.users.includes(state.currentUser.uid))r.users=r.users.filter(u=>u!==state.currentUser.uid);else r.users.push(state.currentUser.uid);if(!r.users.length)msg.reactions=msg.reactions.filter(x=>x.emoji!==emoji);}
   const isDM=ch.startsWith('dm_');
   fbUpdate(isDM?'dmMessages/'+ch.replace('dm_','')+'/'+msgId:'state/messages/'+ch+'/'+msgId,{reactions:msg.reactions});
-  renderMessages();
+  renderMessages({force:true});
 }
 function sendSticker(e,n){
   if(!state.currentChannelId)return;
@@ -3170,7 +3226,7 @@ function createServer(){
   document.getElementById('new-server-icon-b64').value='';document.getElementById('new-server-type').value='public';
   document.getElementById('new-server-icon-emoji').value='';
   const prev=document.getElementById('new-server-icon-preview');
-  prev.innerHTML='<span style="font-size:1.5rem;color:var(--text-3);">📷</span>';
+  prev.innerHTML='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-3);"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
   prev.style.background='var(--bg-4)';
   selectServer(id);showToast('✅ Comunidad "'+name+'" creado');
 }
@@ -3625,7 +3681,7 @@ function votePoll(msgId,optId){
   // Add vote
   msg.poll.options[optId].votes.push(uid);
   fbSet('state/messages/'+state.currentChannelId+'/'+msgId+'/poll',msg.poll);
-  renderMessages();
+  renderMessages({force:true});
 }
 
 // ══ EVENTS ══
@@ -3647,7 +3703,7 @@ function toggleAttendEvent(msgId){
   if(msg.event.attendees.includes(uid)){msg.event.attendees=msg.event.attendees.filter(a=>a!==uid);}
   else{msg.event.attendees.push(uid);}
   fbSet('state/messages/'+state.currentChannelId+'/'+msgId+'/event',msg.event);
-  renderMessages();
+  renderMessages({force:true});
 }
 
 // ══ XP SYSTEM ══
@@ -3930,7 +3986,7 @@ function previewJoinServer(code) {
   document.getElementById('join-preview-name').textContent = srv.name;
   document.getElementById('join-preview-members').textContent = (srv.members || []).length + ' miembro' + ((srv.members || []).length !== 1 ? 's' : '');
   const statusEl = document.getElementById('join-preview-status');
-  const typeLabel={'public':'🌐 Pública','private':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Privada','request':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Por solicitud'}[srv.serverType||'public'];
+  const typeLabel={'public':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg> Pública','private':'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Privada','request':'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Por solicitud'}[srv.serverType||'public'];
   if (alreadyIn) {
     statusEl.innerHTML = '<span style="color:var(--green)">✓ Ya eres miembro</span> &nbsp;<span style="font-size:.7rem;color:var(--text-3)">'+typeLabel+'</span>';
   } else {
@@ -4357,10 +4413,13 @@ async function startVoiceCall(){
     startCallTimer();
     fbSet('calls/'+state.currentChannelId+'/participants/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor||'',avatarUrl:state.currentUser.avatarUrl||'',ts:Date.now()});
     window._fbOnDisconnect(fbRef('calls/'+state.currentChannelId+'/participants/'+state.currentUser.uid)).remove();
-    fbOn('calls/'+state.currentChannelId+'/participants',snap=>{
+    state._callBarCb=snap=>{
       const parts=snap.exists()?Object.values(snap.val()):[];
-      document.getElementById('call-participants').innerHTML=parts.map(p=>`<div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;border:2px solid var(--bg-0);margin-left:-6px;">${(p.name||'?')[0]}</div>`).join('');
-    });
+      const cpEl=document.getElementById('call-participants');
+      if(cpEl)cpEl.innerHTML=parts.map(p=>`<div style="width:28px;height:28px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;border:2px solid var(--bg-0);margin-left:-6px;">${(p.name||'?')[0]}</div>`).join('');
+    };
+    state._callBarPath='calls/'+state.currentChannelId+'/participants';
+    fbOn(state._callBarPath,state._callBarCb);
     showToast('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 5.55 5.55l1.96-1.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Llamada iniciada');
   }catch(e){showToast('❌ No se pudo acceder al micrófono');}
 }
@@ -4369,6 +4428,7 @@ function endCall(){
   state.callActive=false;
   if(state.localStream){state.localStream.getTracks().forEach(t=>t.stop());state.localStream=null;}
   if(state.callChannelId)fbRemove('calls/'+state.callChannelId+'/participants/'+state.currentUser.uid);
+  if(state._callBarPath&&state._callBarCb){fbOff(state._callBarPath,state._callBarCb);state._callBarPath=null;state._callBarCb=null;}
   clearInterval(state.callTimerInterval);
   document.getElementById('call-bar').classList.remove('active');
   document.getElementById('call-timer').textContent='00:00';
@@ -4592,27 +4652,7 @@ function loadSavedTheme() {
   } catch(e) {}
 }
 
-// ── TEMA PERSONALIZADO (colores + fondo, descargable/cargable) ──
-function handleCustomThemeBgUpload(input){
-  const file=input.files[0];if(!file)return;
-  if(file.size>8*1024*1024){showToast('⚠️ Imagen muy grande (máx 8MB)');return;}
-  compressImage(file,1920,1080,800,b64=>{
-    document.getElementById('ct-bg-b64').value=b64;
-    document.getElementById('ct-bg-preview').innerHTML=`<img src="${b64}" style="width:100%;height:100%;object-fit:cover;">`;
-  });
-}
-function clearCustomThemeBg(){
-  document.getElementById('ct-bg-b64').value='';
-  document.getElementById('ct-bg-preview').innerHTML='＋';
-}
-function readCustomThemeForm(){
-  return{
-    accent:document.getElementById('ct-accent').value,
-    bg:document.getElementById('ct-bg').value,
-    panel:document.getElementById('ct-panel').value,
-    bgImage:document.getElementById('ct-bg-b64').value||''
-  };
-}
+// ── TEMA PERSONALIZADO (solo cargable por archivo) ──
 // Convierte un color hex a un objeto {r,g,b}
 function hexToRgb(hex){
   const h=hex.replace('#','');
@@ -4649,38 +4689,8 @@ function applyCustomThemeData(data){
     bgLayer.remove();
     document.body.style.background='';
   }
-  // Reflejar los valores en el formulario y marcar como activo
-  const accentEl=document.getElementById('ct-accent');if(accentEl)accentEl.value=data.accent;
-  const bgEl=document.getElementById('ct-bg');if(bgEl)bgEl.value=data.bg;
-  const panelEl=document.getElementById('ct-panel');if(panelEl)panelEl.value=data.panel;
-  const previewEl=document.getElementById('ct-bg-preview');
-  const b64El=document.getElementById('ct-bg-b64');
-  if(previewEl&&b64El){
-    b64El.value=data.bgImage||'';
-    previewEl.innerHTML=data.bgImage?`<img src="${data.bgImage}" style="width:100%;height:100%;object-fit:cover;">`:'＋';
-  }
   document.querySelectorAll('.theme-dot,.theme-card').forEach(d=>d.classList.remove('active'));
   const badge=document.getElementById('custom-theme-active-badge');if(badge)badge.style.display='inline-block';
-}
-function applyCustomTheme(){
-  const data=readCustomThemeForm();
-  applyCustomThemeData(data);
-  try{
-    localStorage.setItem('nova_theme','custom');
-    localStorage.setItem('nova_custom_theme',JSON.stringify(data));
-  }catch(e){}
-  savePref({theme:'custom',customTheme:data});
-  showToast('✅ Tema personalizado aplicado');
-}
-function downloadCustomTheme(){
-  const data=readCustomThemeForm();
-  const blob=new Blob([JSON.stringify({novaTheme:true,version:1,...data},null,2)],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='nova-tema.json';
-  document.body.appendChild(a);a.click();a.remove();
-  URL.revokeObjectURL(url);
-  showToast('⬇️ Tema descargado');
 }
 function loadCustomThemeFile(input){
   const file=input.files[0];if(!file)return;
@@ -4802,7 +4812,7 @@ function previewServerIconEmoji(val, previewId) {
     el.innerHTML = `<span style="font-size:2rem;line-height:1;">${val.trim()}</span>`;
     el.style.background = 'var(--bg-4)';
   } else {
-    el.innerHTML = '<span style="font-size:1.5rem;color:var(--text-3);">📷</span>';
+    el.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-3);"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>';
     el.style.background = 'var(--bg-4)';
   }
 }
@@ -4995,7 +5005,7 @@ async function sendFriendRequest(){
   // Write pending on my side, incoming on their side
   await fbSet('friends/'+me.uid+'/'+targetUid,{uid:targetUid,name:tUser.name,handle:tUser.handle||handle,avatarColor:tUser.avatarColor||'#5865f2',avatarUrl:tUser.avatarUrl||'',status:'pending',ts:Date.now()});
   await fbSet('friends/'+targetUid+'/'+me.uid,{uid:me.uid,name:me.name,handle:me.handle||'',avatarColor:me.avatarColor||'#5865f2',avatarUrl:me.avatarUrl||'',status:'incoming',ts:Date.now()});
-  input.value='';result.innerHTML='<span style="color:var(--green)">✅ Solicitud enviada a @'+handle+'</span>';
+  input.value='';result.innerHTML='<span style="color:var(--green);display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Solicitud enviada a @'+handle+'</span>';
 }
 async function acceptFriendRequest(uid){
   const me=state.currentUser.uid;
@@ -5129,7 +5139,7 @@ function toggleAudioRecording(){
       document.getElementById('audio-send-btn').style.display='inline-flex';
       stream.getTracks().forEach(t=>t.stop());
       // Visualizer stop
-      document.getElementById('audio-visualizer').innerHTML='<div style="color:var(--green);font-size:.85rem;">✅ Grabación lista</div>';
+      document.getElementById('audio-visualizer').innerHTML='<div style="color:var(--green);font-size:.85rem;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Grabación lista</div>';
     };
     _audioRecorder.start();
     btn.textContent='⏹ Detener';
@@ -5189,7 +5199,7 @@ function pinMessage(msgId){
   msg.pinned=!msg.pinned;
   fbSet('state/messages/'+state.currentChannelId+'/'+msgId+'/pinned',msg.pinned);
   showToast(msg.pinned?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Mensaje fijado':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Mensaje desfijado');
-  renderMessages();
+  renderMessages({force:true});
 }
 
 // ── sendMsg helper (shared by text, image, audio) ──
@@ -5230,12 +5240,18 @@ function showToast(msg){
     t.className='notification-toast';
     document.body.appendChild(t);
   }
-  // Swap a recognized leading emoji for a clean SVG icon; keep custom emoji elsewhere untouched.
-  const m=msg.match(/^(\S+)\s*(.*)$/);
-  if(m&&TOAST_ICONS[m[1]]){
-    t.innerHTML=`<span style="display:inline-flex;vertical-align:-2px;margin-right:6px;">${TOAST_ICONS[m[1]]}</span>${m[2].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}`;
+  if(/^\s*<svg[\s>]/i.test(msg)){
+    // El mensaje ya trae un <svg>...</svg> embebido directamente (no un emoji corto);
+    // insertarlo como HTML tal cual, sin pasar por el mapeo de TOAST_ICONS.
+    t.innerHTML=msg;
   }else{
-    t.textContent=msg;
+    // Swap a recognized leading emoji for a clean SVG icon; keep custom emoji elsewhere untouched.
+    const m=msg.match(/^(\S+)\s*(.*)$/);
+    if(m&&TOAST_ICONS[m[1]]){
+      t.innerHTML=`<span style="display:inline-flex;vertical-align:-2px;margin-right:6px;">${TOAST_ICONS[m[1]]}</span>${m[2].replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}`;
+    }else{
+      t.textContent=msg;
+    }
   }
   t.classList.add('show');clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),3000);
 }
@@ -5805,7 +5821,7 @@ function renderQuickReplies(srv, container) {
           <div style="font-size:.75rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.text}</div>
         </div>
         <button onclick="useQuickReply(${i},'${srv.id}')" class="btn btn-ghost btn-sm" style="font-size:.72rem;flex-shrink:0;">Usar</button>
-        ${isServerAdmin(srv) ? `<button onclick="deleteQuickReply('${srv.id}',${i})" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:.85rem;">✕</button>` : ''}
+        ${isServerAdmin(srv) ? `<button onclick="deleteQuickReply('${srv.id}',${i})" style="background:none;border:none;color:var(--red);cursor:pointer;display:inline-flex;align-items:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ''}
       </div>`).join('') : '<div style="color:var(--text-3);font-size:.82rem;">No hay plantillas aún.</div>'}`;
 }
 function addQuickReply(srvId) {
@@ -5960,10 +5976,10 @@ function renderNovaSection(srv) {
     <div style="margin-bottom:8px;">
       <div style="font-size:.8rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:10px;">⚡ Acciones Rápidas</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openDailyDigest()">📰 Resumen diario</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openUserStats()">📊 Mis estadísticas</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openFocusMode()">🎯 Modo enfoque</button>
-        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openGlobalSearch()">🔍 Búsqueda global</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openDailyDigest()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M4 22h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/><path d="M2 6h12v14H4a2 2 0 0 1-2-2V6z"/></svg> Resumen diario</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openUserStats()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Mis estadísticas</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openFocusMode()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Modo enfoque</button>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openGlobalSearch()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Búsqueda global</button>
         <button class="btn btn-ghost btn-sm" onclick="closeModal('server-settings-modal');openScheduledMessage()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 16 14"/></svg>Programar mensaje</button>
       </div>
     </div>
@@ -6032,7 +6048,7 @@ window.openSsSection = function(section, btn) {
 <!-- ══ FOCUS MODE MODAL ══ -->
 <div class="modal-overlay" id="focus-modal" onclick="if(event.target===this)closeModal('focus-modal')" style="z-index:1100;">
   <div class="modal" style="max-width:380px;text-align:center;">
-    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">🎯 Modo Enfoque</h3>
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg> Modo Enfoque</h3>
     <p style="color:var(--text-2);font-size:.83rem;margin-bottom:18px;">Silencia distracciones. El timer te avisará cuando termine.</p>
     <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;">
       <button onclick="setFocusPreset(15)" class="btn btn-ghost btn-sm">15 min</button>
@@ -6091,7 +6107,7 @@ window.openSsSection = function(section, btn) {
 <div class="modal-overlay" id="digest-modal" onclick="if(event.target===this)closeModal('digest-modal')" style="z-index:1100;">
   <div class="modal" style="max-width:520px;">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <span style="font-size:1.4rem;">📰</span>
+      <span style="font-size:1.4rem;display:inline-flex;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/><path d="M18 14h-8"/><path d="M15 18h-5"/><path d="M10 6h8v4h-8V6z"/><path d="M2 6h12v14H4a2 2 0 0 1-2-2V6z"/></svg></span>
       <div>
         <h3 style="font-size:1.1rem;font-weight:800;margin:0;">Resumen Diario</h3>
         <p style="color:var(--text-2);font-size:.78rem;margin:0;">Últimas 24 horas en tus servidores</p>
@@ -6120,7 +6136,7 @@ window.openSsSection = function(section, btn) {
 <!-- ══ USER STATS MODAL ══ -->
 <div class="modal-overlay" id="user-stats-modal" onclick="if(event.target===this)closeModal('user-stats-modal')" style="z-index:1100;">
   <div class="modal" style="max-width:440px;">
-    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:16px;">📊 Mis Estadísticas</h3>
+    <h3 style="font-size:1.1rem;font-weight:800;margin-bottom:16px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Mis Estadísticas</h3>
     <div id="user-stats-content"></div>
     <div style="margin-top:16px;text-align:right;">
       <button class="btn btn-ghost" onclick="closeModal('user-stats-modal')">Cerrar</button>
