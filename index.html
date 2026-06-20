@@ -1941,7 +1941,7 @@ async function onUserLoggedIn(firebaseUser){
   const srvSnap=await fbGet('state/servers');
   if(srvSnap.exists()){
     const val=srvSnap.val();
-    state.servers=Array.isArray(val)?val:Object.values(val||{});
+    state.servers=normalizeServers(Array.isArray(val)?val:Object.values(val||{}));
   }
 
   document.getElementById('auth-screen').style.display='none';
@@ -2014,9 +2014,16 @@ function updateAvatarsInDOM(){
     }
   });
 }
+function normalizeServers(servers){
+  (servers||[]).forEach(srv=>{
+    if(!Array.isArray(srv.channels))srv.channels=[];
+    srv.channels.forEach(cat=>{if(cat&&cat.type==='category'&&!Array.isArray(cat.children))cat.children=[];});
+  });
+  return servers||[];
+}
 function subscribeServers(){
   fbOn('state/servers',snap=>{
-    if(snap.exists()){const val=snap.val();state.servers=Array.isArray(val)?val:Object.values(val||{});}
+    if(snap.exists()){const val=snap.val();state.servers=normalizeServers(Array.isArray(val)?val:Object.values(val||{}));}
     else state.servers=[];
     renderServerBar();renderChannelsPanel();renderMembersPanel();
   });
@@ -2861,7 +2868,7 @@ function createChannel(){
   const isPrivate=document.getElementById('ch-private-toggle').classList.contains('on');
   const srv=getServer(state.currentServerId);
   const ch={id:'ch'+genId(8),name,type,serverId:srv.id,categoryId:catId,private:isPrivate};
-  const cat=srv.channels.find(c=>c.id===catId);if(cat)cat.children.push(ch);
+  const cat=srv.channels.find(c=>c.id===catId);if(cat){if(!Array.isArray(cat.children))cat.children=[];cat.children.push(ch);}
   saveServers();closeModal('add-channel-modal');selectChannel(ch.id);showToast('✅ Canal #'+name+' creado');
 }
 // ── CATEGORY EDITOR ──
@@ -2946,7 +2953,7 @@ function saveEditChannel(){
 function deleteChannel(chId,srvId){
   if(!confirm('¿Eliminar canal?'))return;
   const srv=getServer(srvId);
-  srv.channels.forEach(cat=>{cat.children=cat.children.filter(c=>c.id!==chId);});
+  srv.channels.forEach(cat=>{cat.children=(cat.children||[]).filter(c=>c.id!==chId);});
   saveServers();if(state.currentChannelId===chId)state.currentChannelId=null;renderAll();showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Canal eliminado');
 }
 
