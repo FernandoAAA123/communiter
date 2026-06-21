@@ -143,9 +143,13 @@ select option{background:var(--bg-3);color:var(--text-0);}
 #app.visible{display:flex;}
 
 /* SERVER BAR — cuadrados redondeados, no círculos */
-#server-bar{width:var(--sidebar-w);background:var(--bg-0);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;overflow:hidden;flex-shrink:0;border-right:1px solid var(--border);}
+#server-bar{width:var(--sidebar-w);background:var(--bg-0);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;overflow:hidden;flex-shrink:0;border-right:1px solid var(--border);position:relative;}
 #server-icons-list{display:flex;flex-direction:column;align-items:center;gap:2px;overflow-y:auto;overflow-x:hidden;max-height:calc(100vh - 200px);flex-shrink:0;}
 #server-icons-list::-webkit-scrollbar{width:5px;}
+.srvbar-fade{position:absolute;left:0;right:0;height:22px;pointer-events:none;opacity:0;transition:opacity .15s;z-index:5;}
+.srvbar-fade-a{top:58px;background:linear-gradient(to bottom,var(--bg-0),transparent);}
+.srvbar-fade-b{bottom:58px;background:linear-gradient(to top,var(--bg-0),transparent);}
+.srvbar-fade.show{opacity:1;}
 .server-icon{width:44px;height:44px;border-radius:14px;background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.15rem;font-weight:700;color:var(--text-2);transition:border-radius .2s,background .15s,box-shadow .15s;position:relative;flex-shrink:0;overflow:hidden;user-select:none;border:1.5px solid transparent;}
 .server-icon:hover{border-radius:12px;background:var(--bg-4);border-color:var(--border);}
 .server-icon.active{border-radius:12px;background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 16px var(--accent-glow);}
@@ -490,6 +494,9 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   #server-bar .server-icon{flex-shrink:0;}
   #server-icons-list{flex-direction:row;align-items:center;gap:4px;overflow-y:visible;overflow-x:visible;max-height:none;}
   #server-bar{overflow-x:auto;overflow-y:hidden;}
+  .srvbar-fade{top:0;bottom:0;left:auto;right:auto;width:16px;height:auto;}
+  .srvbar-fade-a{left:0;background:linear-gradient(to right,var(--bg-0),transparent);}
+  .srvbar-fade-b{right:0;background:linear-gradient(to left,var(--bg-0),transparent);}
 
   /* Toggle button to hide/show the server bar — mobile only */
   #server-bar-toggle{
@@ -837,6 +844,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div id="server-icons-list"></div>
     <div class="server-sep"></div>
     <div class="server-icon" id="add-server-btn" title="Nueva comunidad" onclick="toggleAddServerMenu(event)">＋</div>
+    <div class="srvbar-fade srvbar-fade-a" id="srvbar-fade-a"></div>
+    <div class="srvbar-fade srvbar-fade-b" id="srvbar-fade-b"></div>
   </div>
   <button id="server-bar-toggle" onclick="toggleServerBarMobile()" title="Ocultar/mostrar servidores">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -2306,6 +2315,19 @@ function renderServerBar(){
     el.appendChild(div);
   });
   document.getElementById('dm-btn').classList.toggle('active',state.currentServerId==='__dm__');
+  updateServerBarFades();
+}
+function updateServerBarFades(){
+  const fadeA=document.getElementById('srvbar-fade-a');
+  const fadeB=document.getElementById('srvbar-fade-b');
+  if(!fadeA||!fadeB)return;
+  const isMobile=window.innerWidth<=768;
+  const el=isMobile?document.getElementById('server-bar'):document.getElementById('server-icons-list');
+  if(!el)return;
+  const scrollPos=isMobile?el.scrollLeft:el.scrollTop;
+  const maxScroll=(isMobile?el.scrollWidth:el.scrollHeight)-(isMobile?el.clientWidth:el.clientHeight);
+  fadeA.classList.toggle('show',scrollPos>2);
+  fadeB.classList.toggle('show',scrollPos<maxScroll-2);
 }
 function renderChannelsPanel(){
   // Limpiar listeners de presencia de canales de voz de la render anterior
@@ -4994,6 +5016,10 @@ document.addEventListener('click',function(e){
 window.addEventListener('resize',checkMobile);
 document.addEventListener('DOMContentLoaded',checkMobile);
 window.addEventListener('load',checkMobile);
+
+window.addEventListener('resize',updateServerBarFades);
+document.getElementById('server-bar').addEventListener('scroll',updateServerBarFades);
+document.getElementById('server-icons-list').addEventListener('scroll',updateServerBarFades);
 
 function setTheme(theme, el) {
   document.documentElement.dataset.theme = theme === 'purple' ? '' : theme;
