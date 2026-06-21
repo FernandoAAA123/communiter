@@ -413,7 +413,8 @@ select option{background:var(--bg-3);color:var(--text-0);}
 /* MISC */
 .color-dot{width:18px;height:18px;border-radius:6px;display:inline-block;border:2px solid transparent;cursor:pointer;transition:all .15s;}
 .color-dot.selected{border-color:#fff;transform:scale(1.1);}
-.color-picker-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.color-picker-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;align-items:center;}
+.color-picker-row input[type="color"]{width:26px;height:26px;padding:2px;border-radius:6px;cursor:pointer;flex-shrink:0;}
 .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text-3);}
 .empty-state .big-icon{font-size:3.5rem;}
 .empty-state h3{font-size:.95rem;font-weight:600;color:var(--text-2);}
@@ -486,14 +487,25 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     border-right:none;border-top:1px solid var(--border);
     z-index:200;
     overflow-x:auto;overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior-x:contain;
     gap:4px;
     transition:transform .25s cubic-bezier(.4,0,.2,1);
   }
   #server-bar::-webkit-scrollbar{height:5px;}
   #server-bar .server-sep{width:1px;height:28px;margin:0 4px;flex-shrink:0;}
   #server-bar .server-icon{flex-shrink:0;}
-  #server-icons-list{flex-direction:row;align-items:center;gap:4px;overflow-y:visible;overflow-x:visible;max-height:none;}
-  #server-bar{overflow-x:auto;overflow-y:hidden;}
+  #server-bar #dm-btn,#server-bar #add-server-btn{flex-shrink:0;}
+  /* Clave del fix: en flexbox, un hijo sin flex-shrink:0 ni ancho propio
+     se comprime para caber en el padre en vez de desbordar — eso impedía
+     que #server-bar detectara contenido para scrollear y aparecieran más
+     de ~4 servidores en móvil. Forzamos que la lista crezca con su
+     contenido real y nunca se encoja. */
+  #server-icons-list{
+    flex-direction:row;align-items:center;gap:4px;
+    overflow-y:visible;overflow-x:visible;max-height:none;
+    flex-shrink:0;width:max-content;
+  }
   .srvbar-fade{top:0;bottom:0;left:auto;right:auto;width:16px;height:auto;}
   .srvbar-fade-a{left:0;background:linear-gradient(to right,var(--bg-0),transparent);}
   .srvbar-fade-b{right:0;background:linear-gradient(to left,var(--bg-0),transparent);}
@@ -1171,6 +1183,18 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
       </div>
       <label>Nombre de usuario</label><input type="text" id="us-username">
+      <label>Color de tu nombre <span style="color:var(--text-3);font-size:.75rem;text-transform:none;letter-spacing:0;font-weight:400;">(solo visible en Mensajes Directos — en comunidades manda el color de tu rol)</span></label>
+      <div class="color-picker-row" id="name-color-row">
+        <div class="color-dot selected" style="background:#7c3aed" data-color="#7c3aed" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#ec4899" data-color="#ec4899" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#3b82f6" data-color="#3b82f6" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#10b981" data-color="#10b981" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#f59e0b" data-color="#f59e0b" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#f43f5e" data-color="#f43f5e" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#06b6d4" data-color="#06b6d4" onclick="selectNameColor(this)"></div>
+        <div class="color-dot" style="background:#f97316" data-color="#f97316" onclick="selectNameColor(this)"></div>
+        <input type="color" value="#7c3aed" title="Color personalizado" oninput="state.nameSelectedColor=this.value;document.querySelectorAll('#name-color-row .color-dot').forEach(d=>d.classList.remove('selected'));">
+      </div>
       <label>Handle único <span style="color:var(--text-3);font-size:.78rem;">(@handle — para añadir amigos)</span></label>
       <div style="display:flex;gap:8px;align-items:center;">
         <div style="position:relative;flex:1;"><span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.95rem;pointer-events:none;">@</span><input type="text" id="us-handle" placeholder="tu_handle" style="padding-left:24px;" oninput="checkHandleAvailability(this.value)"></div>
@@ -1824,7 +1848,7 @@ const DEFAULT_STICKERS=[{n:'Baile',e:'💃'},{n:'Fuego',e:'🔥'},{n:'Shock',e:'
 let state={
   currentUser:null,servers:[],currentServerId:'__dm__',currentChannelId:null,
   messages:{},onlineUsers:{},typingUsers:{},
-  serverSelectedColor:'#5865f2',avatarSelectedColor:'#5865f2',
+  serverSelectedColor:'#5865f2',nameSelectedColor:'#7c3aed',
   membersVisible:true,pickerMode:'emoji',replyToMsg:null,editingMsgId:null,reactTargetMsgId:null,serverOrder:[],
   unreadCounts:{},dmConversations:{},currentDmUid:null,
   callActive:false,callChannelId:null,callStartTime:null,callTimerInterval:null,
@@ -1926,7 +1950,7 @@ async function initUserProfile(firebaseUser,displayName,photoURL){
   // 3. Create fresh profile if still nothing
   if(!snap.exists()){
     const tag='#'+String(Math.floor(Math.random()*9000+1000));
-    const profile={uid,name:displayName||'Usuario',tag,email,avatarUrl:photoURL||'',avatarColor:'#7c3aed',status:'online',customStatus:'',createdAt:Date.now()};
+    const profile={uid,name:displayName||'Usuario',tag,email,avatarUrl:photoURL||'',nameColor:'#7c3aed',status:'online',customStatus:'',createdAt:Date.now()};
     await fbSet('users/'+uid,profile);
     if(eKey)await fbSet('usersByEmail/'+eKey,profile);
   }
@@ -2022,13 +2046,17 @@ async function onUserLoggedIn(firebaseUser){
   const profile=snap&&snap.exists?.()?snap.val():{};
   state.currentUser={...profile,uid:firebaseUser.uid,email:firebaseUser.email||'',
     name:profile.name||firebaseUser.displayName||'Usuario',
-    avatarColor:profile.avatarColor||'#7c3aed',
+    // Migración: perfiles antiguos guardaban "avatarColor" y se usaba (por error) también
+    // como color de nombre. Si el perfil ya tiene nameColor, se respeta; si no, se hereda
+    // del avatarColor viejo para no perder la personalización previa del usuario.
+    nameColor:profile.nameColor||profile.avatarColor||'#7c3aed',
     status:profile.status||'online',
   };
-  state.avatarSelectedColor=state.currentUser.avatarColor;
+  delete state.currentUser.avatarColor;
+  state.nameSelectedColor=state.currentUser.nameColor;
 
   const presRef=fbRef('presence/'+state.currentUser.uid);
-  const presData={uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()};
+  const presData={uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',nameColor:state.currentUser.nameColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()};
   await window._fbSet(presRef,presData);
   // Sync email backup
   const eKey=emailToKey(state.currentUser.email||'');
@@ -2095,7 +2123,7 @@ async function onUserLoggedIn(firebaseUser){
 
   // Heartbeat presence
   setInterval(()=>{
-    if(state.currentUser)fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()});
+    if(state.currentUser)fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',nameColor:state.currentUser.nameColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()});
   },25000);
 
   // Request notification permission
@@ -2117,6 +2145,7 @@ function subscribePresence(){
 }
 function updateAvatarsInDOM(){
   // Update all msg-avatar and msg-author elements that have data-uid
+  const _isDmCtx=!!state.currentDmUid;
   document.querySelectorAll('[data-uid]').forEach(el=>{
     const uid=el.dataset.uid;
     const user=state.onlineUsers[uid];if(!user)return;
@@ -2126,11 +2155,13 @@ function updateAvatarsInDOM(){
         el.style.background='#000';
       } else {
         el.textContent=(user.name||'?')[0].toUpperCase();
-        el.style.background=user.avatarColor||'var(--accent)';
+        el.style.background=getAutoAvatarColor(uid||user.name);
       }
     }
     if(el.classList.contains('msg-author')){
-      el.style.color=user.avatarColor||'var(--accent)';
+      // En comunidad el color de nombre lo manda el rol (independiente por servidor);
+      // en MD lo manda el color de nombre elegido por el propio usuario.
+      el.style.color=_isDmCtx?(user.nameColor||'var(--text-1)'):(getRoleColorForUserInServer(uid,state.currentServerId)||'var(--text-1)');
     }
   });
 }
@@ -2232,13 +2263,11 @@ function updateUserBar(){
   const u=state.currentUser;
   const unameEl=document.getElementById('uname-display');
   unameEl.textContent=u.name;
-  const srv=getServer(state.currentServerId);
-  const mem=(srv?.members||[]).find(m=>(m.uid||m.id)===u.uid);
-  const roleColor=(mem?.roles||[]).reduce((c,rn)=>{const ro=(srv?.roles||[]).find(r=>r.name===rn||r.id===rn);return (ro&&ro.color&&!c)?ro.color:c;},'');
+  const roleColor=getRoleColorForUserInServer(u.uid,state.currentServerId);
   unameEl.style.color=roleColor||'var(--text-0)';
   document.getElementById('utag-display').textContent=u.handle?'@'+u.handle:(u.tag||'');
   const ava=document.getElementById('my-user-avatar');
-  ava.style.background=u.avatarUrl?'#000':u.avatarColor;
+  ava.style.background=u.avatarUrl?'#000':getAutoAvatarColor(u.uid||u.name);
   if(u.avatarUrl){ava.innerHTML=`<img src="${u.avatarUrl}" onerror="this.style.display='none'">`;}
   else{ava.innerHTML=`<span>${u.name[0].toUpperCase()}</span>`;}
   const dot=document.getElementById('user-status-dot');
@@ -2364,7 +2393,7 @@ function renderChannelsPanel(){
       const unread=state.unreadCounts[key]||0;
       const div=document.createElement('div');
       div.className='dm-item'+(state.currentChannelId===key?' active':'');
-      div.innerHTML=`<div class="member-avatar" style="background:${info.avatarColor||'#5865f2'};width:32px;height:32px;">${info.avatarUrl?`<img src="${info.avatarUrl}" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-size:.875rem;color:var(--text-1);font-weight:600;">${info.name||'?'}</div><div style="font-size:.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${info.lastMsg||''}</div></div>${unread?`<div class="dm-unread">${unread}</div>`:''}`;
+      div.innerHTML=`<div class="member-avatar" style="background:${getAutoAvatarColor(uid||info.name)};width:32px;height:32px;">${info.avatarUrl?`<img src="${info.avatarUrl}" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase()}</div><div style="flex:1;min-width:0;"><div style="font-size:.875rem;color:var(--text-1);font-weight:600;">${info.name||'?'}</div><div style="font-size:.75rem;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${info.lastMsg||''}</div></div>${unread?`<div class="dm-unread">${unread}</div>`:''}`;
       div.onclick=()=>openDM(uid);
       list.appendChild(div);
     });
@@ -2520,7 +2549,7 @@ function renderDMWelcome(){
           const dmId=getDMId(state.currentUser.uid,uid);
           const key='dm_'+dmId;
           const unread=state.unreadCounts[key]||0;
-          const bg=info.avatarUrl?'#000':(info.avatarColor||'#5865f2');
+          const bg=info.avatarUrl?'#000':getAutoAvatarColor(uid||info.name);
           const ava=info.avatarUrl?`<img src="${info.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase();
           return`<div onclick="openDM('${uid}')" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-3);border-radius:12px;cursor:pointer;transition:all .12s;border:1px solid transparent;" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--bg-4)'" onmouseout="this.style.borderColor='transparent';this.style.background='var(--bg-3)'">
             <div style="width:38px;height:38px;border-radius:12px;background:${bg};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;overflow:hidden;">${ava}</div>
@@ -2538,7 +2567,7 @@ function renderDMWelcome(){
       <div style="font-size:.68rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px;">Amigos — ${friends.length}</div>
       <div style="display:flex;flex-direction:column;gap:4px;">
         ${friends.slice(0,5).map(([uid,f])=>`<div onclick="openDM('${uid}')" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-3);border-radius:12px;cursor:pointer;transition:all .12s;border:1px solid transparent;" onmouseover="this.style.borderColor='var(--accent)';this.style.background='var(--bg-4)'" onmouseout="this.style.borderColor='transparent';this.style.background='var(--bg-3)'">
-          <div style="width:38px;height:38px;border-radius:12px;background:${f.avatarColor||'#5865f2'};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;">${(f.name||'?')[0].toUpperCase()}</div>
+          <div style="width:38px;height:38px;border-radius:12px;background:${getAutoAvatarColor(uid||f.name)};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.9rem;color:#fff;flex-shrink:0;">${(f.name||'?')[0].toUpperCase()}</div>
           <div style="flex:1;">
             <div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${f.name||'?'}</div>
             <div style="font-size:.72rem;color:var(--text-3);">@${f.handle||'?'}</div>
@@ -2699,8 +2728,8 @@ function buildForumPostHeader(){
     ${canDelete?`<button onclick="deleteForumPost('${state._forumChannelId}','${post.id}')" title="Eliminar publicación" style="position:absolute;top:0;right:0;background:rgba(244,63,94,.12);border:none;color:var(--red);cursor:pointer;border-radius:6px;padding:5px 9px;font-size:.72rem;display:flex;align-items:center;gap:4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar</button>`:''}
     ${post.coverImg?`<img src="${post.coverImg}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:12px;margin-bottom:12px;cursor:zoom-in;" onclick="openImageLightbox('${post.coverImg}')">`:''}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-      <div style="width:28px;height:28px;border-radius:8px;background:${post.color};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;">${(post.name||'?')[0].toUpperCase()}</div>
-      <span style="font-size:.8rem;font-weight:600;color:${post.color}">${post.name}</span>
+      <div style="width:28px;height:28px;border-radius:8px;background:${getAutoAvatarColor(post.uid||post.name)};display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0;">${(post.name||'?')[0].toUpperCase()}</div>
+      <span style="font-size:.8rem;font-weight:600;color:${post.roleColor||'var(--text-1)'}">${post.name}</span>
       <span style="font-size:.72rem;color:var(--text-3);">${fmtDateTime(post.ts)}</span>
     </div>
     <div style="font-size:1.1rem;font-weight:700;color:var(--text-0);margin-bottom:6px;padding-right:80px;">${post.title||'Sin título'}</div>
@@ -2749,11 +2778,14 @@ function buildMessageEl(msg,msgs,prevUid,prevTs){
     const contClass='msg-content'+(isEmojiOnlyContent(_displayContent)?' emoji-only':'');
     wrap.innerHTML=replyHtml+`<div class="msg-continuation" style="display:flex;gap:14px;"><span class="cont-time">${fmtTime(msg.ts)}</span><div class="msg-body"><div class="${contClass}">${formatContent(_displayContent)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
   }else{
-    const avatarStyle=`background:${msg.avatarUrl?'#000':msg.color}`;
+    const _isDmMsg=!!state.currentDmUid;
+    const _avaColor=getAutoAvatarColor(msg.uid||msg.name);
+    const avatarStyle=`background:${msg.avatarUrl?'#000':_avaColor}`;
     const avatarContent=msg.avatarUrl?`<img src="${msg.avatarUrl}" onerror="this.style.display='none'">`:(msg.name||'?')[0].toUpperCase();
     const mainClass='msg-content'+(isEmojiOnlyContent(msg._decrypted!==undefined?msg._decrypted:msg.content)?' emoji-only':'');
     const _displayContent2=msg._decrypted!==undefined?msg._decrypted:msg.content;
-    wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${msg.roleColor||'var(--text-1)'}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="${mainClass}">${formatContent(_displayContent2)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
+    const _nameColor=_isDmMsg?(msg.color||'var(--text-1)'):(msg.roleColor||'var(--text-1)');
+    wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${_nameColor}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="${mainClass}">${formatContent(_displayContent2)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
   }
   return wrap;
 }
@@ -2971,7 +3003,7 @@ function renderMembersPanel(){
       return;
     }
     const cat=document.createElement('div');cat.className='members-category';cat.textContent=`EN LÍNEA — ${visible.length}`;el.appendChild(cat);
-    visible.forEach(u=>el.appendChild(buildMemberEl({uid:u.uid,id:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl,roles:[]},true)));
+    visible.forEach(u=>el.appendChild(buildMemberEl({uid:u.uid,id:u.uid,name:u.name,avatarUrl:u.avatarUrl,roles:[]},true)));
     return;
   }
   if(!srv)return;
@@ -3018,11 +3050,10 @@ function buildMemberEl(m,isOnline){
   const uid=m.uid||m.id;
   const div=document.createElement('div');div.className='member-item';
   const avatarC=m.avatarUrl?`<img src="${m.avatarUrl}" onerror="this.style.display='none'">`:(m.name||'?')[0].toUpperCase();
-  const bg=m.avatarUrl?'#000':(m.avatarColor||m.color||'#5865f2');
+  const bg=m.avatarUrl?'#000':getAutoAvatarColor(uid||m.name);
   const realStatus=state.onlineUsers[uid]?.status||'offline';
   const statusColor=STATUS_COLORS[isOnline?realStatus:'offline'];
-  const srv=getServer(state.currentServerId);
-  const roleColor=(m.roles||[]).reduce((c,rn)=>{const ro=(srv?.roles||[]).find(r=>r.name===rn||r.id===rn);return (ro&&ro.color&&!c)?ro.color:c;},'');
+  const roleColor=getRoleColorForUserInServer(uid,state.currentServerId);
   const isBot=m.isBot||(uid||'').startsWith('bot_');
   const botBadgeHtml=isBot?'<span class="bot-badge" style="font-size:.5rem;padding:1px 4px;margin-left:3px;">BOT</span>':'';
   div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'}">${m.name||'?'}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div></div>`;
@@ -3043,23 +3074,23 @@ async function sendMessage(){
   const content=input.value.trim();
   if(!content||!state.currentChannelId)return;
   const u=state.currentUser;
-  const _srv=getServer(state.currentServerId);const _mem=(_srv?.members||[]).find(m=>(m.uid||m.id)===u.uid);const _rc=(_mem?.roles||[]).reduce((c,rn)=>{const ro=(_srv?.roles||[]).find(r=>r.name===rn);return (ro&&ro.color&&!c)?ro.color:c;},'');
   const isDM=state.currentChannelId.startsWith('dm_');
   const dmId=isDM?state.currentChannelId.replace('dm_',''):null;
+  const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
   let storedContent=content,decryptedForLocal=content;
   if(isDM&&isDMEncrypted(dmId)){
     const r=await dmEncryptText(dmId,content);
     storedContent=r.content;
   }
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,roleColor:_rc,avatarUrl:u.avatarUrl||'',content:storedContent,ts:Date.now(),reactions:[],pinned:false,edited:false,replyTo:state.replyToMsg?.id||null};
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:storedContent,ts:Date.now(),reactions:[],pinned:false,edited:false,replyTo:state.replyToMsg?.id||null};
   if(isDM){
     msg._decrypted=decryptedForLocal;
     fbSet('dmMessages/'+dmId+'/'+msg.id,msg);
     const otherUid=state.currentDmUid;
     const otherInfo=state.dmConversations[otherUid]||{name:'?'};
     const lastMsgPreview=isDMEncrypted(dmId)?'🔒 Mensaje cifrado':content.substring(0,40);
-    fbSet('dms/'+u.uid+'/'+otherUid,{uid:otherUid,name:otherInfo.name,avatarUrl:otherInfo.avatarUrl||'',avatarColor:otherInfo.avatarColor||'#5865f2',lastMsg:lastMsgPreview,ts:Date.now()});
-    fbSet('dms/'+otherUid+'/'+u.uid,{uid:u.uid,name:u.name,avatarUrl:u.avatarUrl||'',avatarColor:u.avatarColor,lastMsg:lastMsgPreview,ts:Date.now()});
+    fbSet('dms/'+u.uid+'/'+otherUid,{uid:otherUid,name:otherInfo.name,avatarUrl:otherInfo.avatarUrl||'',lastMsg:lastMsgPreview,ts:Date.now()});
+    fbSet('dms/'+otherUid+'/'+u.uid,{uid:u.uid,name:u.name,avatarUrl:u.avatarUrl||'',lastMsg:lastMsgPreview,ts:Date.now()});
   }else{
     fbSet('state/messages/'+state.currentChannelId+'/'+msg.id,msg);
   }
@@ -3074,7 +3105,8 @@ function sendImageUrl(){
   const url=document.getElementById('image-url-input').value.trim();
   if(!url||!state.currentChannelId)return;
   const u=state.currentUser;
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',imageUrl:url,ts:Date.now(),reactions:[],pinned:false,edited:false};
+  const _rc=getRoleColorForUserInServer(u.uid,state.currentServerId);
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',imageUrl:url,ts:Date.now(),reactions:[],pinned:false,edited:false};
   fbSet('state/messages/'+state.currentChannelId+'/'+msg.id,msg);
   if(!state.messages[state.currentChannelId])state.messages[state.currentChannelId]=[];
   if(!state.messages[state.currentChannelId].find(m=>m.id===msg.id))state.messages[state.currentChannelId].push(msg);
@@ -3157,8 +3189,9 @@ function doReaction(msgId,emoji){
 function sendSticker(e,n){
   if(!state.currentChannelId)return;
   const u=state.currentUser;
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',sticker:e,ts:Date.now(),reactions:[],pinned:false};
   const isDM=state.currentChannelId.startsWith('dm_');
+  const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',sticker:e,ts:Date.now(),reactions:[],pinned:false};
   if(isDM){fbSet('dmMessages/'+state.currentChannelId.replace('dm_','')+'/'+msg.id,msg);}
   else{fbSet('state/messages/'+state.currentChannelId+'/'+msg.id,msg);}
   if(!state.messages[state.currentChannelId])state.messages[state.currentChannelId]=[];
@@ -3168,8 +3201,9 @@ function sendSticker(e,n){
 function sendImageSticker(url,name){
   if(!state.currentChannelId)return;
   const u=state.currentUser;
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',sticker:name||'sticker',stickerUrl:url,ts:Date.now(),reactions:[],pinned:false};
   const isDM=state.currentChannelId.startsWith('dm_');
+  const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',sticker:name||'sticker',stickerUrl:url,ts:Date.now(),reactions:[],pinned:false};
   if(isDM){fbSet('dmMessages/'+state.currentChannelId.replace('dm_','')+'/'+msg.id,msg);}
   else{fbSet('state/messages/'+state.currentChannelId+'/'+msg.id,msg);}
   if(!state.messages[state.currentChannelId])state.messages[state.currentChannelId]=[];
@@ -3290,7 +3324,7 @@ function renderFriendsPage(tab){
     const color=STATUS_COLORS[st]||STATUS_COLORS.offline;
     return `<div class="friend-row">
       <div style="position:relative;flex-shrink:0;" onclick="showProfilePopupByUid(event,'${uid}',null)">
-        <div class="member-avatar" style="background:${f.avatarColor||'#5865f2'};width:36px;height:36px;">${f.avatarUrl?`<img src="${f.avatarUrl}" onerror="this.style.display='none'">`:(f.name||'?')[0].toUpperCase()}</div>
+        <div class="member-avatar" style="background:${getAutoAvatarColor(uid||f.name)};width:36px;height:36px;">${f.avatarUrl?`<img src="${f.avatarUrl}" onerror="this.style.display='none'">`:(f.name||'?')[0].toUpperCase()}</div>
         ${isAccepted?`<div style="position:absolute;bottom:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:${color};border:2.5px solid var(--bg-2);"></div>`:''}
       </div>
       <div style="flex:1;min-width:0;cursor:pointer;" onclick="showProfilePopupByUid(event,'${uid}',null)">
@@ -3463,7 +3497,7 @@ function createServer(){
   const srv={id,name,icon,iconImg,color:state.serverSelectedColor||'#7c3aed',desc,ownerId:state.currentUser.uid,
     serverType:document.getElementById('new-server-type').value||'public',
     channels:[{id:'cat'+id+'0',name:'TEXTO',type:'category',children:[{id:'ch'+genId(8),name:'general',type:'text',private:false},{id:'ch'+genId(8),name:'anuncios',type:'announcement',private:false}]},{id:'cat'+id+'1',name:'VOZ',type:'category',children:[{id:'ch'+genId(8),name:'General',type:'voice',private:false}]}],
-    members:[{uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Admin']}],
+    members:[{uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Admin']}],
     roles:[
       {id:'r1',name:'Admin',color:'#f43f5e',hoist:true,permissions:getDefaultPerms(true)},
       {id:'r2',name:'Moderador',color:'#f59e0b',hoist:true,permissions:{...getDefaultPerms(false),manage_messages:true,manage_members:true,view_audit_log:true,create_polls:true,create_events:true,mention_everyone:true}},
@@ -3512,7 +3546,7 @@ function openServerSettings(){
   // Pending requests
   const pendSec=document.getElementById('ss-pending-section');
   const pendList=document.getElementById('ss-pending-list');
-  if(pendSec&&pendList){const pend=srv.pendingMembers||[];pendSec.style.display=pend.length?'block':'none';pendList.innerHTML=pend.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg-3);border-radius:8px;"><div style="width:32px;height:32px;border-radius:50%;background:${p.avatarColor||'var(--accent)'};display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;overflow:hidden;">${p.avatarUrl?`<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`:(p.name||'?')[0].toUpperCase()}</div><div style="flex:1;font-size:.875rem;color:var(--text-1);">${p.name}</div><button class="btn btn-primary btn-sm" onclick="approvePending('${p.uid}')">Aceptar</button><button class="btn btn-ghost btn-sm" onclick="rejectPending('${p.uid}')">Rechazar</button></div>`).join('');}
+  if(pendSec&&pendList){const pend=srv.pendingMembers||[];pendSec.style.display=pend.length?'block':'none';pendList.innerHTML=pend.map(p=>`<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg-3);border-radius:8px;"><div style="width:32px;height:32px;border-radius:50%;background:${getAutoAvatarColor(p.uid||p.name)};display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:#fff;overflow:hidden;">${p.avatarUrl?`<img src="${p.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`:(p.name||'?')[0].toUpperCase()}</div><div style="flex:1;font-size:.875rem;color:var(--text-1);">${p.name}</div><button class="btn btn-primary btn-sm" onclick="approvePending('${p.uid}')">Aceptar</button><button class="btn btn-ghost btn-sm" onclick="rejectPending('${p.uid}')">Rechazar</button></div>`).join('');}
   document.getElementById('ss-server-desc').value=srv.desc||'';
   document.getElementById('ss-server-icon').value=typeof srv.icon==='string'&&srv.icon!==srv.name[0]?srv.icon:'';
   document.getElementById('ss-server-icon-b64').value='';
@@ -3577,7 +3611,7 @@ function renderSsMembers(srv){
   members.forEach(m=>{
     const uid=m.uid||m.id;
     const isOwner=srv.ownerId===uid;
-    const color=m.avatarColor||m.color||'var(--accent)';
+    const color=getAutoAvatarColor(uid||m.name);
     const row=document.createElement('div');
     row.className='ss-member-row';
     row.innerHTML=`
@@ -3902,7 +3936,8 @@ function createThread(){
   const imgB64=document.getElementById('thread-img-b64')?.value||'';
   if(state._forumChannelId){
     const fChId=state._forumChannelId;
-    const postMsg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',
+    const _rc=getRoleColorForUserInServer(u.uid,state.currentServerId);
+    const postMsg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',
       title:name,content:msg,coverImg:imgB64,ts:Date.now(),reactions:[],pinned:false,channelId:fChId};
     if(!state.messages[fChId])state.messages[fChId]=[];
     state.messages[fChId].push(postMsg);
@@ -3926,7 +3961,8 @@ function createThread(){
   });
   saveServers();
   if(msg){
-    const threadMsg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:msg,ts:Date.now(),reactions:[],pinned:false,channelId:threadId};
+    const _rc=getRoleColorForUserInServer(u.uid,state.currentServerId);
+    const threadMsg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:msg,ts:Date.now(),reactions:[],pinned:false,channelId:threadId};
     fbSet('state/messages/'+threadId+'/'+threadMsg.id,threadMsg);
   }
   closeModal('thread-modal');renderChannelsPanel();
@@ -3950,7 +3986,8 @@ function createPoll(){
   const duration=parseInt(document.getElementById('poll-duration').value);
   const u=state.currentUser;
   const poll={id:'poll'+genId(8),question:q,options:opts.map((o,i)=>({id:i,text:o,votes:[]})),createdBy:u.uid,createdAt:Date.now(),endsAt:duration?Date.now()+duration*1000:0};
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',poll,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
+  const _rc=getRoleColorForUserInServer(u.uid,state.currentServerId);
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',poll,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
   sendMsg(msg);closeModal('poll-modal');showToast('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Encuesta creada');
 }
 function votePoll(msgId,optId){
@@ -3975,7 +4012,8 @@ function createEvent(){
   if(!name||!date){showToast('⚠️ Nombre y fecha requeridos');return;}
   const u=state.currentUser;
   const ev={id:'ev'+genId(8),name,desc,date,location:loc,createdBy:u.uid,attendees:[u.uid],ts:Date.now()};
-  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',event:ev,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
+  const _rc=getRoleColorForUserInServer(u.uid,state.currentServerId);
+  const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',event:ev,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
   sendMsg(msg);closeModal('event-modal');showToast('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Evento creado');
 }
 function toggleAttendEvent(msgId){
@@ -4037,7 +4075,7 @@ function openLeaderboard(){
     const rows=sorted.map(([uid,xp],i)=>{
       const member=(srv.members||[]).find(m=>(m.uid||m.id)===uid);
       const name=member?.name||state.onlineUsers[uid]?.name||'Usuario';
-      const color=member?.color||member?.avatarColor||'var(--accent)';
+      const color=getAutoAvatarColor(uid||name);
       const prog=getXPProgress(xp);
       const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
       return`<div class="leaderboard-row">
@@ -4278,7 +4316,7 @@ function approvePending(uid){
   const p=srv.pendingMembers?.find(m=>m.uid===uid);if(!p)return;
   srv.pendingMembers=srv.pendingMembers.filter(m=>m.uid!==uid);
   if(!srv.members)srv.members=[];
-  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',avatarColor:p.avatarColor,color:p.avatarColor,roles:['Miembro']});
+  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',roles:['Miembro']});
   saveServers();openServerSettings();showToast('✅ '+p.name+' aceptado');
 }
 function rejectPending(uid){
@@ -4346,7 +4384,7 @@ function joinByInviteNew() {
     if(srv.serverType==='request'){
       if(!srv.pendingMembers) srv.pendingMembers=[];
       if(!srv.pendingMembers.find(p=>p.uid===state.currentUser.uid)){
-        srv.pendingMembers.push({uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',avatarColor:state.currentUser.avatarColor,ts:Date.now()});
+        srv.pendingMembers.push({uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',ts:Date.now()});
         saveServers();
       }
       document.getElementById('join-code-input').value='';
@@ -4355,7 +4393,7 @@ function joinByInviteNew() {
       showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Solicitud enviada a "'+srv.name+'"');return;
     }
     if (!srv.members) srv.members = [];
-    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
+    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
     saveServers();
   }
   document.getElementById('join-code-input').value = '';
@@ -4371,7 +4409,7 @@ function joinByInvite() {
   if (!srv) { showToast('❌ Código inválido'); return; }
   if (!(srv.members || []).find(m => (m.uid || m.id) === state.currentUser.uid)) {
     if (!srv.members) srv.members = [];
-    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
+    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
     saveServers();
   }
   selectServer(srv.id); closeModal('server-settings-modal'); showToast('✅ Te uniste a "' + srv.name + '"');
@@ -4403,7 +4441,7 @@ function openInvitePeopleModal() {
     row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:6px 8px;border-radius:8px;transition:background .1s;';
     row.onmouseover = () => row.style.background = 'var(--bg-3)';
     row.onmouseout = () => row.style.background = '';
-    const bg = m.avatarUrl ? '#000' : (m.color || m.avatarColor || 'var(--accent)');
+    const bg = m.avatarUrl ? '#000' : getAutoAvatarColor((m.uid||m.id)||m.name);
     const ava = m.avatarUrl ? `<img src="${m.avatarUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" onerror="this.style.display='none'">` : (m.name || '?')[0].toUpperCase();
     row.innerHTML = `
       <div style="width:32px;height:32px;border-radius:10px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0;overflow:hidden;">${ava}</div>
@@ -4457,7 +4495,7 @@ function showProfilePopup(event,uid){
 
 function showBotProfilePopup(event,botInfo){
   const popup=document.getElementById('profile-popup');
-  const color=botInfo.avatarColor||botInfo.color||'#5865f2';
+  const color=getAutoAvatarColor(botInfo.uid||botInfo.id||botInfo.name);
   popup.style.left=Math.min(event.clientX+10,window.innerWidth-300)+'px';
   popup.style.top=Math.min(event.clientY-20,window.innerHeight-360)+'px';
 
@@ -4506,7 +4544,7 @@ async function showProfilePopupByUid(event,uid,info){
   renderProfilePopupContent(u,uid,false);
 }
 function renderProfilePopupContent(u,uid,loading){
-  const name=u.name||'?';const color=u.avatarColor||u.color||'#7c3aed';const avatarUrl=u.avatarUrl||'';
+  const name=u.name||'?';const color=getAutoAvatarColor(uid||name);const avatarUrl=u.avatarUrl||'';
   const bannerUrl=u.bannerUrl||'';
   const bannerEl=document.getElementById('pp-banner');
   if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition='center';}
@@ -4642,7 +4680,7 @@ function saveUserSettings(){
   const bio=document.getElementById('us-bio').value.trim();
   const customStatus=document.getElementById('us-status').value.trim();
   const status=document.getElementById('us-presence').value;
-  const avatarColor=state.avatarSelectedColor;
+  const nameColor=state.nameSelectedColor;
   const webRaw=document.getElementById('us-social-web')?.value.trim()||'';
   let webUrl='';
   if(webRaw){
@@ -4672,8 +4710,8 @@ function saveUserSettings(){
   const newBannerB64=document.getElementById('us-banner-b64').value;
   const avatarUrl=newAvatarB64||state.currentUser.avatarUrl||'';
   const bannerUrl=newBannerB64||state.currentUser.bannerUrl||'';
-  state.currentUser={...state.currentUser,name,handle,displayName,bio,avatarUrl,bannerUrl,customStatus,status,avatarColor,social,privacy};
-  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,avatarColor,status,customStatus,bio,social,privacy,createdAt:state.currentUser.createdAt||Date.now()};
+  state.currentUser={...state.currentUser,name,handle,displayName,bio,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy};
+  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,social,privacy,createdAt:state.currentUser.createdAt||Date.now()};
   fbSet('users/'+state.currentUser.uid,userData);
   // Handle index for friend search
   fbSet('handles/'+handle,state.currentUser.uid);
@@ -4682,8 +4720,8 @@ function saveUserSettings(){
   // Keep email backup in sync so profile survives Firebase migration
   const eKey=emailToKey(state.currentUser.email||'');
   if(eKey)fbSet('usersByEmail/'+eKey,userData);
-  fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,avatarColor,status,customStatus,ts:Date.now()});
-  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.color=avatarColor;m.avatarUrl=avatarUrl;m.avatarColor=avatarColor;}});
+  fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,nameColor,status,customStatus,ts:Date.now()});
+  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;}});
   saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();showToast('✅ Perfil actualizado');
 }
 
@@ -4805,7 +4843,7 @@ async function startVoiceCall(){
     state.callActive=true;state.callChannelId=callChId;state.callStartTime=Date.now();
     document.getElementById('call-bar').classList.add('active');
     startCallTimer();
-    fbSet('calls/'+callChId+'/participants/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,color:state.currentUser.avatarColor||'',avatarUrl:state.currentUser.avatarUrl||'',ts:Date.now()});
+    fbSet('calls/'+callChId+'/participants/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',ts:Date.now()});
     window._fbOnDisconnect(fbRef('calls/'+callChId+'/participants/'+state.currentUser.uid)).remove();
     state._callBarCb=snap=>{
       const parts=snap.exists()?Object.values(snap.val()):[];
@@ -5246,16 +5284,18 @@ function openUserSettings() {
   const showP = document.getElementById('us-show-presence');
   if (u.privacy?.showPresence===false) showP.classList.remove('on'); else showP.classList.add('on');
   const avaEl = document.getElementById('us-avatar-preview');
+  const _autoAvaColor=getAutoAvatarColor(u.uid||u.name);
   if (u.avatarUrl) { avaEl.innerHTML=`<img src="${u.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`; }
-  else { avaEl.style.background=u.avatarColor||'#7c3aed'; avaEl.textContent=(u.name||'?')[0].toUpperCase(); }
+  else { avaEl.style.background=_autoAvaColor; avaEl.textContent=(u.name||'?')[0].toUpperCase(); }
   const banEl = document.getElementById('us-banner-preview');
   if (u.bannerUrl) { banEl.style.backgroundImage=`url(${u.bannerUrl})`;banEl.style.backgroundSize='cover';banEl.style.backgroundPosition='center';banEl.textContent=''; }
-  else { banEl.style.backgroundImage='';banEl.style.background=u.avatarColor||'var(--accent)'; }
+  else { banEl.style.backgroundImage='';banEl.style.background=_autoAvaColor; }
   const emailEl=document.getElementById('us-email-display');
   const uidEl=document.getElementById('us-uid-display');
   if(emailEl)emailEl.textContent=window._firebaseAuth?.currentUser?.email||'—';
   if(uidEl)uidEl.textContent=u.uid||'—';
-  state.avatarSelectedColor = u.avatarColor||'#7c3aed';
+  state.nameSelectedColor = u.nameColor||u.avatarColor||'#7c3aed';
+  document.querySelectorAll('#name-color-row .color-dot').forEach(d=>d.classList.toggle('selected',d.dataset.color===state.nameSelectedColor));
   document.getElementById('us-avatar-b64').value='';
   document.getElementById('us-banner-b64').value='';
   document.getElementById('handle-status').textContent='';
@@ -5291,8 +5331,8 @@ async function sendFriendRequestFromProfile(uid, btn){
   const tSnap=await fbGet('users/'+uid).catch(()=>null);
   const tUser=tSnap?.val()||{name:'Usuario',handle:''};
   const me=state.currentUser;
-  await fbSet('friends/'+me.uid+'/'+uid,{uid,name:tUser.name,handle:tUser.handle||'',avatarColor:tUser.avatarColor||'#5865f2',avatarUrl:tUser.avatarUrl||'',status:'pending',ts:Date.now()});
-  await fbSet('friends/'+uid+'/'+me.uid,{uid:me.uid,name:me.name,handle:me.handle||'',avatarColor:me.avatarColor||'#5865f2',avatarUrl:me.avatarUrl||'',status:'incoming',ts:Date.now()});
+  await fbSet('friends/'+me.uid+'/'+uid,{uid,name:tUser.name,handle:tUser.handle||'',avatarUrl:tUser.avatarUrl||'',status:'pending',ts:Date.now()});
+  await fbSet('friends/'+uid+'/'+me.uid,{uid:me.uid,name:me.name,handle:me.handle||'',avatarUrl:me.avatarUrl||'',status:'incoming',ts:Date.now()});
   if(btn){btn.textContent='Enviada';btn.disabled=true;btn.style.opacity='.6';}
   showToast('✅ Solicitud de amistad enviada');
 }
@@ -5342,7 +5382,7 @@ function renderFriendsList(){
   list.forEach(([uid,f])=>{
     const div=document.createElement('div');
     div.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-3);border-radius:var(--r-sm);';
-    div.innerHTML=`<div class="member-avatar" style="background:${f.avatarColor||'var(--accent)'};width:36px;height:36px;">${f.avatarUrl?`<img src="${f.avatarUrl}" onerror="this.style.display='none'">`:(f.name||'?')[0].toUpperCase()}</div>
+    div.innerHTML=`<div class="member-avatar" style="background:${getAutoAvatarColor(uid||f.name)};width:36px;height:36px;">${f.avatarUrl?`<img src="${f.avatarUrl}" onerror="this.style.display='none'">`:(f.name||'?')[0].toUpperCase()}</div>
       <div style="flex:1;min-width:0;"><div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${f.name||'?'}</div><div style="font-size:.72rem;color:var(--text-3);">@${f.handle||'?'}</div></div>
       <button class="btn btn-ghost btn-sm" onclick="openDM('${uid}');closeModal('friends-modal')">DM</button>
       <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="removeFriend('${uid}')">Eliminar</button>`;
@@ -5363,7 +5403,7 @@ function renderFriendRequests(){
     incoming.forEach(([uid,f])=>{
       const div=document.createElement('div');
       div.style.cssText='display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-3);border-radius:var(--r-sm);margin-bottom:6px;';
-      div.innerHTML=`<div class="member-avatar" style="background:${f.avatarColor||'var(--accent)'};width:36px;height:36px;">${(f.name||'?')[0].toUpperCase()}</div>
+      div.innerHTML=`<div class="member-avatar" style="background:${getAutoAvatarColor(uid||f.name)};width:36px;height:36px;">${(f.name||'?')[0].toUpperCase()}</div>
         <div style="flex:1;min-width:0;"><div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${f.name||'?'}</div><div style="font-size:.72rem;color:var(--text-3);">@${f.handle||'?'}</div></div>
         <button class="btn btn-primary btn-sm" style="width:auto;padding:4px 12px;" onclick="acceptFriendRequest('${uid}')">Aceptar</button>
         <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="rejectFriendRequest('${uid}')">Rechazar</button>`;
@@ -5401,8 +5441,8 @@ async function sendFriendRequest(){
   const tUser=tSnap?.val()||{name:'Usuario',handle};
   const me=state.currentUser;
   // Write pending on my side, incoming on their side
-  await fbSet('friends/'+me.uid+'/'+targetUid,{uid:targetUid,name:tUser.name,handle:tUser.handle||handle,avatarColor:tUser.avatarColor||'#5865f2',avatarUrl:tUser.avatarUrl||'',status:'pending',ts:Date.now()});
-  await fbSet('friends/'+targetUid+'/'+me.uid,{uid:me.uid,name:me.name,handle:me.handle||'',avatarColor:me.avatarColor||'#5865f2',avatarUrl:me.avatarUrl||'',status:'incoming',ts:Date.now()});
+  await fbSet('friends/'+me.uid+'/'+targetUid,{uid:targetUid,name:tUser.name,handle:tUser.handle||handle,avatarUrl:tUser.avatarUrl||'',status:'pending',ts:Date.now()});
+  await fbSet('friends/'+targetUid+'/'+me.uid,{uid:me.uid,name:me.name,handle:me.handle||'',avatarUrl:me.avatarUrl||'',status:'incoming',ts:Date.now()});
   input.value='';result.innerHTML='<span style="color:var(--green);display:inline-flex;align-items:center;gap:4px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Solicitud enviada a @'+handle+'</span>';
 }
 async function acceptFriendRequest(uid){
@@ -5436,11 +5476,11 @@ function renderDMWelcome(){
       </div>
       ${dms.length?`<div style="margin-bottom:12px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">DMs RECIENTES</div>
       <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px;">${dms.map(([uid,info])=>`<div onclick="openDM('${uid}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-3);border-radius:var(--r-sm);cursor:pointer;transition:background .1s;" onmouseover="this.style.background='var(--bg-4)'" onmouseout="this.style.background='var(--bg-3)'">
-        <div class="member-avatar" style="background:${info.avatarColor||'var(--accent)'};width:36px;height:36px;">${info.avatarUrl?`<img src="${info.avatarUrl}" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase()}</div>
+        <div class="member-avatar" style="background:${getAutoAvatarColor(uid||info.name)};width:36px;height:36px;">${info.avatarUrl?`<img src="${info.avatarUrl}" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase()}</div>
         <div style="min-width:0;"><div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${info.name||'?'}</div><div style="font-size:.75rem;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${info.lastMsg||''}</div></div></div>`).join('')}</div>`:''}
       ${friends.length?`<div style="margin-bottom:12px;font-size:.7rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-3);">AMIGOS — ${friends.length}</div>
       <div style="display:flex;flex-direction:column;gap:4px;">${friends.map(([uid,f])=>`<div onclick="openDM('${uid}')" style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg-3);border-radius:var(--r-sm);cursor:pointer;transition:background .1s;" onmouseover="this.style.background='var(--bg-4)'" onmouseout="this.style.background='var(--bg-3)'">
-        <div class="member-avatar" style="background:${f.avatarColor||'var(--accent)'};width:36px;height:36px;">${f.avatarUrl?`<img src="${f.avatarUrl}" onerror="this.style.display='none'">`:(f.name||'?')[0].toUpperCase()}</div>
+        <div class="member-avatar" style="background:${getAutoAvatarColor(uid||f.name)};width:36px;height:36px;">${f.avatarUrl?`<img src="${f.avatarUrl}" onerror="this.style.display='none'">`:(f.name||'?')[0].toUpperCase()}</div>
         <div style="min-width:0;"><div style="font-size:.875rem;font-weight:600;color:var(--text-0);">${f.name||'?'}</div><div style="font-size:.72rem;color:var(--text-3);">@${f.handle||'?'}</div></div></div>`).join('')}</div>`
       :'<div style="text-align:center;padding:30px;color:var(--text-3);font-size:.875rem;">Sin amigos aún.<br>¡Añade alguno con el botón de arriba!</div>'}
     </div>`;
@@ -5480,15 +5520,18 @@ function searchMessages(q){
   const msgs=state.messages[state.currentChannelId]||[];
   const found=msgs.filter(m=>m.content&&m.content.toLowerCase().includes(q.toLowerCase()));
   if(!found.length){results.innerHTML='<div style="color:var(--text-3);font-size:.85rem;text-align:center;padding:20px;">Sin resultados</div>';return;}
-  results.innerHTML=found.slice(-30).reverse().map(m=>`
+  const _isDmSearch=!!state.currentDmUid;
+  results.innerHTML=found.slice(-30).reverse().map(m=>{
+    const _nc=_isDmSearch?(m.color||'var(--text-1)'):(m.roleColor||'var(--text-1)');
+    return`
     <div onclick="jumpToMessage('${m.id}');closeModal('search-modal')" style="background:var(--bg-3);border-radius:var(--r-sm);padding:10px 12px;cursor:pointer;border:1px solid var(--border);transition:border-color .1s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-        <div style="width:20px;height:20px;border-radius:6px;background:${m.color};display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0;">${(m.name||'?')[0].toUpperCase()}</div>
-        <span style="font-size:.8rem;font-weight:600;color:${m.color}">${m.name}</span>
+        <div style="width:20px;height:20px;border-radius:6px;background:${getAutoAvatarColor(m.uid||m.name)};display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;color:#fff;flex-shrink:0;">${(m.name||'?')[0].toUpperCase()}</div>
+        <span style="font-size:.8rem;font-weight:600;color:${_nc}">${m.name}</span>
         <span style="font-size:.7rem;color:var(--text-3)">${fmtDateTime(m.ts)}</span>
       </div>
       <div style="font-size:.875rem;color:var(--text-1);">${highlightMatch(m.content,q)}</div>
-    </div>`).join('');
+    </div>`;}).join('');
 }
 function highlightMatch(text,q){
   const safe=text.replace(/</g,'&lt;');
@@ -5507,7 +5550,9 @@ function handleChatImageUpload(input){
   compressImage(file,800,800,400,b64=>{
     if(!state.currentChannelId)return;
     const u=state.currentUser;
-    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',imageData:b64,ts:Date.now(),reactions:[],pinned:false};
+    const isDM=!!state.currentDmUid;
+    const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
+    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',imageData:b64,ts:Date.now(),reactions:[],pinned:false};
     msg.channelId=state.currentChannelId;
     sendMsg(msg);
   });
@@ -5574,7 +5619,9 @@ function sendAudioMessage(){
   reader.onload=e=>{
     const b64=e.target.result;
     const u=state.currentUser;
-    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',audioData:b64,ts:Date.now(),reactions:[],pinned:false};
+    const isDM=!!state.currentDmUid;
+    const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
+    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',audioData:b64,ts:Date.now(),reactions:[],pinned:false};
     msg.channelId=state.currentChannelId;
     sendMsg(msg);
     closeAudioModal();
@@ -5681,8 +5728,27 @@ function handleGlobalClick(e){
 function handleInputKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}}
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,200)+'px';}
 function switchTab(prefix,idx,btn){const modal=btn.closest('.modal');modal.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');modal.querySelectorAll('.tab-content').forEach((c,i)=>c.classList.toggle('active',i===idx));}
-function selectAvatarColor(el){document.querySelectorAll('#us-color-row .color-dot').forEach(d=>d.classList.remove('selected'));el.classList.add('selected');state.avatarSelectedColor=el.dataset.color;}
+function selectNameColor(el){document.querySelectorAll('#name-color-row .color-dot').forEach(d=>d.classList.remove('selected'));el.classList.add('selected');state.nameSelectedColor=el.dataset.color;}
 function selectServerColor(el){document.querySelectorAll('#server-color-picker .color-dot').forEach(d=>d.classList.remove('selected'));el.classList.add('selected');state.serverSelectedColor=el.dataset.color;}
+// Color de rol del miembro `uid` dentro del servidor `serverId` (independiente por comunidad).
+// Devuelve '' si el usuario no tiene ningún rol con color asignado en ese servidor.
+function getRoleColorForUserInServer(uid,serverId){
+  const srv=getServer(serverId);
+  const mem=(srv?.members||[]).find(m=>(m.uid||m.id)===uid);
+  return (mem?.roles||[]).reduce((c,rn)=>{
+    const ro=(srv?.roles||[]).find(r=>r.name===rn||r.id===rn);
+    return (ro&&ro.color&&!c)?ro.color:c;
+  },'');
+}
+// Color de avatar automático: determinístico según el uid (o nombre como respaldo),
+// para que cada persona tenga siempre el mismo color sin tener que elegirlo.
+const AUTO_AVATAR_PALETTE=['#7c3aed','#ec4899','#3b82f6','#10b981','#f59e0b','#f43f5e','#06b6d4','#8b5cf6','#f97316','#14b8a6'];
+function getAutoAvatarColor(seed){
+  const s=String(seed||'?');
+  let hash=0;
+  for(let i=0;i<s.length;i++){hash=(hash*31+s.charCodeAt(i))>>>0;}
+  return AUTO_AVATAR_PALETTE[hash%AUTO_AVATAR_PALETTE.length];
+}
 function getServer(id){return state.servers.find(s=>s.id===id);}
 function getChannel(id,srv){if(!id||!srv)return null;for(const cat of(srv.channels||[])){const ch=(cat.children||[]).find(c=>c.id===id);if(ch)return ch;}return null;}
 function genId(n=10){return Math.random().toString(36).substring(2,2+n);}
@@ -5740,7 +5806,9 @@ document.addEventListener('paste',e=>{
   const file=imageItem.getAsFile();if(!file)return;
   compressImage(file,800,800,400,b64=>{
     const u=state.currentUser;
-    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.avatarColor,avatarUrl:u.avatarUrl||'',content:'',imageData:b64,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
+    const isDM=!!state.currentDmUid;
+    const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
+    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',imageData:b64,ts:Date.now(),reactions:[],pinned:false,channelId:state.currentChannelId};
     sendMsg(msg);showToast('<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> Imagen pegada');
   });
 });
@@ -6025,7 +6093,7 @@ function runGlobalSearch(query) {
       return `<div onclick="closeModal('global-search-modal');selectServer('${srv.id}');setTimeout(()=>selectChannel('${ch.id}'),100);" style="padding:10px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;" onmouseover="this.style.background='var(--bg-3)'" onmouseout="this.style.background=''">
         <div style="font-size:.68rem;color:var(--text-3);margin-bottom:4px;font-weight:600;">${srv.name} › #${ch.name}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;">
-          <div style="width:26px;height:26px;border-radius:50%;background:${msg.avatarColor||'var(--accent)'};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;">${ava}</div>
+          <div style="width:26px;height:26px;border-radius:50%;background:${getAutoAvatarColor(msg.uid||msg.userName)};flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;color:#fff;">${ava}</div>
           <div>
             <span style="font-size:.78rem;font-weight:700;color:var(--text-1);">${msg.userName || 'Usuario'}</span>
             <span style="font-size:.72rem;color:var(--text-3);margin-left:6px;">${_relTime(msg.ts)}</span>
@@ -6069,7 +6137,7 @@ function scheduleDispatch(entry) {
     const ch = srv ? getChannel(entry.chId, srv) : null;
     if (!ch) return;
     const uid = state.currentUser?.uid;
-    const msg = { id: 'm' + genId(10), text: entry.text, uid, userName: state.currentUser.displayName || 'Tú', ts: Date.now(), avatarColor: state.currentUser.avatarColor || 'var(--accent)' };
+    const msg = { id: 'm' + genId(10), text: entry.text, uid, userName: state.currentUser.displayName || 'Tú', ts: Date.now() };
     await fbSet('messages/' + entry.chId + '/' + msg.id, msg);
     showToast('📨 Mensaje programado enviado en #' + ch.name);
     // Remove from list
