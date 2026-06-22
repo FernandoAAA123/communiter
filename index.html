@@ -625,6 +625,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   }
   .modal-overlay{align-items:flex-end;padding:0;}
   .modal-overlay#create-server-modal{align-items:center;padding:16px;}
+  .modal-overlay#create-server-modal .modal{max-height:calc(100vh - 80px)!important;border-radius:16px!important;overflow-y:auto;}
 
   /* Server settings modal */
   #server-settings-modal{max-height:92vh!important;border-radius:20px 20px 0 0;overflow:hidden;}
@@ -949,7 +950,6 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       </div>
       <textarea id="channel-note-input" rows="2" placeholder="Escribe tu nota privada para este canal..." style="width:100%;background:transparent;border:none;padding:8px 10px;color:var(--text-0);font-family:var(--font);font-size:.82rem;resize:none;outline:none;box-sizing:border-box;"></textarea>
     </div>
-    <div id="mobile-input-spacer"></div>
     <div id="input-area">
       <div id="input-box">
         <button class="input-btn" onclick="document.getElementById('img-file-input').click()" title="Imagen"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
@@ -990,6 +990,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <div class="picker-body" id="picker-content"></div>
       </div>
     </div>
+    <div id="mobile-input-spacer"></div>
   </div>
   <div id="members-panel">
     <div id="members-header">Miembros</div>
@@ -1331,7 +1332,32 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <button class="btn btn-ghost btn-sm" onclick="copyUID()">Copiar</button>
       </div>
-      <div style="margin-top:20px;padding:14px;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.15);border-radius:var(--r-sm);">
+      <!-- BAP ID SECTION -->
+      <div style="margin-top:16px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-sm);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <img src="https://chibi.iitranq.co.uk/BmBfGROSXFdY.jpg" style="width:22px;height:22px;border-radius:6px;object-fit:cover;" alt="BAP ID">
+          <span style="font-size:.875rem;font-weight:700;color:var(--text-0);">BAP ID</span>
+        </div>
+        <!-- Desconectado -->
+        <div id="bap-id-nova-disconnected">
+          <p style="font-size:.76rem;color:var(--text-2);margin-bottom:10px;line-height:1.5;">Conecta tu BAP ID para sincronizar tu cuenta con todos los juegos y apps de BAP Studios.</p>
+          <button class="btn btn-primary btn-sm" style="width:100%;" onclick="window.BapIDNova && window.BapIDNova.open()">Conectar BAP ID</button>
+        </div>
+        <!-- Conectado -->
+        <div id="bap-id-nova-connected" style="display:none;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div id="bap-id-nova-avatar" style="width:36px;height:36px;border-radius:50%;background:var(--bg-4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;overflow:hidden;flex-shrink:0;"></div>
+            <div style="flex:1;min-width:0;">
+              <div id="bap-id-nova-name" style="font-size:.875rem;font-weight:600;color:var(--text-0);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+              <div id="bap-id-nova-email" style="font-size:.72rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
+            </div>
+            <span style="font-size:.68rem;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2);white-space:nowrap;">Conectado</span>
+          </div>
+          <button class="btn btn-ghost btn-sm" style="width:100%;font-size:.75rem;color:var(--text-3);" onclick="window.BapIDNova && window.BapIDNova.logout()">Desconectar BAP ID</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;padding:14px;background:rgba(244,63,94,.05);border:1px solid rgba(244,63,94,.15);border-radius:var(--r-sm);">
         <div style="font-size:.875rem;font-weight:600;color:var(--red);margin-bottom:6px;display:flex;align-items:center;gap:6px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Zona de peligro</div>
         <div style="font-size:.78rem;color:var(--text-3);margin-bottom:12px;">Esta acción es permanente e irreversible.</div>
         <button class="btn btn-danger" style="width:100%;" onclick="deleteMyAccount()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar cuenta permanentemente</button>
@@ -6619,6 +6645,93 @@ window.openSsSection = function(section, btn) {
   <div style="color:var(--text-2);font-size:.875rem;">Silenciando notificaciones...</div>
   <button onclick="stopFocusTimer()" style="margin-top:8px;padding:10px 24px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:#fff;cursor:pointer;font-family:var(--font);font-size:.875rem;">Terminar enfoque</button>
 </div>
+
+<!-- ══ BAP ID INTEGRATION ══ -->
+<script type="module">
+(function () {
+  const BAP_ID_URL     = 'https://fernandoaaa123.github.io/BAP-ID/';
+  const BAP_PROJECT_ID = 'bap-studios-id';
+  const BAP_API_KEY    = 'AIzaSyDYO-VjjLbqrYIWV-mMfKpsR_TvBJZgLZ0';
+  const BAP_USERS_URL  = `https://firestore.googleapis.com/v1/projects/${BAP_PROJECT_ID}/databases/(default)/documents/bap_users`;
+
+  let _user  = null;
+  let _ready = false;
+
+  const _getUID  = () => { try { return localStorage.getItem('bap_id_uid') || null; } catch(e) { return null; } };
+  const _setUID  = uid => { try { localStorage.setItem('bap_id_uid', uid); } catch(e) {} };
+  const _clearUID = () => { try { localStorage.removeItem('bap_id_uid'); } catch(e) {} };
+
+  async function _fetchProfile(uid) {
+    try {
+      const r = await fetch(`${BAP_USERS_URL}/${uid}?key=${BAP_API_KEY}`);
+      if (!r.ok) return null;
+      const doc = await r.json();
+      const f = doc.fields || {};
+      return {
+        uid,
+        email: f.email?.stringValue || '',
+        name:  f.name?.stringValue  || '',
+        photo: f.photo?.stringValue || ''
+      };
+    } catch(e) { return null; }
+  }
+
+  function _updateUI(user) {
+    const disc = document.getElementById('bap-id-nova-disconnected');
+    const conn = document.getElementById('bap-id-nova-connected');
+    if (!disc || !conn) { setTimeout(() => _updateUI(user), 300); return; }
+    if (user) {
+      disc.style.display = 'none';
+      conn.style.display = '';
+      const av = document.getElementById('bap-id-nova-avatar');
+      if (av) {
+        if (user.photo) av.innerHTML = `<img src="${user.photo}" style="width:100%;height:100%;object-fit:cover;">`;
+        else av.textContent = (user.name || user.email || '?').charAt(0).toUpperCase();
+      }
+      const nameEl  = document.getElementById('bap-id-nova-name');
+      const emailEl = document.getElementById('bap-id-nova-email');
+      if (nameEl)  nameEl.textContent  = user.name  || user.email.split('@')[0] || '—';
+      if (emailEl) emailEl.textContent = user.email || '—';
+    } else {
+      disc.style.display = '';
+      conn.style.display = 'none';
+    }
+  }
+
+  async function _init() {
+    const uid = _getUID();
+    if (!uid) { _updateUI(null); return; }
+    const profile = await _fetchProfile(uid);
+    if (!profile) { _clearUID(); _updateUI(null); return; }
+    _user  = profile;
+    _ready = true;
+    _updateUI(profile);
+  }
+
+  window.addEventListener('message', async (e) => {
+    if (!e.data || e.data.type !== 'BAP_ID_LOGIN') return;
+    const { uid, name, email, photo } = e.data;
+    if (!uid) return;
+    _setUID(uid);
+    _user  = { uid, name, email, photo: photo || '' };
+    _ready = true;
+    _updateUI(_user);
+  });
+
+  window.BapIDNova = {
+    open:     () => window.open(BAP_ID_URL, 'bap_id', 'width=420,height=620'),
+    isReady:  () => _ready,
+    getUser:  () => _user,
+    logout:   () => { _clearUID(); _user = null; _ready = false; _updateUI(null); }
+  };
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(_init, 400));
+  } else {
+    setTimeout(_init, 400);
+  }
+})();
+</script>
 
 </body>
 </html>
