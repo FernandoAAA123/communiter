@@ -2088,10 +2088,10 @@ async function onUserLoggedIn(firebaseUser){
 
   const presRef=fbRef('presence/'+state.currentUser.uid);
   const presData={uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',nameColor:state.currentUser.nameColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()};
-  await window._fbSet(presRef,presData);
+  await withTimeout(window._fbSet(presRef,presData),5000,null);
   // Sync email backup
   const eKey=emailToKey(state.currentUser.email||'');
-  if(eKey){const snap2=await fbGet('users/'+state.currentUser.uid);if(snap2.exists())fbSet('usersByEmail/'+eKey,snap2.val());}
+  if(eKey){const snap2=await withTimeout(fbGet('users/'+state.currentUser.uid),5000,null);if(snap2&&snap2.exists?.())fbSet('usersByEmail/'+eKey,snap2.val());}
   window._fbOnDisconnect(presRef).remove();
   window._fbOnDisconnect(fbRef('typing/'+state.currentUser.uid)).remove();
   // Set offline immediately when tab closes (faster than Firebase onDisconnect ~60s)
@@ -2114,8 +2114,8 @@ async function onUserLoggedIn(firebaseUser){
     fbUpdate('users/'+state.currentUser.uid,{handle:autoHandle});
   }
 
-  const srvSnap=await fbGet('state/servers');
-  if(srvSnap.exists()){
+  const srvSnap=await withTimeout(fbGet('state/servers'),6000,null);
+  if(srvSnap&&srvSnap.exists?.()){
     const val=srvSnap.val();
     state.servers=normalizeServers(Array.isArray(val)?val:Object.values(val||{}));
   }
@@ -5545,7 +5545,7 @@ function showLoadingOverlay(msg){
 }
 function hideLoadingOverlay(){
   const el=document.getElementById('loading-overlay');
-  if(el){el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>{el.style.display='none';el.style.opacity='1';},400);}
+  if(el){el.style.pointerEvents='none';el.style.opacity='0';el.style.transition='opacity .4s';setTimeout(()=>{el.style.display='none';el.style.opacity='1';el.style.pointerEvents='';},400);}
 }
 
 // ── DESKTOP NOTIFICATIONS ──
@@ -5765,7 +5765,7 @@ function updateOnlineCount(){
 }
 function handleGlobalClick(e){
   if(!e.target.closest('#add-server-menu')&&!e.target.closest('#add-server-btn'))closeAddServerMenu();
-  if(!e.target.closest('#emoji-picker')&&!e.target.closest('.input-btn')){closePicker();state.reactTargetMsgId=null;}
+  if(!e.target.closest('#emoji-picker')&&!e.target.closest('.input-btn')&&!e.target.closest('.qr-more')){closePicker();state.reactTargetMsgId=null;}
   if(!e.target.closest('#quick-react-popup')&&!e.target.closest('[onclick^="quickReact"]'))closeQuickReact();
   if(!e.target.closest('#context-menu')&&!e.target.closest('.server-icon')&&!e.target.closest('.friend-ctx-btn'))closeCtx();
   if(!e.target.closest('#profile-popup')&&!e.target.closest('[data-uid]')&&!e.target.closest('.member-item'))closeProfilePopup();
@@ -5829,6 +5829,7 @@ document.addEventListener('firebase-ready',()=>{
       }catch(err){
         console.error('Login error:',err);
         hideLoadingOverlay();
+        document.getElementById('app').classList.remove('visible');
         document.getElementById('auth-screen').style.display='flex';
         document.getElementById('live-badge').style.display='none';
         state.currentUser=null;
