@@ -1295,6 +1295,17 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 
       <button class="btn btn-primary" style="width:100%;" onclick="document.getElementById('ct-theme-file').click()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Cargar tema</button>
       <input type="file" id="ct-theme-file" accept="application/json,.json" style="display:none" onchange="loadCustomThemeFile(this)">
+
+      <div style="margin:24px 0 16px;border-top:1px solid var(--border);"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h4 style="font-size:.95rem;font-weight:700;color:var(--text-0);margin:0;">Instalar Nova</h4>
+        <span id="pwa-installed-badge" style="display:none;font-size:.65rem;font-weight:700;color:var(--green);background:rgba(16,185,129,.12);padding:2px 8px;border-radius:20px;">Instalada</span>
+      </div>
+      <p style="font-size:.82rem;color:var(--text-3);margin:4px 0 12px;" id="pwa-desc">Descarga Nova como app: abre más rápido, tiene su propio ícono y se siente nativa — sin pasar por el navegador.</p>
+      <button class="btn btn-primary" style="width:100%;" id="pwa-install-btn" onclick="installPWA()" disabled>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Instalar como app
+      </button>
+      <div id="pwa-ios-instructions" style="display:none;font-size:.8rem;color:var(--text-2);background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px 12px;margin-top:8px;line-height:1.5;"></div>
     </div>
 
     <!-- TAB 2: PRIVACIDAD -->
@@ -5400,6 +5411,84 @@ window.addEventListener('resize',checkMobile);
 document.addEventListener('DOMContentLoaded',checkMobile);
 window.addEventListener('load',checkMobile);
 
+// ── PWA: instalar Nova como app ──
+let _pwaDeferredPrompt=null;
+function _isStandaloneApp(){return window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;}
+function _isIOSDevice(){return /iphone|ipad|ipod/i.test(navigator.userAgent)&&!window.MSStream;}
+function _initPWA(){
+  // Manifest autocontenido como data URI — no requiere un archivo aparte,
+  // necesario para que el navegador considere la página "instalable".
+  const manifest={
+    name:'Nova',short_name:'Nova',description:'Chat y comunidades',
+    start_url:'.',scope:'.',display:'standalone',
+    background_color:'#0b0b0f',theme_color:'#7c3aed',
+    icons:[
+      {src:'https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2',sizes:'192x192',type:'image/png'},
+      {src:'https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2',sizes:'512x512',type:'image/png'}
+    ]
+  };
+  const link=document.createElement('link');
+  link.rel='manifest';
+  link.href='data:application/manifest+json,'+encodeURIComponent(JSON.stringify(manifest));
+  document.head.appendChild(link);
+
+  // Service worker mínimo: Chrome exige uno registrado para ofrecer instalación.
+  // Sin caché offline por ahora — solo deja pasar las peticiones.
+  if('serviceWorker' in navigator){
+    try{
+      const swCode="self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>self.clients.claim());self.addEventListener('fetch',e=>{});";
+      const swUrl=URL.createObjectURL(new Blob([swCode],{type:'application/javascript'}));
+      navigator.serviceWorker.register(swUrl).catch(()=>{});
+    }catch(e){}
+  }
+
+  window.addEventListener('beforeinstallprompt',(e)=>{
+    e.preventDefault();
+    _pwaDeferredPrompt=e;
+    _updatePWAButtonUI();
+  });
+  window.addEventListener('appinstalled',()=>{
+    _pwaDeferredPrompt=null;
+    _updatePWAButtonUI();
+    showToast('✅ Nova instalada');
+  });
+  _updatePWAButtonUI();
+}
+function _updatePWAButtonUI(){
+  const btn=document.getElementById('pwa-install-btn');if(!btn)return;
+  const badge=document.getElementById('pwa-installed-badge');
+  const desc=document.getElementById('pwa-desc');
+  const iosBox=document.getElementById('pwa-ios-instructions');
+  if(_isStandaloneApp()){
+    btn.style.display='none';
+    if(badge)badge.style.display='inline-block';
+    if(desc)desc.textContent='Ya estás usando Nova instalada como app.';
+    if(iosBox)iosBox.style.display='none';
+    return;
+  }
+  if(_isIOSDevice()){
+    btn.style.display='none';
+    if(iosBox){iosBox.style.display='block';iosBox.innerHTML='Para instalar Nova en iPhone/iPad: toca el botón <strong>Compartir</strong> en Safari y elige <strong>"Agregar a pantalla de inicio"</strong>.';}
+    return;
+  }
+  btn.style.display='';
+  if(_pwaDeferredPrompt){
+    btn.disabled=false;btn.style.opacity='1';
+    if(desc)desc.textContent='Descarga Nova como app: abre más rápido, tiene su propio ícono y se siente nativa.';
+  }else{
+    btn.disabled=true;btn.style.opacity='.5';
+    if(desc)desc.textContent='Tu navegador no ofreció instalar Nova todavía. Busca "Instalar app" en el menú (⋮) de tu navegador.';
+  }
+}
+async function installPWA(){
+  if(!_pwaDeferredPrompt){showToast('⚠️ Busca "Instalar app" en el menú de tu navegador');return;}
+  _pwaDeferredPrompt.prompt();
+  await _pwaDeferredPrompt.userChoice;
+  _pwaDeferredPrompt=null;
+  _updatePWAButtonUI();
+}
+_initPWA();
+
 window.addEventListener('resize',updateServerBarFades);
 document.getElementById('server-bar').addEventListener('scroll',updateServerBarFades);
 document.getElementById('server-icons-list').addEventListener('scroll',updateServerBarFades);
@@ -5604,6 +5693,7 @@ function copyUID() {
 // ── OPEN USER SETTINGS (full) ──
 function openUserSettings() {
   const u = state.currentUser; if (!u) return;
+  _updatePWAButtonUI();
   document.getElementById('us-username').value = u.name || '';
   document.getElementById('us-handle').value = u.handle || '';
   document.getElementById('us-bio').value = u.bio || '';
