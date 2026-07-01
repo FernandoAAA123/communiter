@@ -1475,6 +1475,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <!-- FUNCIONES NOVA -->
       <div class="ss-nav-cat">NOVA</div>
       <button class="ss-nav-item" data-section="nova" onclick="openSsSection('nova',this)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M12 2l1.5 5L19 9l-5.5 2L12 16l-1.5-5L5 9l5.5-2z"/></svg> Funciones Nova</button>
+      <button class="ss-nav-item" data-section="bots" onclick="openSsSection('bots',this);loadBotsMarketplace()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15h.01M16 15h.01"/></svg> Bots</button>
 
       <div style="height:1px;background:var(--border);margin:10px 8px;"></div>
       <button class="ss-nav-item danger" onclick="deleteCurrentServer()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar comunidad</button>
@@ -1711,6 +1712,15 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <p class="ss-section-desc">Herramientas exclusivas de Nova para enriquecer tu comunidad.</p>
         </div>
         <div id="ss-nova-content"></div>
+      </div>
+
+      <!-- BOTS: MARKETPLACE / AÑADIR AL SERVIDOR -->
+      <div class="ss-section" id="ss-sec-bots">
+        <div class="ss-section-header">
+          <h2 class="ss-section-title"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:5px;"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 15h.01M16 15h.01"/></svg> Bots</h2>
+          <p class="ss-section-desc">Añade bots hechos en Nova Studio a esta comunidad, como en Discord. El bot solo responde mientras su creador lo tenga activo desde Nova Studio.</p>
+        </div>
+        <div id="ss-bots-list"><div style="color:var(--text-3);font-size:.85rem;">Cargando bots...</div></div>
       </div>
 
     </div><!-- end main content -->
@@ -2008,10 +2018,13 @@ async function initUserProfile(firebaseUser,displayName,photoURL){
       await fbSet('users/'+uid,recovered);
       snap=await fbGet('users/'+uid);
 
-      // Re-link old UID references to the new UID so servers/DMs reappear
-      if(oldUid&&oldUid!==uid){
-        await migrateUidReferences(oldUid,uid);
-      }
+      // NOTA DE SEGURIDAD: la migración automática de UID (migrateUidReferences)
+      // se desactivó porque reescribía nodos raíz completos (state, users, dms, etc.)
+      // desde el cliente, lo cual exige reglas de Firebase abiertas para cualquier
+      // usuario autenticado y es exactamente lo que Firebase marcó como vulnerable.
+      // Era un resto de una migración de proyecto antigua. Si alguna vez necesitas
+      // volver a re-vincular UIDs viejos, hazlo manualmente desde la consola/Admin SDK,
+      // nunca desde el cliente.
       showToast('✅ Perfil recuperado desde respaldo');
     }
   }
@@ -3827,6 +3840,98 @@ function isServerAdmin(srv){
   if(srv.ownerId===state.currentUser.uid)return true;
   const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);
   return m?.roles?.includes('Admin')||false;
+}
+
+// ══ BOTS: MARKETPLACE (añadir/quitar bots de un servidor, estilo Discord) ══
+// Los bots se crean y configuran en Nova Studio; desde aquí cualquier admin del
+// servidor puede instalarlos o quitarlos sin tener que entrar a Studio.
+const BOT_CHANNEL_MAP={welcome:'welcomeChannels',dex:'dexChannels',search:'searchChannels','plugin-mine':'channels','plugin-fight':'channels'};
+let _botsMarketUnsub=null;
+function getAllTextChannelsOf(srv){
+  return (srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>c.type==='text'||!c.type);
+}
+function loadBotsMarketplace(){
+  const el=document.getElementById('ss-bots-list');if(!el)return;
+  if(_botsMarketUnsub){try{_botsMarketUnsub();}catch(e){}_botsMarketUnsub=null;}
+  _botsMarketUnsub=window._fbOnValue(fbRef('botdata/bots'),snap=>{
+    const all=snap.exists()?Object.values(snap.val()):[];
+    renderBotsMarketplace(all);
+  });
+}
+function renderBotsMarketplace(bots){
+  const el=document.getElementById('ss-bots-list');if(!el)return;
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  if(!bots.length){el.innerHTML='<div style="color:var(--text-3);font-size:.85rem;">Todavía no has creado ningún bot. Crea uno en Nova Studio y aparecerá aquí.</div>';return;}
+  const typeLabel={welcome:'Bienvenida',dex:'Colección',search:'Búsqueda',external:'Externo','plugin-mine':'Dex Mine','plugin-fight':'Dex Fight'};
+  el.innerHTML=bots.map(b=>{
+    const installed=(b.installedServers||[]).includes(srv.id);
+    return `<div class="bot-card" style="background:var(--bg-3);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;">
+      <div style="width:44px;height:44px;border-radius:12px;background:${b.avatarColor||'#7c3aed'};display:flex;align-items:center;justify-content:center;font-size:1.2rem;font-weight:800;color:#fff;flex-shrink:0;overflow:hidden;">${b.avatarUrl?`<img src="${b.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`:(b.name||'B')[0].toUpperCase()}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-weight:700;color:var(--text-0);font-size:.9rem;">${b.name}<span style="margin-left:6px;font-size:.6rem;font-weight:700;background:var(--bg-4);color:var(--text-2);border-radius:4px;padding:1px 5px;">${typeLabel[b.type]||b.type}</span></div>
+        <div style="font-size:.78rem;color:var(--text-2);margin-top:2px;">${b.description||''}</div>
+      </div>
+      ${installed
+        ?`<button class="btn btn-ghost btn-sm" onclick="uninstallBotFromServer('${b.uid}')">Quitar</button>`
+        :`<button class="btn btn-primary btn-sm" onclick="openInstallBotFlow('${b.uid}')">Añadir</button>`}
+    </div>`;
+  }).join('');
+}
+function openInstallBotFlow(botId){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_server')){showToast('⚠️ No tienes permiso para añadir bots a este servidor');return;}
+  fbGet('botdata/bots/'+botId).then(snap=>{
+    const bot=snap&&snap.exists&&snap.exists()?snap.val():null;
+    if(!bot){showToast('⚠️ Bot no encontrado');return;}
+    const channelKey=BOT_CHANNEL_MAP[bot.type];
+    if(!channelKey){ // bots externos: sin canal, se añaden directo
+      installBotToServer(botId,null);return;
+    }
+    const channels=getAllTextChannelsOf(srv);
+    if(!channels.length){showToast('⚠️ Este servidor no tiene canales de texto');return;}
+    const options=channels.map(c=>`<option value="${c.id}">#${c.name}</option>`).join('');
+    const html=`<div class="modal-overlay open" id="bot-install-modal" style="z-index:9999;"><div class="modal" style="width:380px;">
+      <button class="close-btn" onclick="document.getElementById('bot-install-modal').remove()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      <h2>Añadir ${bot.name}</h2>
+      <p class="sub">Elige en qué canal responderá este bot en "${srv.name}".</p>
+      <label>Canal</label><select id="bot-install-channel">${options}</select>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="document.getElementById('bot-install-modal').remove()">Cancelar</button>
+        <button class="btn btn-primary" onclick="installBotToServer('${botId}',document.getElementById('bot-install-channel').value);document.getElementById('bot-install-modal').remove();">Añadir bot</button>
+      </div>
+    </div></div>`;
+    document.body.insertAdjacentHTML('beforeend',html);
+  });
+}
+async function installBotToServer(botId,channelId){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_server')){showToast('⚠️ No tienes permiso para añadir bots a este servidor');return;}
+  const snap=await fbGet('botdata/bots/'+botId);
+  const bot=snap&&snap.exists&&snap.exists()?snap.val():null;if(!bot)return;
+  const installedServers=Array.from(new Set([...(bot.installedServers||[]),srv.id]));
+  const updates={installedServers};
+  const channelKey=BOT_CHANNEL_MAP[bot.type];
+  if(channelKey&&channelId){
+    updates[channelKey]={...(bot[channelKey]||{}),[srv.id]:channelId};
+  }
+  await fbUpdate('botdata/bots/'+botId,updates);
+  showToast('✅ '+bot.name+' añadido a "'+srv.name+'"');
+}
+async function uninstallBotFromServer(botId){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_server')){showToast('⚠️ No tienes permiso para quitar bots de este servidor');return;}
+  if(!confirm('¿Quitar este bot de "'+srv.name+'"?'))return;
+  const snap=await fbGet('botdata/bots/'+botId);
+  const bot=snap&&snap.exists&&snap.exists()?snap.val():null;if(!bot)return;
+  const installedServers=(bot.installedServers||[]).filter(id=>id!==srv.id);
+  const updates={installedServers};
+  const channelKey=BOT_CHANNEL_MAP[bot.type];
+  if(channelKey&&bot[channelKey]){
+    const chMap={...bot[channelKey]};delete chMap[srv.id];
+    updates[channelKey]=chMap;
+  }
+  await fbUpdate('botdata/bots/'+botId,updates);
+  showToast('🗑️ Bot quitado de "'+srv.name+'"');
 }
 
 // ── ROLES ──
