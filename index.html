@@ -3861,6 +3861,7 @@ function loadBotsMarketplace(){
 function renderBotsMarketplace(bots){
   const el=document.getElementById('ss-bots-list');if(!el)return;
   const srv=getServer(state.currentServerId);if(!srv)return;
+  bots=bots.filter(b=>b.type!=='external'); // los personalizados corren dentro de Nova Studio, no por servidor
   if(!bots.length){el.innerHTML='<div style="color:var(--text-3);font-size:.85rem;">Todavía no has creado ningún bot. Crea uno en Nova Studio y aparecerá aquí.</div>';return;}
   const typeLabel={welcome:'Bienvenida',dex:'Colección',search:'Búsqueda',external:'Externo','plugin-mine':'Dex Mine','plugin-fight':'Dex Fight'};
   el.innerHTML=bots.map(b=>{
