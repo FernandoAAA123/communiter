@@ -9,7 +9,7 @@
 <link rel="shortcut icon" type="image/png" href="https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2">
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, onChildAdded, onDisconnect, remove, get, off, update }
+  import { getDatabase, ref, set, push, onValue, onChildAdded, onDisconnect, remove, get, off, update, query, orderByChild, limitToLast }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword,
     signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence }
@@ -38,6 +38,7 @@
   window._fbRef = ref; window._fbSet = set; window._fbPush = push;
   window._fbOnValue = onValue; window._fbOnChildAdded = onChildAdded;
   window._fbOff = off; window._fbOnDisconnect = onDisconnect;
+  window._fbQuery = query; window._fbOrderByChild = orderByChild; window._fbLimitToLast = limitToLast;
   window._fbRemove = remove; window._fbGet = get; window._fbUpdate = update;
   window._fbGoogleProvider = new GoogleAuthProvider();
   window._fbSignInGoogle = () => signInWithPopup(auth, window._fbGoogleProvider);
@@ -177,6 +178,7 @@ select option{background:var(--bg-3);color:var(--text-0);}
 .channel-item{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 14px;cursor:pointer;border-radius:var(--r-sm);margin:1px 6px;color:var(--text-3);font-size:.875rem;font-weight:500;transition:all .1s;position:relative;}
 .channel-item:hover{background:var(--bg-3);color:var(--text-1);}
 .channel-item.active{background:var(--bg-4);color:var(--text-0);font-weight:600;}
+.channel-item.unread{color:var(--text-0);font-weight:700;}
 .channel-item .ch-icon{font-size:.85rem;width:18px;text-align:center;flex-shrink:0;opacity:.7;}
 .channel-item.active .ch-icon{opacity:1;}
 .unread-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.58rem;font-weight:700;border-radius:20px;padding:1px 6px;min-width:16px;text-align:center;}
@@ -1375,7 +1377,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <!-- BAP ID SECTION -->
       <div style="margin-top:16px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-sm);">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <img src="https://chibi.iitranq.co.uk/BmBfGROSXFdY.jpg" style="width:22px;height:22px;border-radius:6px;object-fit:cover;" alt="BAP ID">
+          <img src="https://chibi.iitranq.co.uk/JGVbi0S7NWjd.jpg" style="width:22px;height:22px;border-radius:6px;object-fit:cover;" alt="BAP ID">
           <span style="font-size:.875rem;font-weight:700;color:var(--text-0);">BAP ID</span>
         </div>
         <!-- Desconectado -->
@@ -1928,6 +1930,7 @@ let state={
   serverSelectedColor:'#5865f2',nameSelectedColor:'#7c3aed',
   membersVisible:true,pickerMode:'emoji',replyToMsg:null,editingMsgId:null,reactTargetMsgId:null,serverOrder:[],
   unreadCounts:{},dmConversations:{},currentDmUid:null,
+  channelActivity:{},lastRead:{},
   callActive:false,callChannelId:null,callStartTime:null,callTimerInterval:null,
   isMuted:false,localStream:null,videoCallActive:false,isCamOff:false,
   friends:{},
@@ -1945,14 +1948,49 @@ function fbOnChild(path,cb){return window._fbOnChildAdded(fbRef(path),cb);}
 function fbPush(path,val){return window._fbPush(fbRef(path),val);}
 function fbOffChild(path,cb){return window._fbOff(fbRef(path),'child_added',cb);}
 const _chVoiceListeners={};
+const _chActivityListeners={};
+// Marca un canal como leído (persiste entre sesiones/dispositivos, como Discord)
+function markChannelRead(chId){
+  if(!chId)return;
+  const ts=Date.now();
+  state.lastRead[chId]=ts;
+  savePref({['lastRead/'+chId]:ts});
+}
+// Escucha SOLO el último mensaje de cada canal de texto del servidor activo,
+// para saber si hay actividad nueva sin descargar el historial completo.
+function subscribeChannelActivity(srv){
+  Object.values(_chActivityListeners).forEach(unsub=>{try{unsub();}catch(e){}});
+  Object.keys(_chActivityListeners).forEach(k=>delete _chActivityListeners[k]);
+  if(!srv)return;
+  const channels=(srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>c.type==='text'||!c.type);
+  channels.forEach(ch=>{
+    const q=window._fbQuery(fbRef('state/messages/'+ch.id),window._fbOrderByChild('ts'),window._fbLimitToLast(1));
+    const unsub=window._fbOnValue(q,snap=>{
+      let latestTs=0;
+      if(snap.exists())Object.values(snap.val()).forEach(m=>{if((m.ts||0)>latestTs)latestTs=m.ts;});
+      state.channelActivity[ch.id]=latestTs;
+      if(state.currentServerId===srv.id)renderChannelsPanel();
+    });
+    _chActivityListeners[ch.id]=unsub;
+  });
+}
+function isChannelUnread(chId){
+  if(chId===state.currentChannelId)return false; // el canal abierto siempre cuenta como leído
+  const latest=state.channelActivity[chId]||0;
+  const read=state.lastRead[chId]||0;
+  return latest>read;
+}
 
 // ── PREFS PERSISTENCE (Firebase, survives Firebase project migration) ──
 let _prefSaveTimer=null;
+let _prefPending={};
 function savePref(partial){
   if(!state.currentUser?.uid)return;
+  Object.assign(_prefPending,partial);
   clearTimeout(_prefSaveTimer);
   _prefSaveTimer=setTimeout(()=>{
-    fbUpdate('users/'+state.currentUser.uid+'/prefs',partial).catch(()=>{});
+    const toSend=_prefPending;_prefPending={};
+    fbUpdate('users/'+state.currentUser.uid+'/prefs',toSend).catch(()=>{});
   },400);
 }
 
@@ -2189,6 +2227,14 @@ async function onUserLoggedIn(firebaseUser){
   const srvExists=lastSrv&&(lastSrv==='__dm__'||state.servers.find(s=>s.id===lastSrv));
   state.currentServerId=srvExists?lastSrv:'__dm__';
   if(lastCh)state.currentChannelId=lastCh;
+  state.lastRead=prefs.lastRead||{};
+  if(state.currentServerId!=='__dm__'){
+    const srv=getServer(state.currentServerId);
+    if(srv){
+      subscribeChannelActivity(srv);
+      if(state.currentChannelId){subscribeChannel(state.currentChannelId);markChannelRead(state.currentChannelId);}
+    }
+  }
 
   if(prefs.theme==='custom'&&prefs.customTheme){
     applyCustomThemeData(prefs.customTheme);
@@ -2520,7 +2566,7 @@ function renderChannelsPanel(){
     (cat.children||[]).forEach((ch,chIdx)=>{
       const unread=state.unreadCounts[ch.id]||0;
       const item=document.createElement('div');
-      item.className='channel-item'+(ch.id===state.currentChannelId?' active':'');
+      item.className='channel-item'+(ch.id===state.currentChannelId?' active':'')+(isChannelUnread(ch.id)?' unread':'');
       item.draggable=isServerAdmin(srv);
       item.dataset.chid=ch.id;
 
@@ -3003,6 +3049,9 @@ function mediaHtml(msg){
   // Auto-embed YouTube link if message contains one
   const yt=extractYouTubeId(msg.content);
   if(yt)return`<div style="margin-top:8px;max-width:400px;border-radius:var(--r-sm);overflow:hidden;aspect-ratio:16/9;background:#000;"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${yt}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>`;
+  // Video alojado directamente (catbox, archivos .mp4/.webm/etc) → reproductor de video normal
+  const directVideo=extractDirectVideoUrl(msg.content);
+  if(directVideo)return`<video controls preload="metadata" src="${directVideo}" style="margin-top:8px;max-width:360px;max-height:320px;border-radius:var(--r-sm);display:block;background:#000;"></video>`;
   // Generic link-preview card for other URLs (image links handled separately)
   const linkCard=buildLinkEmbed(msg.content);
   if(linkCard)return linkCard;
@@ -3032,6 +3081,15 @@ function extractYouTubeId(text){
   if(!text)return null;
   const m=text.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   return m?m[1]:null;
+}
+function extractDirectVideoUrl(text){
+  if(!text)return null;
+  const m=text.match(/(https?:\/\/[^\s<]+|www\.[^\s<]+\.[a-z]{2,}[^\s<]*)/i);
+  if(!m)return null;
+  const raw=m[0];const href=raw.startsWith('http')?raw:'https://'+raw;
+  let u;try{u=new URL(href);}catch(e){return null;}
+  const videoExt=/\.(mp4|webm|mov|m4v|mkv|ogv)(\?.*)?$/i;
+  return videoExt.test(u.pathname)?href:null;
 }
 function openImgViewer(msgId){
   const msgs=state.messages[state.currentChannelId]||[];
@@ -3463,12 +3521,22 @@ function showFriendCtx(e,uid){
 // ── CHANNELS ──
 function selectChannel(id){
   state.currentChannelId=id;state.unreadCounts[id]=0;state._forumChannelId=null;
-  subscribeChannel(id);renderChannelsPanel();renderChatArea();
+  subscribeChannel(id);markChannelRead(id);renderChannelsPanel();renderChatArea();
   savePref({lastChannel:id});
 }
 function selectServer(id){
   state.currentServerId=id;state.currentChannelId=null;state.currentDmUid=null;
-  if(id!=='__dm__'){const srv=getServer(id);if(srv){const f=srv.channels?.flatMap(c=>c.children||[]).find(c=>c.type==='text');if(f){state.currentChannelId=f.id;subscribeChannel(f.id);}}}
+  if(id!=='__dm__'){
+    const srv=getServer(id);
+    if(srv){
+      const f=srv.channels?.flatMap(c=>c.children||[]).find(c=>c.type==='text');
+      if(f){state.currentChannelId=f.id;subscribeChannel(f.id);markChannelRead(f.id);}
+      subscribeChannelActivity(srv);
+    }
+  } else {
+    Object.values(_chActivityListeners).forEach(unsub=>{try{unsub();}catch(e){}});
+    Object.keys(_chActivityListeners).forEach(k=>delete _chActivityListeners[k]);
+  }
   savePref({lastServer:id,lastChannel:state.currentChannelId||''});
   renderAll();
 }
@@ -7213,7 +7281,7 @@ window.openSsSection = function(section, btn) {
 <!-- ══ BAP ID INTEGRATION ══ -->
 <script type="module">
 (function () {
-  const BAP_ID_URL     = 'https://fernandoaaa123.github.io/BAP-ID/';
+  const BAP_ID_URL     = 'https://fernandoaaa123.github.io/BAP-STUDIOS/';
   const BAP_PROJECT_ID = 'bap-studios-id';
   const BAP_API_KEY    = 'AIzaSyDYO-VjjLbqrYIWV-mMfKpsR_TvBJZgLZ0';
   const BAP_USERS_URL  = `https://firestore.googleapis.com/v1/projects/${BAP_PROJECT_ID}/databases/(default)/documents/bap_users`;
