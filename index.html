@@ -1956,6 +1956,7 @@ function markChannelRead(chId){
   if(!chId)return;
   const ts=Date.now();
   state.lastRead[chId]=ts;
+  state.unreadCounts[chId]=0;
   savePref({['lastRead/'+chId]:ts});
 }
 // Escucha SOLO el último mensaje de cada canal de texto del servidor activo,
@@ -6381,11 +6382,6 @@ function sendAudioMessage(){
 document.head.insertAdjacentHTML('beforeend','<style>@keyframes vizBar{from{transform:scaleY(.3)}to{transform:scaleY(1)}}</style>');
 
 // ── UNREAD / PIN ──
-function markChannelRead(chId){
-  state.unreadCounts[chId]=0;
-  try{const k='nova_read_'+chId;localStorage.setItem(k,Date.now());}catch(e){}
-  renderChannelsPanel();
-}
 function pinMessage(msgId){
   const msgs=state.messages[state.currentChannelId]||[];
   const msg=msgs.find(m=>m.id===msgId);if(!msg)return;
