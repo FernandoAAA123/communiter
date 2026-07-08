@@ -2133,6 +2133,8 @@ async function runManualUidMigration(){
     });
     lines.push('servidores: '+(r.servers.error?'❌ '+r.servers.error:r.servers.copied?`✅ ${r.servers.membersTouched} tocado(s)`:r.servers.found?'— no aparecía en ningún servidor':'❌ no se pudo leer state/servers'));
     if(r.xp)lines.push('xp: '+(r.xp.error?'❌ '+r.xp.error:`✅ ${r.xp.copied}/${r.xp.serversChecked} servidor(es)`));
+    if(r.channelMessages)lines.push('mensajes en canales: '+(r.channelMessages.errors.length?`❌ ${r.channelMessages.errors.length} error(es): `+r.channelMessages.errors.slice(0,2).join('; '):`✅ ${r.channelMessages.messagesUpdated} mensaje(s) en ${r.channelMessages.channelsScanned} canal(es)`));
+    if(r.dmMessages)lines.push('mensajes en DMs: '+(r.dmMessages.errors.length?`❌ ${r.dmMessages.errors.length} error(es): `+r.dmMessages.errors.slice(0,2).join('; '):`✅ ${r.dmMessages.messagesUpdated} mensaje(s) en ${r.dmMessages.conversationsScanned} conversación(es)`));
     const resumen=lines.join('\n');
     console.log('[migración UID]\n'+resumen);
     alert('Resultado de la migración:\n\n'+resumen+'\n\nRevisá que diga "✅ copiado" en lo que esperabas migrar. Si dice "— sin datos" es que ese UID viejo no tenía nada ahí (no es un error). Si dice "❌" es un permiso denegado — avisame el mensaje exacto.\n\nLa página se va a recargar para reflejar los cambios.');
@@ -2226,6 +2228,68 @@ async function migrateUidReferences(oldUid,newUid,opts){
       }
     }
   }catch(e){ report.servers.error=e.message; }
+
+  // Migrar autoría de mensajes en canales de servidores: cualquier mensaje viejo con
+  // uid===oldUid pasa a uid===newUid, en TODOS los canales de TODOS los servidores
+  // (no solo donde quedó membresía), porque pudo haber escrito ahí y salido después.
+  // Solo se toca el campo 'uid' — contenido, timestamp, reacciones, todo queda igual.
+  report.channelMessages={channelsScanned:0,messagesUpdated:0,errors:[]};
+  try{
+    const srvSnap2=await fbGet('state/servers');
+    if(srvSnap2&&srvSnap2.exists()){
+      const raw2=srvSnap2.val();
+      const allServers=Array.isArray(raw2)?raw2:Object.values(raw2||{});
+      const channelIds=[];
+      allServers.forEach(srv=>{
+        (srv.channels||[]).forEach(cat=>{
+          (cat.children||[]).forEach(ch=>{ if(ch&&ch.id)channelIds.push(ch.id); });
+        });
+      });
+      for(const chId of channelIds){
+        report.channelMessages.channelsScanned++;
+        try{
+          const msnap=await fbGet('state/messages/'+chId);
+          if(!msnap||!msnap.exists())continue;
+          const msgs=msnap.val();
+          for(const msgId of Object.keys(msgs)){
+            const m=msgs[msgId];
+            if(m&&m.uid===oldUid){
+              await fbUpdate('state/messages/'+chId+'/'+msgId,{uid:newUid});
+              report.channelMessages.messagesUpdated++;
+            }
+          }
+        }catch(e){ report.channelMessages.errors.push(chId+': '+e.message); }
+      }
+    }
+  }catch(e){ report.channelMessages.errors.push(e.message); }
+
+  // Migrar historial de DMs: como el ID de conversación se arma con ambos UIDs
+  // (dmId = uidA_uidB ordenados), no alcanza con renombrar un campo — hay que copiar
+  // cada mensaje a la nueva clave de conversación (oldUid+otro → newUid+otro).
+  // Se copia mensaje por mensaje (no se sobreescribe el nodo entero) para no borrar
+  // mensajes nuevos que ya existan ahí si esa conversación ya se usó con el UID nuevo.
+  report.dmMessages={conversationsScanned:0,messagesUpdated:0,errors:[]};
+  try{
+    const dmsData=report.dms&&report.dms.copied?(await fbGet('dms/'+newUid)).val():null;
+    const otherUids=dmsData?Object.keys(dmsData):[];
+    for(const otherUid of otherUids){
+      report.dmMessages.conversationsScanned++;
+      const oldDmId=getDMId(oldUid,otherUid);
+      const newDmId=getDMId(newUid,otherUid);
+      if(oldDmId===newDmId)continue;
+      try{
+        const dmSnap=await fbGet('dmMessages/'+oldDmId);
+        if(!dmSnap||!dmSnap.exists())continue;
+        const msgs=dmSnap.val();
+        for(const msgId of Object.keys(msgs)){
+          const m={...msgs[msgId]};
+          if(m.uid===oldUid)m.uid=newUid;
+          await fbSet('dmMessages/'+newDmId+'/'+msgId,m);
+          report.dmMessages.messagesUpdated++;
+        }
+      }catch(e){ report.dmMessages.errors.push(otherUid+': '+e.message); }
+    }
+  }catch(e){ report.dmMessages.errors.push(e.message); }
 
   return report;
 }
