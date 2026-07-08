@@ -2122,10 +2122,22 @@ async function runManualUidMigration(){
   const newUid=document.getElementById('admin-mig-new').value.trim();
   if(!oldUid||!newUid){showToast('⚠️ Completa ambos UID');return;}
   if(oldUid===newUid){showToast('⚠️ Los UID deben ser distintos');return;}
+  showToast('⏳ Migrando...');
   try{
-    await migrateUidReferences(oldUid,newUid,{migrateProfile:true});
-    showToast('✅ Migración completa: '+oldUid+' → '+newUid);
+    const r=await migrateUidReferences(oldUid,newUid,{migrateProfile:true});
+    const lines=[];
+    lines.push('perfil: '+(r.profile?.copied?'✅ copiado':r.profile?.found?'❌ '+(r.profile.error||'error'):'⚠️ no encontrado en users/'+oldUid));
+    ['friends','dms','notes','userStats'].forEach(k=>{
+      const x=r[k];
+      lines.push(k+': '+(x.copied?'✅ copiado':x.found?'❌ '+(x.error||'error'):'— sin datos'));
+    });
+    lines.push('servidores: '+(r.servers.error?'❌ '+r.servers.error:r.servers.copied?`✅ ${r.servers.membersTouched} tocado(s)`:r.servers.found?'— no aparecía en ningún servidor':'❌ no se pudo leer state/servers'));
+    if(r.xp)lines.push('xp: '+(r.xp.error?'❌ '+r.xp.error:`✅ ${r.xp.copied}/${r.xp.serversChecked} servidor(es)`));
+    const resumen=lines.join('\n');
+    console.log('[migración UID]\n'+resumen);
+    alert('Resultado de la migración:\n\n'+resumen+'\n\nRevisá que diga "✅ copiado" en lo que esperabas migrar. Si dice "— sin datos" es que ese UID viejo no tenía nada ahí (no es un error). Si dice "❌" es un permiso denegado — avisame el mensaje exacto.\n\nLa página se va a recargar para reflejar los cambios.');
     closeModal('admin-migrate-modal');
+    location.reload();
   }catch(e){
     showToast('❌ Error al migrar: '+e.message);
   }
@@ -2137,19 +2149,32 @@ async function runManualUidMigration(){
 // porque no pasa por ese flujo.
 async function migrateUidReferences(oldUid,newUid,opts){
   opts=opts||{};
+  const report={}; // node -> {found:bool, copied:bool, error:string|null}
+
   if(opts.migrateProfile){
-    const uSnap=await fbGet('users/'+oldUid).catch(()=>null);
-    if(uSnap&&uSnap.exists()){
-      const profile={...uSnap.val(),uid:newUid};
-      await fbSet('users/'+newUid,profile).catch(()=>{});
-      const eKey=profile.email?emailToKey(profile.email):null;
-      if(eKey)await fbSet('usersByEmail/'+eKey,profile).catch(()=>{});
-    }
+    report.profile={found:false,copied:false,error:null};
+    try{
+      const uSnap=await fbGet('users/'+oldUid);
+      if(uSnap&&uSnap.exists()){
+        report.profile.found=true;
+        const profile={...uSnap.val(),uid:newUid};
+        await fbSet('users/'+newUid,profile);
+        report.profile.copied=true;
+        const eKey=profile.email?emailToKey(profile.email):null;
+        if(eKey)await fbSet('usersByEmail/'+eKey,profile);
+      }
+    }catch(e){ report.profile.error=e.message; }
   }
+
   async function copyOwnNode(node){
-    const snap=await fbGet(node+'/'+oldUid).catch(()=>null);
-    if(!snap||!snap.exists())return;
-    await fbSet(node+'/'+newUid,snap.val()).catch(()=>{});
+    report[node]={found:false,copied:false,error:null};
+    try{
+      const snap=await fbGet(node+'/'+oldUid);
+      if(!snap||!snap.exists())return;
+      report[node].found=true;
+      await fbSet(node+'/'+newUid,snap.val());
+      report[node].copied=true;
+    }catch(e){ report[node].error=e.message; }
   }
   await copyOwnNode('friends');
   await copyOwnNode('dms');
@@ -2159,34 +2184,50 @@ async function migrateUidReferences(oldUid,newUid,opts){
   // Migrar membresía en servidores: ownerId y la entrada del propio usuario en 'members'.
   // Solo se tocan esos dos campos puntuales — nunca el resto del contenido del servidor
   // (canales, mensajes, roles de otros miembros quedan intactos).
-  const srvSnap=await fbGet('state/servers').catch(()=>null);
-  if(!srvSnap||!srvSnap.exists())return;
-  const raw=srvSnap.val();
-  const servers=Array.isArray(raw)?raw:Object.values(raw||{});
-  let changed=false;
-  const patched=servers.map(srv=>{
-    const s={...srv};
-    let touched=false;
-    if(s.ownerId===oldUid){s.ownerId=newUid;touched=true;}
-    if(Array.isArray(s.members)){
-      const idx=s.members.findIndex(m=>(m.uid||m.id)===oldUid);
-      if(idx>=0){
-        s.members=s.members.map((m,i)=>i!==idx?m:{...m,...(m.uid?{uid:newUid}:{}),...(m.id?{id:newUid}:{})});
-        touched=true;
+  report.servers={found:false,membersTouched:0,copied:false,error:null};
+  try{
+    const srvSnap=await fbGet('state/servers');
+    if(srvSnap&&srvSnap.exists()){
+      report.servers.found=true;
+      const raw=srvSnap.val();
+      const servers=Array.isArray(raw)?raw:Object.values(raw||{});
+      let changed=false;
+      const patched=servers.map(srv=>{
+        const s={...srv};
+        let touched=false;
+        if(s.ownerId===oldUid){s.ownerId=newUid;touched=true;}
+        if(Array.isArray(s.members)){
+          const idx=s.members.findIndex(m=>(m.uid||m.id)===oldUid);
+          if(idx>=0){
+            s.members=s.members.map((m,i)=>i!==idx?m:{...m,...(m.uid?{uid:newUid}:{}),...(m.id?{id:newUid}:{})});
+            touched=true;
+          }
+        }
+        if(touched){changed=true;report.servers.membersTouched++;}
+        return s;
+      });
+      if(changed){
+        await fbSet('state/servers',patched);
+        report.servers.copied=true;
+        // Migrar el XP propio en cada servidor donde el usuario quedó como miembro.
+        report.xp={serversChecked:0,copied:0,error:null};
+        for(const s of patched){
+          const isMember=(s.members||[]).some(m=>(m.uid||m.id)===newUid);
+          if(!isMember)continue;
+          report.xp.serversChecked++;
+          try{
+            const xpSnap=await fbGet('xp/'+s.id+'/'+oldUid);
+            if(xpSnap&&xpSnap.exists()){
+              await fbSet('xp/'+s.id+'/'+newUid,xpSnap.val());
+              report.xp.copied++;
+            }
+          }catch(e){ report.xp.error=e.message; }
+        }
       }
     }
-    if(touched)changed=true;
-    return s;
-  });
-  if(!changed)return;
-  await fbSet('state/servers',patched).catch(()=>{});
-  // Migrar el XP propio en cada servidor donde el usuario quedó como miembro.
-  for(const s of patched){
-    const isMember=(s.members||[]).some(m=>(m.uid||m.id)===newUid);
-    if(!isMember)continue;
-    const xpSnap=await fbGet('xp/'+s.id+'/'+oldUid).catch(()=>null);
-    if(xpSnap&&xpSnap.exists())await fbSet('xp/'+s.id+'/'+newUid,xpSnap.val()).catch(()=>{});
-  }
+  }catch(e){ report.servers.error=e.message; }
+
+  return report;
 }
 
 // ── MERGE DUPLICATE PROFILE ──
