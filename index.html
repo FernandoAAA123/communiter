@@ -906,6 +906,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <div class="uname" id="uname-display">Usuario</div>
         <div class="utag" id="utag-display">#0000</div>
       </div>
+      <button class="icon-btn" title="Migrar UID (admin)" onclick="openAdminMigrateModal()" id="admin-migrate-btn" style="display:none;color:var(--yellow);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M3 16v5h5"/><path d="M16 21h5v-5"/><path d="M15 9l6-6"/><path d="M9 15l-6 6"/></svg></button>
       <button class="icon-btn" title="Micrófono" onclick="toggleMute()" id="mute-btn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></button>
       <button class="icon-btn" title="Cerrar sesión" onclick="doSignOut()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
     </div>
@@ -1189,6 +1190,21 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
+<div class="modal-overlay" id="admin-migrate-modal">
+  <div class="modal" style="width:420px;">
+    <button class="close-btn" onclick="closeModal('admin-migrate-modal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <h2>Migrar UID (manual)</h2>
+    <p class="sub">Copia perfil, amigos, DMs, notas, stats y membresía en servidores de un UID a otro. Solo vos ves este botón.</p>
+    <label>UID viejo (origen)</label>
+    <input type="text" id="admin-mig-old" placeholder="Ej: DpGqEhYwhpcMCAZgpCMz6cBtNo23">
+    <label>UID nuevo (destino)</label>
+    <input type="text" id="admin-mig-new" placeholder="Ej: 18E9M6rfTtXvQBhfaIEB4eALXm72">
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal('admin-migrate-modal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="runManualUidMigration()">Migrar</button>
+    </div>
+  </div>
+</div>
 <div class="modal-overlay" id="user-settings-modal">
   <div class="modal" style="width:560px;">
     <button class="close-btn" onclick="closeModal('user-settings-modal')"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
@@ -2094,7 +2110,42 @@ async function initUserProfile(firebaseUser,displayName,photoURL){
 // esa entrada específica no se puede migrar desde acá — las reglas de seguridad no
 // permiten leer datos ajenos, ni siquiera para arreglarlos. Quedaría huérfana; la
 // persona tendría que volver a enviar la solicitud.
-async function migrateUidReferences(oldUid,newUid){
+//
+// Panel manual de migración de UID — visible solo para este UID puntual.
+// A diferencia de la recuperación automática (que solo migra los datos propios de
+// quien inicia sesión), este panel puede migrar CUALQUIER par de UIDs porque las
+// reglas de Firebase le dan una excepción puntual a este UID exacto.
+const ADMIN_UID='18E9M6rfTtXvQBhfaIEB4eALXm72';
+function openAdminMigrateModal(){ openModal('admin-migrate-modal'); }
+async function runManualUidMigration(){
+  const oldUid=document.getElementById('admin-mig-old').value.trim();
+  const newUid=document.getElementById('admin-mig-new').value.trim();
+  if(!oldUid||!newUid){showToast('⚠️ Completa ambos UID');return;}
+  if(oldUid===newUid){showToast('⚠️ Los UID deben ser distintos');return;}
+  try{
+    await migrateUidReferences(oldUid,newUid,{migrateProfile:true});
+    showToast('✅ Migración completa: '+oldUid+' → '+newUid);
+    closeModal('admin-migrate-modal');
+  }catch(e){
+    showToast('❌ Error al migrar: '+e.message);
+  }
+}
+//
+// opts.migrateProfile: si es true, además copia users/{oldUid} → users/{newUid} y
+// actualiza usersByEmail. El flujo automático de login NO lo necesita (ya copia el
+// perfil por su cuenta antes de llamar acá); el panel manual de admin sí lo pide,
+// porque no pasa por ese flujo.
+async function migrateUidReferences(oldUid,newUid,opts){
+  opts=opts||{};
+  if(opts.migrateProfile){
+    const uSnap=await fbGet('users/'+oldUid).catch(()=>null);
+    if(uSnap&&uSnap.exists()){
+      const profile={...uSnap.val(),uid:newUid};
+      await fbSet('users/'+newUid,profile).catch(()=>{});
+      const eKey=profile.email?emailToKey(profile.email):null;
+      if(eKey)await fbSet('usersByEmail/'+eKey,profile).catch(()=>{});
+    }
+  }
   async function copyOwnNode(node){
     const snap=await fbGet(node+'/'+oldUid).catch(()=>null);
     if(!snap||!snap.exists())return;
@@ -2186,6 +2237,8 @@ async function onUserLoggedIn(firebaseUser){
   };
   delete state.currentUser.avatarColor;
   state.nameSelectedColor=state.currentUser.nameColor;
+  const adminBtn=document.getElementById('admin-migrate-btn');
+  if(adminBtn)adminBtn.style.display=(state.currentUser.uid===ADMIN_UID)?'':'none';
 
   const presRef=fbRef('presence/'+state.currentUser.uid);
   const presData={uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',nameColor:state.currentUser.nameColor,status:state.currentUser.status||'online',customStatus:state.currentUser.customStatus||'',ts:Date.now()};
