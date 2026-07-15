@@ -363,6 +363,14 @@ select option{background:var(--bg-3);color:var(--text-0);}
 #members-header{height:52px;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--border);font-size:.67rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);flex-shrink:0;}
 #members-list{flex:1;overflow-y:auto;padding:8px 0;}
 .members-category{padding:14px 8px 4px 14px;font-size:.65rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-3);}
+.active-now-title{padding:14px 14px 10px;font-size:.95rem;font-weight:800;color:var(--text-0);}
+.friend-active-card{margin:0 8px 8px;background:var(--bg-3);border-radius:12px;cursor:pointer;transition:background .12s;overflow:hidden;}
+.friend-active-card:hover{background:var(--bg-4);}
+.friend-active-card .member-name{font-size:.85rem;font-weight:700;color:var(--text-0);}
+.friend-active-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 8px rgba(0,0,0,.25);}
+.friend-active-row1{display:flex;align-items:center;gap:10px;padding:10px 12px;}
+.friend-active-row2{display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(0,0,0,.18);border-top:1px solid var(--border);}
+.friend-active-row2 svg{flex-shrink:0;color:var(--text-3);}
 .member-item{display:flex;align-items:center;gap:10px;padding:5px 8px 5px 10px;border-radius:var(--r-sm);margin:1px 6px;cursor:pointer;transition:background .1s;}
 .member-item:hover{background:var(--bg-3);}
 .member-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0;overflow:hidden;position:relative;}
@@ -3529,20 +3537,49 @@ function renderFriendsActivityPanel(el){
     el.innerHTML='<div style="padding:20px 12px;color:var(--text-3);font-size:.8rem;text-align:center;line-height:1.6;">Ningún amigo está en línea ahora mismo.</div>';
     return;
   }
-  const cat=document.createElement('div');cat.className='members-category';cat.textContent=`AMIGOS EN LÍNEA — ${online.length}`;el.appendChild(cat);
-  online.forEach(([uid,f])=>{
-    const live=state.onlineUsers[uid]||{};
-    const name=live.name||f.name||'?';
-    const avatarUrl=live.avatarUrl||f.avatarUrl;
-    const div=document.createElement('div');div.className='member-item';
-    const avatarC=avatarUrl?`<img src="${avatarUrl}" onerror="this.style.display='none'">`:name[0].toUpperCase();
-    const bg=avatarUrl?'#000':getAutoAvatarColor(uid||name);
-    const statusColor=STATUS_COLORS[live.status||'online']||STATUS_COLORS.online;
-    const activityHtml=live.activity?renderActivityLine(live.activity):(live.customStatus?`<div class="member-activity"><span style="overflow:hidden;text-overflow:ellipsis;font-style:italic;">${escapeHtml(live.customStatus)}</span></div>`:'');
-    div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name">${name}</div>${activityHtml}</div>`;
-    div.onclick=e=>{showProfilePopupByUid(e,uid,f);e.stopPropagation();};
-    el.appendChild(div);
-  });
+  const withActivity=online.filter(([uid])=>state.onlineUsers[uid]?.activity&&activityDisplayText(state.onlineUsers[uid].activity));
+  const withoutActivity=online.filter(([uid])=>!(state.onlineUsers[uid]?.activity&&activityDisplayText(state.onlineUsers[uid].activity)));
+
+  if(withActivity.length){
+    const title=document.createElement('div');title.className='active-now-title';title.textContent='Activo ahora';el.appendChild(title);
+    withActivity.forEach(([uid,f])=>{
+      const live=state.onlineUsers[uid]||{};
+      const name=live.name||f.name||'?';
+      const avatarUrl=live.avatarUrl||f.avatarUrl;
+      const avatarC=avatarUrl?`<img src="${avatarUrl}" onerror="this.style.display='none'">`:name[0].toUpperCase();
+      const bg=avatarUrl?'#000':getAutoAvatarColor(uid||name);
+      const statusColor=STATUS_COLORS[live.status||'online']||STATUS_COLORS.online;
+      const card=document.createElement('div');card.className='friend-active-card';
+      card.innerHTML=`<div class="friend-active-row1">
+          <div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div>
+          <div style="flex:1;min-width:0;">
+            <div class="member-name">${name}</div>
+            <div style="font-size:.76rem;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${activityTopLabel(live.activity)}</div>
+          </div>
+          ${activityIconBoxHtml(live.activity)}
+        </div>
+        <div class="friend-active-row2">${activityIconSVG(live.activity.type)}<span style="font-size:.8rem;font-weight:700;color:var(--text-0);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml((live.activity.name||'').trim())}</span></div>`;
+      card.onclick=e=>{showProfilePopupByUid(e,uid,f);e.stopPropagation();};
+      el.appendChild(card);
+    });
+  }
+
+  if(withoutActivity.length){
+    const cat=document.createElement('div');cat.className='members-category';cat.textContent=`EN LÍNEA — ${withoutActivity.length}`;el.appendChild(cat);
+    withoutActivity.forEach(([uid,f])=>{
+      const live=state.onlineUsers[uid]||{};
+      const name=live.name||f.name||'?';
+      const avatarUrl=live.avatarUrl||f.avatarUrl;
+      const div=document.createElement('div');div.className='member-item';
+      const avatarC=avatarUrl?`<img src="${avatarUrl}" onerror="this.style.display='none'">`:name[0].toUpperCase();
+      const bg=avatarUrl?'#000':getAutoAvatarColor(uid||name);
+      const statusColor=STATUS_COLORS[live.status||'online']||STATUS_COLORS.online;
+      const activityHtml=live.customStatus?`<div class="member-activity"><span style="overflow:hidden;text-overflow:ellipsis;font-style:italic;">${escapeHtml(live.customStatus)}</span></div>`:'';
+      div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name">${name}</div>${activityHtml}</div>`;
+      div.onclick=e=>{showProfilePopupByUid(e,uid,f);e.stopPropagation();};
+      el.appendChild(div);
+    });
+  }
 }
 
 // ── MESSAGING ──
@@ -5342,11 +5379,28 @@ function manageRoles(uid){
 
 // ── ACTIVITY STATUS (Jugando a.../Escuchando.../Viendo...) ──
 const ACTIVITY_LABELS={playing:'Jugando a',listening:'Escuchando',watching:'Viendo',custom:''};
+// Generic label for the top row of an Active Now card — the specific name (game/song/show)
+// goes in the row below instead, mirroring how platform-linked presence (e.g. Xbox) works.
+function activityTopLabel(a){
+  if(a.type==='playing')return'Jugando';
+  if(a.type==='listening')return a.source==='spotify'?'Escuchando en Spotify':'Escuchando';
+  if(a.type==='watching')return'Viendo';
+  return'Actividad personalizada';
+}
 function activityIconSVG(type){
   if(type==='playing')return`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="12" x2="10" y2="12"/><line x1="8" y1="10" x2="8" y2="14"/><circle cx="15" cy="13" r="1"/><circle cx="18" cy="11" r="1"/><rect x="2" y="6" width="20" height="12" rx="4"/></svg>`;
   if(type==='listening')return`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>`;
   if(type==='watching')return`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>`;
   return`<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.9 6.26L21 9.27l-4.5 4.39L17.8 21 12 17.77 6.2 21l1.3-7.34L3 9.27l6.1-1.01z"/></svg>`;
+}
+// Bigger "app logo" box shown on the right of Active Now cards — real Spotify
+// branding when the activity actually came from Spotify, themed color+icon otherwise.
+function activityIconBoxHtml(a){
+  if(a.type==='listening'&&a.source==='spotify'){
+    return`<div class="friend-active-icon" style="background:#1DB954;"><svg width="22" height="22" viewBox="0 0 24 24" fill="#fff"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.72 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg></div>`;
+  }
+  const theme={playing:{bg:'linear-gradient(135deg,#7c3aed,#5b21b6)'},listening:{bg:'linear-gradient(135deg,#1DB954,#128c3f)'},watching:{bg:'linear-gradient(135deg,#e11d48,#9f1239)'},custom:{bg:'linear-gradient(135deg,#64748b,#334155)'}}[a.type]||{bg:'var(--bg-4)'};
+  return`<div class="friend-active-icon" style="background:${theme.bg};color:#fff;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${activityIconSVG(a.type).match(/<svg[^>]*>(.*)<\/svg>/s)[1]}</svg></div>`;
 }
 // Returns escaped, display-ready text like "Jugando a Minecraft" / "Escuchando cierta canción" / custom text alone
 function activityDisplayText(a){
