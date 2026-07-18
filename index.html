@@ -18,7 +18,7 @@
 <link rel="shortcut icon" type="image/png" href="https://chibi.iitranq.co.uk/Y1OMxvpQecD2.png?v=2">
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, onChildAdded, onDisconnect, remove, get, off, update, query, orderByChild, limitToLast }
+  import { getDatabase, ref, set, push, onValue, onChildAdded, onDisconnect, remove, get, off, update, query, orderByChild, limitToLast, startAt }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
   import { getAuth, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword,
     signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, setPersistence, browserLocalPersistence }
@@ -47,7 +47,7 @@
   window._fbRef = ref; window._fbSet = set; window._fbPush = push;
   window._fbOnValue = onValue; window._fbOnChildAdded = onChildAdded;
   window._fbOff = off; window._fbOnDisconnect = onDisconnect;
-  window._fbQuery = query; window._fbOrderByChild = orderByChild; window._fbLimitToLast = limitToLast;
+  window._fbQuery = query; window._fbOrderByChild = orderByChild; window._fbLimitToLast = limitToLast; window._fbStartAt = startAt;
   window._fbRemove = remove; window._fbGet = get; window._fbUpdate = update;
   window._fbGoogleProvider = new GoogleAuthProvider();
   window._fbSignInGoogle = () => signInWithPopup(auth, window._fbGoogleProvider);
@@ -1209,6 +1209,20 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 </div>
 
 <!-- ══ DIÁLOGOS PROPIOS (reemplazan alert/confirm/prompt nativos del navegador) ══ -->
+<div class="modal-overlay" id="forward-message-modal">
+  <div class="modal" style="width:420px;padding:0;overflow:hidden;">
+    <div style="padding:20px 20px 12px;">
+      <h2 style="margin-bottom:2px;">Reenviar mensaje</h2>
+      <p class="sub" style="margin-bottom:10px;">Elige a dónde enviarlo</p>
+      <input type="text" id="forward-search" placeholder="Buscar..." oninput="renderForwardTargets(this.value.trim().toLowerCase())">
+    </div>
+    <div id="forward-target-list" style="max-height:360px;overflow-y:auto;padding-bottom:8px;"></div>
+    <div class="modal-actions" style="padding:14px 20px;">
+      <button class="btn btn-ghost" onclick="closeModal('forward-message-modal')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="cmtr-confirm-modal">
   <div class="modal" style="width:400px;padding:24px;">
     <h2 id="cmtr-confirm-title" style="margin-bottom:8px;">Confirmar</h2>
@@ -1465,6 +1479,17 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <button class="btn btn-ghost btn-sm" onclick="copyUID()">Copiar</button>
       </div>
+      <!-- MODO LITE SECTION -->
+      <div style="margin-top:16px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-sm);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+          <div style="min-width:0;">
+            <div style="font-size:.875rem;font-weight:700;color:var(--text-0);margin-bottom:3px;">⚡ Modo Lite</div>
+            <p style="font-size:.76rem;color:var(--text-2);line-height:1.5;">En canales con más de 100 mensajes, solo carga los del último día para que la app no vaya lenta. Los canales chicos (100 o menos) se muestran completos igual, y los mensajes viejos siguen ahí, solo no se cargan automáticamente.</p>
+          </div>
+          <div class="toggle" id="us-lite-mode-toggle" onclick="toggleLiteMode()" style="flex-shrink:0;"></div>
+        </div>
+      </div>
+
       <!-- SPOTIFY SECTION -->
       <div style="margin-top:16px;padding:14px;background:var(--bg-3);border:1px solid var(--border);border-radius:var(--r-sm);">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -2045,6 +2070,7 @@ let state={
   isMuted:false,localStream:null,videoCallActive:false,isCamOff:false,
   friends:{},
   spotify:{connected:false,accessToken:null,expiresAt:0,pollTimer:null},
+  liteMode:false,
 };
 
 // DB helpers
@@ -2545,6 +2571,7 @@ async function onUserLoggedIn(firebaseUser){
   if(lastCh)state.currentChannelId=lastCh;
   state.lastRead=prefs.lastRead||{};
   state._lastReadLoaded=true;
+  state.liteMode=!!prefs.liteMode;
   if(state.currentServerId!=='__dm__'){
     const srv=getServer(state.currentServerId);
     if(srv){
@@ -2658,17 +2685,33 @@ function subscribeTypingGlobal(){
   });
 }
 let _msgListeners={};
+// Modo Lite: por debajo de este número de mensajes, un canal ya es "chico" y no
+// vale la pena filtrar por fecha — se muestra completo tal cual. Solo canales con
+// MÁS mensajes que esto aplican el corte de las últimas 24h.
+const LITE_MODE_THRESHOLD=100;
 function subscribeChannel(channelId){
   if(_msgListeners[channelId])return;
   let isFirst=true;
-  window._fbOnValue(fbRef('state/messages/'+channelId),snap=>{
+  const baseRef=fbRef('state/messages/'+channelId);
+  const liteCutoff=Date.now()-24*60*60*1000;
+  // Pedimos como máximo los últimos LITE_MODE_THRESHOLD mensajes — esta misma
+  // consulta nos sirve para dos cosas: 1) es lo único que se descarga en vez de
+  // todo el historial, y 2) si Firebase devuelve exactamente ese límite, sabemos
+  // que el canal tiene MÁS mensajes que el umbral (si devuelve menos, es que ya
+  // trajimos el historial completo y no hace falta filtrar por fecha).
+  const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(LITE_MODE_THRESHOLD)):baseRef;
+  window._fbOnValue(target,snap=>{
     const prev=state.messages[channelId]||[];
     if(!snap.exists()){state.messages[channelId]=[];}
     else{
       // Merge Firebase data with any optimistic local messages (same id → Firebase wins)
       const fromFb=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
       const localOnly=(state.messages[channelId]||[]).filter(m=>!fromFb.find(f=>f.id===m.id));
-      state.messages[channelId]=[...fromFb,...localOnly].sort((a,b)=>a.ts-b.ts);
+      let merged=[...fromFb,...localOnly].sort((a,b)=>a.ts-b.ts);
+      // Solo filtramos por fecha si el canal realmente supera el umbral —
+      // si trajo menos del límite, eso YA ES todo el historial del canal.
+      if(state.liteMode&&fromFb.length>=LITE_MODE_THRESHOLD)merged=merged.filter(m=>m.ts>=liteCutoff);
+      state.messages[channelId]=merged;
     }
     // Notify on new messages after first load
     if(!isFirst){
@@ -2690,9 +2733,13 @@ function subscribeChannel(channelId){
 function subscribeDMChannel(dmId){
   const key='dm_'+dmId;
   if(_msgListeners[key])return;
-  window._fbOnValue(fbRef('dmMessages/'+dmId),snap=>{
+  const baseRef=fbRef('dmMessages/'+dmId);
+  const liteCutoff=Date.now()-24*60*60*1000;
+  const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(LITE_MODE_THRESHOLD)):baseRef;
+  window._fbOnValue(target,snap=>{
     if(!snap.exists()){state.messages[key]=[];if(state.currentChannelId===key)renderMessages();return;}
-    const list=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
+    let list=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
+    if(state.liteMode&&list.length>=LITE_MODE_THRESHOLD)list=list.filter(m=>m.ts>=liteCutoff);
     state.messages[key]=list;
     decryptDMMessagesInPlace(dmId,key).then(()=>{
       if(state.currentChannelId===key)renderMessages();
@@ -2824,7 +2871,7 @@ function renderChannelsPanel(){
   const srv=getServer(state.currentServerId);
   const isDM=state.currentServerId==='__dm__';
   document.getElementById('server-name').textContent=isDM?'Mensajes Directos':(srv?srv.name:'');
-  document.getElementById('add-channel-btn').style.display=(!isDM&&srv)?'':'none';
+  document.getElementById('add-channel-btn').style.display=(!isDM&&srv&&hasPermission(state.currentUser.uid,'manage_channels'))?'':'none';
   const list=document.getElementById('channels-list');list.innerHTML='';
   if(isDM){
     let dms=Object.entries(state.dmConversations);
@@ -3170,11 +3217,12 @@ function buildMessageEl(msg,msgs,prevUid,prevTs){
   const wrap=document.createElement('div');
   wrap.className='msg-wrap'+(msg.pinned?' highlighted':'');
   wrap.dataset.msgid=msg.id;
-  const isCont=msg.uid===prevUid&&!msg.sticker&&!msg.replyTo&&!msg.poll&&!msg.event&&(msg.ts-prevTs)<5*60*1000;
+  const isCont=msg.uid===prevUid&&!msg.sticker&&!msg.replyTo&&!msg.forwardedFrom&&!msg.poll&&!msg.event&&(msg.ts-prevTs)<5*60*1000;
   const isMe=msg.uid===state.currentUser.uid;
   const isBot=(msg.uid||'').startsWith('bot_');
   const botBadge=isBot?'<span class="bot-badge">BOT</span>':'';
   const replyHtml=msg.replyTo?buildReplyPreview(msg.replyTo,msgs):'';
+  const forwardBadge=msg.forwardedFrom?`<div style="display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--text-3);margin-bottom:2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 4 20 9 15 14"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg>Reenviado de ${escapeHtml(msg.forwardedFrom.name||'?')}</div>`:'';
   if(isCont){
     const _displayContent=msg._decrypted!==undefined?msg._decrypted:msg.content;
     const contClass='msg-content'+(isEmojiOnlyContent(_displayContent)?' emoji-only':'');
@@ -3187,7 +3235,7 @@ function buildMessageEl(msg,msgs,prevUid,prevTs){
     const mainClass='msg-content'+(isEmojiOnlyContent(msg._decrypted!==undefined?msg._decrypted:msg.content)?' emoji-only':'');
     const _displayContent2=msg._decrypted!==undefined?msg._decrypted:msg.content;
     const _nameColor=_isDmMsg?(msg.color||'var(--text-1)'):(msg.roleColor||'var(--text-1)');
-    wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body"><div class="msg-meta"><span class="msg-author" style="color:${_nameColor}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="${mainClass}">${formatContent(_displayContent2)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
+    wrap.innerHTML=replyHtml+`<div class="msg-group"><div class="msg-avatar" style="${avatarStyle}" data-uid="${msg.uid}">${avatarContent}</div><div class="msg-body">${forwardBadge}<div class="msg-meta"><span class="msg-author" style="color:${_nameColor}" data-uid="${msg.uid}">${msg.name}${botBadge}</span><span class="msg-time">${fmtDateTime(msg.ts)}</span>${msg.pinned?'<span style="font-size:.65rem;color:var(--yellow);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg></span>':''}</div><div class="${mainClass}">${formatContent(_displayContent2)}${mediaHtml(msg)}</div>${msg.edited?'<span class="msg-edited">(editado)</span>':''}${reactionsHtml(msg)}</div><div class="msg-hover-actions">${hoverBtns(msg,isMe)}</div></div>`;
   }
   upgradeLinkEmbeds(wrap);
   return wrap;
@@ -3451,6 +3499,7 @@ function hoverBtns(msg,isMe){
   const inServer=state.currentServerId&&state.currentServerId!=='__dm__';
   return`<button class="icon-btn" onclick="quickReact('${msg.id}',this)" title="Reaccionar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
     <button class="icon-btn" onclick="setReply('${msg.id}')" title="Responder"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 14 4 9 9 4"/><path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg></button>
+    <button class="icon-btn" onclick="forwardMessage('${msg.id}')" title="Reenviar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 4 20 9 15 14"/><path d="M4 20v-7a4 4 0 0 1 4-4h12"/></svg></button>
     ${inServer?`<button class="icon-btn" onclick="openThreadModal('${msg.id}')" title="Crear hilo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></button>`:''}
     ${isMe?`<button class="icon-btn" onclick="startEditMsg('${msg.id}')" title="Editar"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>`:''}
     ${canPin?`<button class="icon-btn" onclick="pinMessage('${msg.id}')" title="${msg.pinned?'Desfijar':'Fijar'}">${msg.pinned?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg>'}</button>`:''}
@@ -3633,7 +3682,8 @@ function sendImageUrl(){
   if(!state.messages[state.currentChannelId].find(m=>m.id===msg.id))state.messages[state.currentChannelId].push(msg);
   renderMessages();closeModal('image-url-modal');document.getElementById('image-url-input').value='';
 }
-function deleteMsg(id){
+async function deleteMsg(id){
+  if(!(await cmtrConfirm('¿Eliminar este mensaje? Esta acción no se puede deshacer.',{danger:true,okText:'Eliminar'})))return;
   const ch=state.currentChannelId;if(!ch)return;
   const isDM=ch.startsWith('dm_');
   fbRemove(isDM?'dmMessages/'+ch.replace('dm_','')+'/'+id:'state/messages/'+ch+'/'+id);
@@ -3672,6 +3722,70 @@ function setReply(id){
   document.getElementById('msg-input').focus();
 }
 function cancelReply(){state.replyToMsg=null;document.getElementById('reply-bar').classList.remove('show');}
+
+// ── REENVIAR MENSAJE ──
+function forwardMessage(id){
+  const msg=(state.messages[state.currentChannelId]||[]).find(m=>m.id===id);
+  if(!msg)return;
+  state._forwardingMsg=msg;
+  document.getElementById('forward-search').value='';
+  renderForwardTargets('');
+  openModal('forward-message-modal');
+}
+function renderForwardTargets(filter){
+  const el=document.getElementById('forward-target-list');
+  if(!el)return;
+  filter=filter||'';
+  let html='';
+  // Mensajes directos existentes
+  const dms=Object.entries(state.dmConversations||{}).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+  const dmMatches=dms.filter(([,info])=>(info.name||'').toLowerCase().includes(filter));
+  if(dmMatches.length){
+    html+='<div class="members-category">MENSAJES DIRECTOS</div>';
+    dmMatches.forEach(([uid,info])=>{
+      const bg=info.avatarUrl?'#000':getAutoAvatarColor(uid||info.name);
+      const ava=info.avatarUrl?`<img src="${info.avatarUrl}" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase();
+      html+=`<div class="member-item" onclick="doForwardTo({type:'dm',uid:'${uid}'})"><div class="member-avatar" style="background:${bg}">${ava}</div><div class="member-info"><div class="member-name">${escapeHtml(info.name||'?')}</div></div></div>`;
+    });
+  }
+  // Canales de texto de tus servidores
+  (state.servers||[]).forEach(srv=>{
+    const isMember=(srv.members||[]).some(m=>(m.uid||m.id)===state.currentUser.uid);
+    if(!isMember)return;
+    const channels=(srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>(c.type==='text'||!c.type)&&(c.name||'').toLowerCase().includes(filter));
+    if(!channels.length)return;
+    html+=`<div class="members-category">${escapeHtml(srv.name||'').toUpperCase()}</div>`;
+    channels.forEach(ch=>{
+      html+=`<div class="member-item" onclick="doForwardTo({type:'channel',id:'${ch.id}'})"><div class="member-avatar" style="background:var(--bg-4);font-size:.9rem;">#</div><div class="member-info"><div class="member-name">${escapeHtml(ch.name)}</div></div></div>`;
+    });
+  });
+  el.innerHTML=html||'<div style="padding:24px;text-align:center;color:var(--text-3);font-size:.8rem;">Sin resultados</div>';
+}
+function doForwardTo(target){
+  const msg=state._forwardingMsg;if(!msg)return;
+  const content=msg._decrypted!==undefined?msg._decrypted:(msg.content||'');
+  const fwd={
+    id:'msg'+genId(12),uid:state.currentUser.uid,name:state.currentUser.name,
+    color:state.currentUser.nameColor||'',avatarUrl:state.currentUser.avatarUrl||'',
+    content,ts:Date.now(),reactions:[],pinned:false,edited:false,
+    imageData:msg.imageData||null,fileData:msg.fileData||null,fileName:msg.fileName||null,
+    fileType:msg.fileType||null,audioData:msg.audioData||null,
+    forwardedFrom:{name:msg.name,ts:msg.ts}
+  };
+  if(target.type==='dm'){
+    const dmId=getDMId(state.currentUser.uid,target.uid);
+    fbSet('dmMessages/'+dmId+'/'+fwd.id,fwd);
+    const otherInfo=state.dmConversations[target.uid]||{name:'?'};
+    const preview='↪️ '+(content||(fwd.imageData?'Imagen':fwd.fileData?'Archivo':fwd.audioData?'Mensaje de voz':'')).substring(0,40);
+    fbSet('dms/'+state.currentUser.uid+'/'+target.uid,{uid:target.uid,name:otherInfo.name,avatarUrl:otherInfo.avatarUrl||'',lastMsg:preview,ts:Date.now()});
+    fbSet('dms/'+target.uid+'/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',lastMsg:preview,ts:Date.now()});
+  }else{
+    fbSet('state/messages/'+target.id+'/'+fwd.id,fwd);
+  }
+  closeModal('forward-message-modal');
+  state._forwardingMsg=null;
+  showToast('✅ Mensaje reenviado');
+}
 const QUICK_REACT_EMOJIS=['👍','❤️','😂','😮','😢','🎉'];
 function quickReact(id,btnEl){
   const popup=document.getElementById('quick-react-popup');
@@ -3915,19 +4029,27 @@ function selectServer(id){
   savePref({lastServer:id,lastChannel:state.currentChannelId||''});
   renderAll();
 }
-function openAddChannelModal(){if(!state.currentServerId||state.currentServerId==='__dm__')return;populateCategorySelect();document.getElementById('ch-private-toggle').classList.remove('on');openModal('add-channel-modal');}
-function openAddChannelModalForCat(catId){populateCategorySelect(catId);document.getElementById('ch-private-toggle').classList.remove('on');openModal('add-channel-modal');}
+function openAddChannelModal(){
+  if(!state.currentServerId||state.currentServerId==='__dm__')return;
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para crear canales en este servidor');return;}
+  populateCategorySelect();document.getElementById('ch-private-toggle').classList.remove('on');openModal('add-channel-modal');
+}
+function openAddChannelModalForCat(catId){
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para crear canales en este servidor');return;}
+  populateCategorySelect(catId);document.getElementById('ch-private-toggle').classList.remove('on');openModal('add-channel-modal');
+}
 function populateCategorySelect(selectedId){
   const srv=getServer(state.currentServerId);const sel=document.getElementById('new-channel-category');sel.innerHTML='';
   (srv?.channels||[]).forEach(c=>{const opt=document.createElement('option');opt.value=c.id;opt.textContent=c.name;if(c.id===selectedId)opt.selected=true;sel.appendChild(opt);});
 }
 function createChannel(){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para crear canales en este servidor');return;}
   const name=document.getElementById('new-channel-name').value.trim().replace(/\s+/g,'-').toLowerCase();
   if(!name){showToast('⚠️ Nombre requerido');return;}
   const type=document.getElementById('new-channel-type').value;
   const catId=document.getElementById('new-channel-category').value;
   const isPrivate=document.getElementById('ch-private-toggle').classList.contains('on');
-  const srv=getServer(state.currentServerId);
   const ch={id:'ch'+genId(8),name,type,serverId:srv.id,categoryId:catId,private:isPrivate};
   const cat=srv.channels.find(c=>c.id===catId);if(cat){if(!Array.isArray(cat.children))cat.children=[];cat.children.push(ch);}
   saveServers();closeModal('add-channel-modal');selectChannel(ch.id);showToast('✅ Canal #'+name+' creado');
@@ -3935,6 +4057,7 @@ function createChannel(){
 // ── CATEGORY EDITOR ──
 function createCategory(srvId){
   const srv=getServer(srvId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para crear categorías en este servidor');return;}
   if(!srv.channels)srv.channels=[];
   const cat={id:'cat'+genId(8),name:'NUEVA CATEGORÍA',type:'category',children:[]};
   srv.channels.push(cat);
@@ -3982,6 +4105,7 @@ function editCategory(catId){
 // ── EDIT CHANNEL ──
 function openEditChannel(chId, srvId){
   const srv=getServer(srvId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para editar canales en este servidor');return;}
   let ch=null;
   srv.channels.forEach(cat=>(cat.children||[]).forEach(c=>{if(c.id===chId)ch=c;}));
   if(!ch)return;
@@ -3998,6 +4122,7 @@ function saveEditChannel(){
   const chId=document.getElementById('edit-ch-id').value;
   const srvId=document.getElementById('edit-ch-srv-id').value;
   const srv=getServer(srvId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para editar canales en este servidor');return;}
   let ch=null;
   srv.channels.forEach(cat=>(cat.children||[]).forEach(c=>{if(c.id===chId)ch=c;}));
   if(!ch)return;
@@ -4013,8 +4138,9 @@ function saveEditChannel(){
   showToast('✅ Canal actualizado');
 }
 async function deleteChannel(chId,srvId){
+  const srv=getServer(srvId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_channels')){showToast('⚠️ No tienes permiso para eliminar canales en este servidor');return;}
   if(!(await cmtrConfirm('¿Eliminar canal?',{danger:true,okText:'Eliminar'})))return;
-  const srv=getServer(srvId);
   srv.channels.forEach(cat=>{cat.children=(cat.children||[]).filter(c=>c.id!==chId);});
   saveServers();if(state.currentChannelId===chId)state.currentChannelId=null;renderAll();showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Canal eliminado');
 }
@@ -4072,6 +4198,7 @@ function openServerSettings(){
     if(state.currentServerId==='__dm__'){openUserSettings();return;}
     return;
   }
+  if(!hasPermission(state.currentUser.uid,'manage_server')){showToast('⚠️ No tienes permiso para editar la configuración de este servidor');return;}
   // Fill sidebar server name
   document.getElementById('ss-server-name-sidebar').textContent=srv.name;
   // Fill general fields
@@ -4254,6 +4381,7 @@ function logAudit(action, icon){
 }
 function saveServerSettings(){
   const srv=getServer(state.currentServerId);if(!srv)return;
+  if(!hasPermission(state.currentUser.uid,'manage_server')){showToast('⚠️ No tienes permiso para editar este servidor');return;}
   const ssTypeEl=document.getElementById('ss-server-type');if(ssTypeEl)srv.serverType=ssTypeEl.value;
   const name=document.getElementById('ss-server-name').value.trim();
   if(!name){showToast('⚠️ Nombre requerido');return;}
@@ -6150,7 +6278,7 @@ function cmtrPrompt(message,defaultValue,opts={}){
 }
 function showServerCtx(e,srv){
   const menu=document.getElementById('context-menu');
-  menu.innerHTML=`<div class="ctx-item" onclick="selectServer('${srv.id}');closeCtx()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Ir al servidor</div><div class="ctx-item" onclick="markServerRead('${srv.id}');closeCtx()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Marcar como leído</div><div class="ctx-item" onclick="openServerSettings();closeCtx()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Configuración</div><div class="ctx-sep"></div>${isServerAdmin(srv)?`<div class="ctx-item danger" onclick="state.currentServerId='${srv.id}';deleteCurrentServer();closeCtx()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar</div>`:''}`;
+  menu.innerHTML=`<div class="ctx-item" onclick="selectServer('${srv.id}');closeCtx()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Ir al servidor</div><div class="ctx-item" onclick="markServerRead('${srv.id}');closeCtx()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Marcar como leído</div>${hasPermission(state.currentUser.uid,'manage_server')?`<div class="ctx-item" onclick="openServerSettings();closeCtx()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Configuración</div>`:''}<div class="ctx-sep"></div>${isServerAdmin(srv)?`<div class="ctx-item danger" onclick="state.currentServerId='${srv.id}';deleteCurrentServer();closeCtx()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> Eliminar</div>`:''}`;
   menu.style.left=e.clientX+'px';menu.style.top=e.clientY+'px';menu.classList.add('open');
 }
 function showChannelCtx(e,ch,srv){
@@ -6610,9 +6738,26 @@ function copyUID() {
 }
 
 // ── OPEN USER SETTINGS (full) ──
+// El Modo Lite cambia qué consulta de Firebase se usa al suscribirse a un canal
+// (subscribeChannel/subscribeDMChannel), y esas suscripciones quedan cacheadas en
+// _msgListeners una vez abiertas — por eso, para que el cambio se aplique de forma
+// consistente a TODO lo que ya está abierto, recargamos la página tras confirmarlo.
+async function toggleLiteMode(){
+  const turningOn=!state.liteMode;
+  const ok=await cmtrConfirm(
+    turningOn
+      ? 'Se activará el Modo Lite: cada canal solo cargará los mensajes del último día. La app necesita recargarse para aplicarlo. ¿Recargar ahora?'
+      : 'Se desactivará el Modo Lite y se volverá a cargar el historial completo. ¿Recargar ahora?',
+    {okText:'Recargar ahora'}
+  );
+  if(!ok)return;
+  try{await fbUpdate('users/'+state.currentUser.uid+'/prefs',{liteMode:turningOn});}catch(e){}
+  location.reload();
+}
 function openUserSettings() {
   const u = state.currentUser; if (!u) return;
   _updatePWAButtonUI();
+  document.getElementById('us-lite-mode-toggle')?.classList.toggle('on',!!state.liteMode);
   document.getElementById('us-username').value = u.name || '';
   document.getElementById('us-handle').value = u.handle || '';
   document.getElementById('us-bio').value = u.bio || '';
@@ -7007,10 +7152,12 @@ function sendAudioMessage(){
 document.head.insertAdjacentHTML('beforeend','<style>@keyframes vizBar{from{transform:scaleY(.3)}to{transform:scaleY(1)}}</style>');
 
 // ── UNREAD / PIN ──
-function pinMessage(msgId){
+async function pinMessage(msgId){
   const msgs=state.messages[state.currentChannelId]||[];
   const msg=msgs.find(m=>m.id===msgId);if(!msg)return;
-  msg.pinned=!msg.pinned;
+  const willPin=!msg.pinned;
+  if(!(await cmtrConfirm(willPin?'¿Fijar este mensaje en el canal?':'¿Quitar este mensaje de los fijados?',{okText:willPin?'Fijar':'Desfijar'})))return;
+  msg.pinned=willPin;
   fbSet('state/messages/'+state.currentChannelId+'/'+msgId+'/pinned',msg.pinned);
   showToast(msg.pinned?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Mensaje fijado':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24Z"/></svg> Mensaje desfijado');
   renderMessages({force:true});
