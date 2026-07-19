@@ -423,7 +423,7 @@ select option{background:var(--bg-3);color:var(--text-0);}
 #profile-popup.open{display:block;}
 .profile-banner{height:68px;}
 .profile-body{padding:0 16px 16px;}
-.profile-ava{width:68px;height:68px;border-radius:18px;border:4px solid var(--bg-2);margin-top:-34px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;color:#fff;}
+.profile-ava{width:68px;height:68px;border-radius:18px;border:4px solid var(--bg-2);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.7rem;font-weight:700;color:#fff;}
 .profile-ava img{width:100%;height:100%;object-fit:cover;border-radius:inherit;}
 .profile-name{font-size:.95rem;font-weight:700;color:var(--text-0);margin-top:8px;letter-spacing:-.01em;}
 .profile-tag{font-size:.7rem;color:var(--text-3);}
@@ -861,11 +861,17 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   <div class="profile-banner" id="pp-banner"></div>
   <div class="profile-body">
     <div style="position:relative;width:fit-content;">
-      <div class="profile-ava" id="pp-ava"></div>
-      <div id="pp-online-dot" style="position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--green);border:2px solid var(--bg-2);display:none;"></div>
+      <div id="pp-avatar-frame" style="border-radius:22px;margin-top:-34px;transition:padding .12s;">
+        <div style="position:relative;">
+          <div class="profile-ava" id="pp-ava"></div>
+          <div id="pp-online-dot" style="position:absolute;bottom:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--green);border:2px solid var(--bg-2);display:none;"></div>
+        </div>
+      </div>
     </div>
-    <div class="profile-name" id="pp-name"></div>
-    <div class="profile-tag" id="pp-tag"></div>
+    <div id="pp-nameplate-wrap" style="border-radius:10px;margin-top:8px;transition:padding .1s;">
+      <div class="profile-name" id="pp-name" style="margin-top:0;"></div>
+      <div class="profile-tag" id="pp-tag"></div>
+    </div>
     <div class="profile-status" id="pp-status"></div>
     <div class="profile-roles" id="pp-roles"></div>
     <div class="profile-actions" id="pp-actions"></div>
@@ -1347,6 +1353,23 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <option value="dnd">No molestar</option>
         <option value="offline">Invisible</option>
       </select>
+
+      <label style="margin-top:6px;">Placa de nombre</label>
+      <div id="us-nameplate-picker" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;"></div>
+
+      <label>Marco de avatar <span style="color:var(--text-3);font-size:.75rem;text-transform:none;letter-spacing:0;font-weight:400;">(borde decorativo alrededor de tu foto)</span></label>
+      <div id="us-avatar-deco-picker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;"></div>
+
+      <label>Color de cartel <span style="color:var(--text-3);font-size:.75rem;text-transform:none;letter-spacing:0;font-weight:400;">(se usa solo si no subiste una imagen de banner)</span></label>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <input type="color" id="us-banner-color" value="#5865f2" onchange="state._selBannerColorOn=true;renderCustomizationPickers();">
+        <div class="toggle" id="us-banner-color-toggle" onclick="this.classList.toggle('on');state._selBannerColorOn=this.classList.contains('on');"></div>
+        <span style="font-size:.75rem;color:var(--text-2);">Usar como cartel</span>
+      </div>
+
+      <label>Efecto de perfil</label>
+      <div id="us-profile-effect-picker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px;"></div>
+
       <label>Redes sociales <span style="color:var(--text-3);font-size:.75rem;">(hasta 6 enlaces)</span></label>
       <div style="display:flex;flex-direction:column;gap:6px;" id="us-socials-list">
         <input type="text" class="us-social-link" placeholder="https://... o @usuario">
@@ -3575,7 +3598,9 @@ function buildMemberEl(m,isOnline){
   const botBadgeHtml=isBot?'<span class="bot-badge" style="font-size:.5rem;padding:1px 4px;margin-left:3px;">BOT</span>':'';
   const activity=isOnline?(state.onlineUsers[uid]?.activity||m.activity):null;
   const activityHtml=activity?renderActivityLine(activity):'';
-  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'}">${m.name||'?'}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div>${activityHtml}</div>`;
+  const ringColor=m.avatarDecoration?avatarFrameRing(m.avatarDecoration):'';
+  const avatarRingStyle=ringColor?`box-shadow:0 0 0 2px ${ringColor};`:'';
+  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg};${avatarRingStyle}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'}">${m.name||'?'}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div>${activityHtml}</div>`;
   div.onclick=e=>{showProfilePopupByUid(e,uid,m);e.stopPropagation();};
   return div;
 }
@@ -5393,11 +5418,29 @@ function renderProfilePopupContent(u,uid,loading){
   const name=u.name||'?';const color=getAutoAvatarColor(uid||name);const avatarUrl=u.avatarUrl||'';
   const bannerUrl=u.bannerUrl||'';
   const bannerEl=document.getElementById('pp-banner');
-  if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition='center';}
+  if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition='center';bannerEl.style.background='';}
+  else if(u.bannerColor){bannerEl.style.backgroundImage='';bannerEl.style.background=u.bannerColor;}
   else{bannerEl.style.backgroundImage='';bannerEl.style.background=`linear-gradient(135deg,${color},${color}66)`;}
   bannerEl.style.opacity=loading?'.6':'1';
   const avaEl=document.getElementById('pp-ava');avaEl.style.background=avatarUrl?'#000':color;
   avaEl.innerHTML=avatarUrl?`<img src="${avatarUrl}" onerror="this.parentElement.style.background='${color}';this.outerHTML='${(name[0]||'?').toUpperCase()}'">`:(name[0]||'?').toUpperCase();
+  const decoEl=document.getElementById('pp-avatar-frame');
+  if(decoEl){
+    const frameCss=avatarFrameCss(u.avatarDecoration);
+    if(frameCss){decoEl.style.background=frameCss;decoEl.style.padding='4px';}
+    else{decoEl.style.background='';decoEl.style.padding='0';}
+  }
+  const nameplateWrap=document.getElementById('pp-nameplate-wrap');
+  if(nameplateWrap){
+    const npCss=nameplateCss(u.nameplate);
+    if(npCss){nameplateWrap.style.background=npCss;nameplateWrap.style.padding='6px 10px 8px';}
+    else{nameplateWrap.style.background='';nameplateWrap.style.padding='0';}
+  }
+  const popupEl=document.getElementById('profile-popup');
+  if(popupEl){
+    const fxShadow=profileEffectShadow(u.profileEffect);
+    popupEl.style.boxShadow=fxShadow?`0 16px 48px rgba(0,0,0,.6), ${fxShadow}`:'0 16px 48px rgba(0,0,0,.6)';
+  }
   const dotEl=document.getElementById('pp-online-dot');
   if(dotEl){const st=state.onlineUsers[uid]?.status;const isOn=!!state.onlineUsers[uid]&&st!=='offline';dotEl.style.display=isOn?'block':'none';dotEl.style.background=st==='idle'?'var(--yellow)':st==='dnd'?'var(--red)':'var(--green)';}
   document.getElementById('pp-name').textContent=u.displayName||name;
@@ -5506,6 +5549,41 @@ function manageRoles(uid){
 }
 
 // ── ACTIVITY STATUS (Jugando a.../Escuchando.../Viendo...) ──
+// ── PERSONALIZACIÓN DE PERFIL (placa de nombre, decoración de avatar, efecto) ──
+const NAMEPLATE_PRESETS=[
+  {id:'sunset',label:'Atardecer',css:'linear-gradient(135deg,#ff512f,#dd2476)'},
+  {id:'ocean',label:'Océano',css:'linear-gradient(135deg,#2193b0,#6dd5ed)'},
+  {id:'forest',label:'Bosque',css:'linear-gradient(135deg,#134e5e,#71b280)'},
+  {id:'candy',label:'Dulce',css:'linear-gradient(135deg,#ff9a9e,#fecfef)'},
+  {id:'void',label:'Vacío',css:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'},
+  {id:'ember',label:'Brasa',css:'linear-gradient(135deg,#f12711,#f5af19)'},
+  {id:'mint',label:'Menta',css:'linear-gradient(135deg,#00b09b,#96c93d)'},
+  {id:'royal',label:'Real',css:'linear-gradient(135deg,#7f00ff,#e100ff)'},
+];
+const AVATAR_FRAME_PRESETS=[
+  {id:'gold',label:'Dorado',css:'conic-gradient(from 180deg,#fceabb,#f8b500,#fceabb,#f8b500,#fceabb)',ring:'#f8b500'},
+  {id:'silver',label:'Plateado',css:'conic-gradient(from 180deg,#f0f0f0,#a0a0a0,#f0f0f0,#a0a0a0,#f0f0f0)',ring:'#b0b0b0'},
+  {id:'fire',label:'Fuego',css:'conic-gradient(from 180deg,#ff512f,#f09819,#ff512f,#f09819,#ff512f)',ring:'#ff512f'},
+  {id:'ocean',label:'Océano',css:'conic-gradient(from 180deg,#2193b0,#6dd5ed,#2193b0,#6dd5ed,#2193b0)',ring:'#2193b0'},
+  {id:'toxic',label:'Tóxico',css:'conic-gradient(from 180deg,#a8ff78,#78ffd6,#a8ff78,#78ffd6,#a8ff78)',ring:'#78ffd6'},
+  {id:'royal',label:'Real',css:'conic-gradient(from 180deg,#7f00ff,#e100ff,#7f00ff,#e100ff,#7f00ff)',ring:'#a100ff'},
+  {id:'rose',label:'Rosa',css:'conic-gradient(from 180deg,#ff9a9e,#fecfef,#ff9a9e,#fecfef,#ff9a9e)',ring:'#ff9a9e'},
+  {id:'void',label:'Vacío',css:'conic-gradient(from 180deg,#0f0c29,#302b63,#0f0c29,#302b63,#0f0c29)',ring:'#302b63'},
+  {id:'rainbow',label:'Arcoíris',css:'conic-gradient(from 180deg,red,orange,yellow,green,blue,indigo,violet,red)',ring:'#ff512f'},
+];
+function avatarFrameCss(id){return(AVATAR_FRAME_PRESETS.find(f=>f.id===id)||{}).css||'';}
+function avatarFrameRing(id){return(AVATAR_FRAME_PRESETS.find(f=>f.id===id)||{}).ring||'';}
+const PROFILE_EFFECT_PRESETS=[
+  {id:'glow-purple',label:'Morado',color:'124,58,237'},
+  {id:'glow-gold',label:'Dorado',color:'234,179,8'},
+  {id:'neon-pink',label:'Rosa neón',color:'236,72,153'},
+  {id:'frost',label:'Escarcha',color:'59,130,246'},
+  {id:'ember',label:'Brasa',color:'239,68,68'},
+  {id:'mint',label:'Menta',color:'16,185,129'},
+];
+function nameplateCss(id){return(NAMEPLATE_PRESETS.find(n=>n.id===id)||{}).css||'';}
+function profileEffectShadow(id){const p=PROFILE_EFFECT_PRESETS.find(e=>e.id===id);return p?`0 0 0 2px rgba(${p.color},.55), 0 0 34px rgba(${p.color},.3)`:'';}
+
 const ACTIVITY_LABELS={playing:'Jugando a',listening:'Escuchando',watching:'Viendo',custom:''};
 // Generic label for the top row of an Active Now card — the specific name (game/song/show)
 // goes in the row below instead, mirroring how platform-linked presence (e.g. Xbox) works.
@@ -5598,6 +5676,32 @@ function _updateActivityPlaceholder(){
   const placeholders={playing:'Ej: Minecraft',listening:'Ej: cierta canción',watching:'Ej: una serie',custom:'Ej: leyendo un libro'};
   nameEl.placeholder=placeholders[type]||'Nombre del juego, canción, serie...';
 }
+
+// ── PICKERS DE PERSONALIZACIÓN (placa de nombre, decoración de avatar, efecto) ──
+function renderCustomizationPickers(){
+  const npEl=document.getElementById('us-nameplate-picker');
+  if(npEl){
+    npEl.innerHTML=`<div onclick="selectNameplate(null)" style="height:40px;border-radius:8px;border:2px solid ${!state._selNameplate?'var(--accent)':'var(--border)'};background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.65rem;color:var(--text-3);">Ninguna</div>`+
+      NAMEPLATE_PRESETS.map(p=>`<div title="${p.label}" onclick="selectNameplate('${p.id}')" style="height:40px;border-radius:8px;cursor:pointer;background:${p.css};border:2px solid ${state._selNameplate===p.id?'#fff':'transparent'};box-shadow:${state._selNameplate===p.id?'0 0 0 2px var(--accent)':'none'};"></div>`).join('');
+  }
+  const adEl=document.getElementById('us-avatar-deco-picker');
+  if(adEl){
+    adEl.innerHTML=`<div onclick="selectAvatarDeco(null)" style="height:46px;border-radius:8px;border:2px solid ${!state._selAvatarDeco?'var(--accent)':'var(--border)'};background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.6rem;color:var(--text-3);text-align:center;padding:2px;">Ninguno</div>`+
+      AVATAR_FRAME_PRESETS.map(p=>`<div title="${p.label}" onclick="selectAvatarDeco('${p.id}')" style="height:46px;border-radius:10px;cursor:pointer;background:${p.css};padding:3px;display:flex;align-items:center;justify-content:center;box-shadow:${state._selAvatarDeco===p.id?'0 0 0 2px var(--accent)':'none'};"><div style="width:100%;height:100%;border-radius:7px;background:var(--bg-3);"></div></div>`).join('');
+  }
+  const feEl=document.getElementById('us-profile-effect-picker');
+  if(feEl){
+    feEl.innerHTML=`<div onclick="selectProfileEffect(null)" style="height:36px;border-radius:8px;border:2px solid ${!state._selProfileEffect?'var(--accent)':'var(--border)'};background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.66rem;color:var(--text-3);">Ninguno</div>`+
+      PROFILE_EFFECT_PRESETS.map(p=>`<div onclick="selectProfileEffect('${p.id}')" style="height:36px;border-radius:8px;cursor:pointer;background:var(--bg-3);border:2px solid ${state._selProfileEffect===p.id?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:.66rem;color:var(--text-1);box-shadow:${state._selProfileEffect===p.id?`0 0 12px rgba(${p.color},.5)`:'none'};">${p.label}</div>`).join('');
+  }
+  const bcEl=document.getElementById('us-banner-color');
+  if(bcEl&&state._selBannerColor)bcEl.value=state._selBannerColor;
+  const bcToggle=document.getElementById('us-banner-color-toggle');
+  if(bcToggle)bcToggle.classList.toggle('on',!!state._selBannerColorOn);
+}
+function selectNameplate(id){state._selNameplate=id;renderCustomizationPickers();}
+function selectAvatarDeco(e){state._selAvatarDeco=e;renderCustomizationPickers();}
+function selectProfileEffect(id){state._selProfileEffect=id;renderCustomizationPickers();}
 
 // ── SPOTIFY INTEGRATION ──
 // PKCE OAuth flow entirely client-side (no server/client-secret required).
@@ -5805,8 +5909,12 @@ function saveUserSettings(){
   const newBannerB64=document.getElementById('us-banner-b64').value;
   const avatarUrl=newAvatarB64||state.currentUser.avatarUrl||'';
   const bannerUrl=newBannerB64||state.currentUser.bannerUrl||'';
-  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy};
-  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,createdAt:state.currentUser.createdAt||Date.now()};
+  const nameplate=state._selNameplate||null;
+  const avatarDecoration=state._selAvatarDeco||null;
+  const profileEffect=state._selProfileEffect||null;
+  const bannerColor=state._selBannerColorOn?(document.getElementById('us-banner-color').value||null):null;
+  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplate,avatarDecoration,profileEffect,bannerColor};
+  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplate,avatarDecoration,profileEffect,bannerColor,createdAt:state.currentUser.createdAt||Date.now()};
   fbSet('users/'+state.currentUser.uid,userData);
   // Handle index for friend search
   fbSet('handles/'+handle,state.currentUser.uid);
@@ -5816,7 +5924,7 @@ function saveUserSettings(){
   const eKey=emailToKey(state.currentUser.email||'');
   if(eKey)fbSet('usersByEmail/'+eKey,userData);
   fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,nameColor,status,customStatus,activity,ts:Date.now()});
-  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;}});
+  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecoration=avatarDecoration;}});
   saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();showToast('✅ Perfil actualizado');
 }
 
@@ -6758,6 +6866,12 @@ function openUserSettings() {
   const u = state.currentUser; if (!u) return;
   _updatePWAButtonUI();
   document.getElementById('us-lite-mode-toggle')?.classList.toggle('on',!!state.liteMode);
+  state._selNameplate=u.nameplate||null;
+  state._selAvatarDeco=u.avatarDecoration||null;
+  state._selProfileEffect=u.profileEffect||null;
+  state._selBannerColor=u.bannerColor||'#5865f2';
+  state._selBannerColorOn=!!u.bannerColor;
+  renderCustomizationPickers();
   document.getElementById('us-username').value = u.name || '';
   document.getElementById('us-handle').value = u.handle || '';
   document.getElementById('us-bio').value = u.bio || '';
