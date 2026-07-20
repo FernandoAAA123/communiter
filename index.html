@@ -165,6 +165,10 @@ select option{background:var(--bg-3);color:var(--text-0);}
 .server-icon.active{border-radius:12px;background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 16px var(--accent-glow);}
 .server-unread-pill{position:absolute;left:0;top:50%;transform:translateY(-50%);width:4px;height:18px;border-radius:0 3px 3px 0;background:#fff;pointer-events:none;}
 .server-mention-badge{position:absolute;bottom:2px;right:2px;width:11px;height:11px;border-radius:50%;background:var(--red);border:2px solid var(--bg-1);pointer-events:none;}
+.dm-rail-avatar{width:44px;height:44px;border-radius:50%;cursor:pointer;position:relative;flex-shrink:0;transition:border-radius .2s,box-shadow .15s;overflow:hidden;display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:1rem;margin-bottom:6px;}
+.dm-rail-avatar:hover{border-radius:16px;}
+.dm-rail-avatar img{width:100%;height:100%;object-fit:cover;}
+#dm-avatar-rail{display:flex;flex-direction:column;align-items:center;}
 .server-icon img{width:100%;height:100%;object-fit:cover;}
 .server-sep{width:28px;height:1px;background:var(--border);margin:4px 0;flex-shrink:0;}
 .forum-posts-grid{display:flex;flex-direction:column;gap:10px;}
@@ -192,7 +196,8 @@ select option{background:var(--bg-3);color:var(--text-0);}
 .unread-dot{position:absolute;left:3px;top:50%;transform:translateY(-50%);width:6px;height:6px;border-radius:50%;background:var(--text-0);pointer-events:none;}
 .channel-item .ch-icon{font-size:.85rem;width:18px;text-align:center;flex-shrink:0;opacity:.7;}
 .channel-item.active .ch-icon{opacity:1;}
-.unread-badge{margin-left:auto;background:var(--red);color:#fff;font-size:.58rem;font-weight:700;border-radius:20px;padding:1px 6px;min-width:16px;text-align:center;}
+.unread-badge{margin-left:auto;background:var(--bg-4);color:var(--text-2);font-size:.58rem;font-weight:700;border-radius:20px;padding:1px 6px;min-width:16px;text-align:center;}
+.unread-badge.mention{background:var(--red);color:#fff;}
 .ch-actions{margin-left:auto;display:none;gap:3px;}
 .channel-item:hover .ch-actions{display:flex;}
 .channel-item:hover .unread-badge{display:none;}
@@ -541,6 +546,9 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   #server-bar::-webkit-scrollbar{height:5px;}
   #server-bar .server-sep{width:1px;height:28px;margin:0 4px;flex-shrink:0;}
   #server-bar .server-icon{flex-shrink:0;}
+  #server-bar #dm-avatar-rail{flex-direction:row;gap:4px;}
+  #server-bar .dm-rail-avatar{margin-bottom:0;}
+  #server-bar #dm-avatar-rail-sep{width:1px;height:28px;margin:0 4px;}
   #server-bar #dm-btn,#server-bar #add-server-btn{flex-shrink:0;}
   /* Clave del fix: en flexbox, un hijo sin flex-shrink:0 ni ancho propio
      se comprime para caber en el padre en vez de desbordar — eso impedía
@@ -904,6 +912,8 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div class="server-icon active" id="dm-btn" title="Mensajes directos" onclick="selectServer('__dm__')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
     </div>
+    <div id="dm-avatar-rail-sep" class="server-sep" style="display:none;"></div>
+    <div id="dm-avatar-rail"></div>
     <div class="server-sep"></div>
     <div id="server-icons-list"></div>
     <div class="server-sep"></div>
@@ -2181,10 +2191,12 @@ function markChannelRead(chId){
   state.unreadCounts[chId]=0;
   savePref({['lastRead/'+chId]:ts});
 }
-// Escucha SOLO el último mensaje de cada canal de texto de TODOS los servidores donde
+// Escucha los últimos mensajes de cada canal de texto de TODOS los servidores donde
 // el usuario es miembro (no solo el que tiene abierto), para poder mostrar el indicador
 // de no leído/mención en la barra de servidores aunque no esté mirando ese servidor.
-// También detecta si ese último mensaje te menciona con @tuNombre.
+// También detecta si alguno de esos mensajes (sin leer todavía) te menciona con
+// @tuNombre o con @everyone/@aquí.
+const MENTION_SCAN_LIMIT=30; // cuántos mensajes recientes revisamos por canal, no solo el último
 function subscribeAllChannelsActivity(){
   Object.values(_chActivityListeners).forEach(unsub=>{try{unsub();}catch(e){}});
   Object.keys(_chActivityListeners).forEach(k=>delete _chActivityListeners[k]);
@@ -2192,18 +2204,23 @@ function subscribeAllChannelsActivity(){
   if(!uid)return;
   const myServers=state.servers.filter(srv=>(srv.members||[]).some(m=>(m.uid||m.id)===uid));
   const myName=state.currentUser?.name||'';
-  const mentionRe=myName?new RegExp('@'+myName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b'):null;
+  const mentionRe=myName?new RegExp('@'+myName.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i'):null;
+  const everyoneRe=/@everyone\b|@aqu[ií]\b/i;
   myServers.forEach(srv=>{
     const channels=(srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>c.type==='text'||!c.type);
     channels.forEach(ch=>{
       state.channelToServer[ch.id]=srv.id;
-      const q=window._fbQuery(fbRef('state/messages/'+ch.id),window._fbOrderByChild('ts'),window._fbLimitToLast(1));
+      const q=window._fbQuery(fbRef('state/messages/'+ch.id),window._fbOrderByChild('ts'),window._fbLimitToLast(MENTION_SCAN_LIMIT));
       const unsub=window._fbOnValue(q,snap=>{
         let latestTs=0,mentionsMe=false;
+        const read=state.lastRead[ch.id]||0;
         if(snap.exists()){
           Object.values(snap.val()).forEach(m=>{
             if((m.ts||0)>latestTs)latestTs=m.ts;
-            if(mentionRe&&m.content&&mentionRe.test(m.content))mentionsMe=true;
+            if(m.uid===uid)return; // tus propios mensajes nunca son una mención tuya
+            if((m.ts||0)<=read)return; // ya lo leíste, no lo contamos aunque mencione
+            const content=m.content||'';
+            if((mentionRe&&mentionRe.test(content))||everyoneRe.test(content))mentionsMe=true;
           });
         }
         state.channelActivity[ch.id]=latestTs;
@@ -2816,21 +2833,44 @@ function subscribeChannel(channelId){
       });
     }
     isFirst=false;
-    if(channelId===state.currentChannelId)renderMessages();
+    if(channelId===state.currentChannelId){
+      renderMessages();
+      // Mantener lastRead al día MIENTRAS el canal sigue abierto — antes solo se
+      // actualizaba al entrar, así que cualquier mensaje nuevo (tuyo o de otro)
+      // llegado mientras estabas adentro dejaba lastRead desactualizado, y en
+      // cuanto salías del canal, éste se marcaba como "no leído" incorrectamente.
+      markChannelRead(channelId);
+      renderChannelsPanel();renderServerBar();
+    }
   });
   _msgListeners[channelId]=true;
 }
 function subscribeDMChannel(dmId){
   const key='dm_'+dmId;
   if(_msgListeners[key])return;
+  let isFirst=true;
   const baseRef=fbRef('dmMessages/'+dmId);
   const liteCutoff=Date.now()-24*60*60*1000;
   const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(LITE_MODE_THRESHOLD)):baseRef;
   window._fbOnValue(target,snap=>{
+    const prev=state.messages[key]||[];
     if(!snap.exists()){state.messages[key]=[];if(state.currentChannelId===key)renderMessages();return;}
     let list=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
     if(state.liteMode&&list.length>=LITE_MODE_THRESHOLD)list=list.filter(m=>m.ts>=liteCutoff);
     state.messages[key]=list;
+    if(!isFirst){
+      const newMsgs=list.filter(m=>!prev.find(p=>p.id===m.id)&&m.uid!==state.currentUser?.uid);
+      newMsgs.forEach(m=>{
+        if(key!==state.currentChannelId){
+          state.unreadCounts[key]=(state.unreadCounts[key]||0)+1;
+          renderChannelsPanel();
+          renderDmAvatarRail();
+        }
+        const preview=m.audioData?'🎤 Mensaje de voz':m.imageData?'🖼️ Imagen':m.fileData?'📎 '+(m.fileName||'Archivo'):(m._decrypted!==undefined?m._decrypted:m.content||'').substring(0,60);
+        sendDesktopNotif(m.name, preview, m.avatarUrl||'');
+      });
+    }
+    isFirst=false;
     decryptDMMessagesInPlace(dmId,key).then(()=>{
       if(state.currentChannelId===key)renderMessages();
     });
@@ -2954,7 +2994,6 @@ function toggleMuteChannel(chId){
 }
 
 // ── CARPETAS DE SERVIDORES ──
-function serverFolderOf(srvId){return(state.serverFolders||[]).find(f=>(f.serverIds||[]).includes(srvId));}
 function buildFolderEl(folder,myServers){
   const frag=document.createDocumentFragment();
   const header=document.createElement('div');
@@ -3062,6 +3101,33 @@ function createFolderWithCurrentServer(){
   nameInput.value='';
   closeModal('folder-picker-modal');renderServerBar();
 }
+function renderDmAvatarRail(){
+  const el=document.getElementById('dm-avatar-rail');
+  const sep=document.getElementById('dm-avatar-rail-sep');
+  if(!el||!sep)return;
+  el.innerHTML='';
+  const uid=state.currentUser?.uid;
+  if(!uid){sep.style.display='none';return;}
+  const unreadDms=Object.entries(state.dmConversations||{}).filter(([partnerUid])=>{
+    const dmId=getDMId(uid,partnerUid);
+    return (state.unreadCounts['dm_'+dmId]||0)>0;
+  }).sort((a,b)=>(b[1].ts||0)-(a[1].ts||0));
+  sep.style.display=unreadDms.length?'block':'none';
+  unreadDms.forEach(([partnerUid,info])=>{
+    const dmId=getDMId(uid,partnerUid);
+    const key='dm_'+dmId;
+    const unread=state.unreadCounts[key]||0;
+    const bg=info.avatarUrl?'#000':getAutoAvatarColor(partnerUid||info.name);
+    const ava=info.avatarUrl?`<img src="${info.avatarUrl}" onerror="this.style.display='none'">`:(info.name||'?')[0].toUpperCase();
+    const div=document.createElement('div');
+    div.className='dm-rail-avatar';
+    div.title=info.name||'?';
+    div.style.background=bg;
+    div.innerHTML=ava+'<div class="server-unread-pill"></div>'+`<div style="position:absolute;bottom:-2px;right:-2px;min-width:16px;height:16px;border-radius:50%;background:var(--red);border:2px solid var(--bg-1);display:flex;align-items:center;justify-content:center;font-size:.55rem;font-weight:700;color:#fff;padding:0 3px;">${unread>9?'9+':unread}</div>`;
+    div.onclick=()=>{selectServer('__dm__');openDM(partnerUid);};
+    el.appendChild(div);
+  });
+}
 function renderServerBar(){
   const el=document.getElementById('server-icons-list');el.innerHTML='';
   const uid=state.currentUser?.uid;
@@ -3077,6 +3143,7 @@ function renderServerBar(){
     el.appendChild(buildFolderEl(folder,myServers));
   });
   document.getElementById('dm-btn').classList.toggle('active',state.currentServerId==='__dm__');
+  renderDmAvatarRail();
   updateServerBarFades();
 }
 function updateServerBarFades(){
@@ -3180,7 +3247,7 @@ function renderChannelsPanel(){
       const muteIcon=chMuted?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;flex-shrink:0;"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>':'';
       const slowmodeIcon=ch.slowmode?`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;flex-shrink:0;color:var(--text-3);" title="Modo lento: ${ch.slowmode}s"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`:'';
 
-      item.innerHTML=`${!chMuted&&isChannelUnread(ch.id)?'<span class="unread-dot"></span>':''}${forumCover||`<span class="ch-icon">${CHAN_ICONS[ch.type]||CHAN_ICONS.text}</span>`}${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}${slowmodeIcon}${muteIcon}${unread?`<div class="unread-badge">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="openEditChannel('${ch.id}','${srv.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}</div>`;
+      item.innerHTML=`${!chMuted&&isChannelUnread(ch.id)?'<span class="unread-dot"></span>':''}${forumCover||`<span class="ch-icon">${CHAN_ICONS[ch.type]||CHAN_ICONS.text}</span>`}${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}${slowmodeIcon}${muteIcon}${unread?`<div class="unread-badge${channelHasMention(ch.id)?' mention':''}">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="openEditChannel('${ch.id}','${srv.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}</div>`;
       item.onclick=e=>{if(!e.target.closest('.ch-actions'))selectChannel(ch.id);};
       item.oncontextmenu=e=>{e.preventDefault();showChannelCtx(e,ch,srv);};
 
@@ -4749,7 +4816,7 @@ function isServerAdmin(srv){
 // ══ BOTS: MARKETPLACE (añadir/quitar bots de un servidor, estilo Discord) ══
 // Los bots se crean y configuran en Communiter Studio; desde aquí cualquier admin del
 // servidor puede instalarlos o quitarlos sin tener que entrar a Studio.
-const BOT_CHANNEL_MAP={welcome:'welcomeChannels',dex:'dexChannels',search:'searchChannels','plugin-mine':'channels','plugin-fight':'channels'};
+const BOT_CHANNEL_MAP={welcome:'welcomeChannels',dex:'dexChannels',search:'searchChannels','plugin-mine':'channels','plugin-fight':'channels','custom-code':'customChannels'};
 let _botsMarketUnsub=null;
 function getAllTextChannelsOf(srv){
   return (srv.channels||[]).flatMap(c=>c.children||[]).filter(c=>c.type==='text'||!c.type);
@@ -4765,9 +4832,8 @@ function loadBotsMarketplace(){
 function renderBotsMarketplace(bots){
   const el=document.getElementById('ss-bots-list');if(!el)return;
   const srv=getServer(state.currentServerId);if(!srv)return;
-  bots=bots.filter(b=>b.type!=='external'); // los personalizados corren dentro de Communiter Studio, no por servidor
   if(!bots.length){el.innerHTML='<div style="color:var(--text-3);font-size:.85rem;">Todavía no has creado ningún bot. Crea uno en Communiter Studio y aparecerá aquí.</div>';return;}
-  const typeLabel={welcome:'Bienvenida',dex:'Colección',search:'Búsqueda',external:'Externo','plugin-mine':'Dex Mine','plugin-fight':'Dex Fight'};
+  const typeLabel={welcome:'Bienvenida',dex:'Colección',search:'Búsqueda','custom-code':'Código propio','plugin-mine':'Dex Mine','plugin-fight':'Dex Fight'};
   el.innerHTML=bots.map(b=>{
     const installed=(b.installedServers||[]).includes(srv.id);
     return `<div class="bot-card" style="background:var(--bg-3);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;margin-bottom:10px;">
