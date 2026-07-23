@@ -2212,6 +2212,11 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 <script>
+// Guarda la plantilla original del popup de perfil humano. showBotProfilePopup
+// reemplaza todo el innerHTML del popup con su propia plantilla de bot; sin esto,
+// al volver a abrir el perfil de una persona real, renderProfilePopupContent no
+// encuentra pp-banner/pp-ava/pp-name (fueron borrados) y se corrompe el popup.
+const PROFILE_POPUP_SKELETON = document.getElementById('profile-popup')?.innerHTML || '';
 // ═══════════════════ CORDIS v2 — JS ═══════════════════
 const STATUS_COLORS={online:'#3ba55d',idle:'#faa81a',dnd:'#ed4245',offline:'#72767d'};
 const CHAN_ICONS={
@@ -5884,6 +5889,13 @@ function positionProfilePopup(event){
 }
 async function showProfilePopupByUid(event,uid,info){
   const popup=document.getElementById('profile-popup');
+  // Si el último popup mostrado fue el de un bot (showBotProfilePopup reemplaza
+  // todo el innerHTML), restaurá la plantilla humana antes de seguir — si no,
+  // getElementById('pp-banner') etc. da null y el render se corrompe a medias.
+  if(popup.dataset.kind==='bot'||!document.getElementById('pp-banner')){
+    popup.innerHTML=PROFILE_POPUP_SKELETON;
+  }
+  popup.dataset.kind='user';
   if(!info){
     const srv=getServer(state.currentServerId);
     info=(srv?.members||[]).find(m=>(m.uid||m.id)===uid)||state.onlineUsers[uid]||{};
