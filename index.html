@@ -1241,6 +1241,78 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
+<div class="modal-overlay" id="nameplate-modal">
+  <div class="modal" style="width:360px;padding:20px;">
+    <h2 style="margin-bottom:4px;">Placa de nombre</h2>
+    <p class="sub" style="margin-bottom:14px;">Color de fondo detrás de tu nombre.</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div class="toggle" id="us-nameplate-toggle" onclick="toggleNameplateOn()"></div>
+      <span style="font-size:.8rem;color:var(--text-2);">Usar placa de nombre</span>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;">
+      <input type="color" id="us-nameplate-color1" value="#ff512f" oninput="updateNameplateColor(1,this.value)" style="width:56px;height:38px;padding:2px;cursor:pointer;">
+      <input type="color" id="us-nameplate-color2" value="#dd2476" oninput="updateNameplateColor(2,this.value)" style="width:56px;height:38px;padding:2px;cursor:pointer;">
+      <div id="us-nameplate-preview" style="flex:1;border-radius:8px;height:38px;"></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal('nameplate-modal')">Listo</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="avatarframe-modal">
+  <div class="modal" style="width:400px;padding:20px;">
+    <h2 style="margin-bottom:4px;">Marco de avatar</h2>
+    <p class="sub" style="margin-bottom:14px;">Borde decorativo alrededor de tu foto.</p>
+    <div class="tab-bar" style="margin-bottom:12px;">
+      <button type="button" class="tab-btn active" id="af-tab-custom" onclick="setAvatarFrameTab('custom')">🎨 Color propio</button>
+      <button type="button" class="tab-btn" id="af-tab-catalog" onclick="setAvatarFrameTab('catalog')">🛍️ Catálogo</button>
+    </div>
+    <div id="af-tab-content-custom">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div class="toggle" id="us-avatarframe-toggle" onclick="toggleAvatarDecoOn()"></div>
+        <span style="font-size:.8rem;color:var(--text-2);">Usar marco propio</span>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center;margin-bottom:6px;">
+        <input type="color" id="us-avatarframe-color" value="#f8b500" oninput="updateAvatarDecoColor(this.value)" style="width:56px;height:38px;padding:2px;cursor:pointer;">
+        <div style="width:70px;height:70px;border-radius:50%;background:var(--bg-3);" id="us-avatarframe-preview"></div>
+      </div>
+    </div>
+    <div id="af-tab-content-catalog" style="display:none;">
+      <div id="us-avatarframe-catalog-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-height:260px;overflow-y:auto;"></div>
+      <p style="font-size:.72rem;color:var(--text-3);margin-top:8px;">Estas decoraciones las sube el administrador desde Communiter Creator.</p>
+    </div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal('avatarframe-modal')">Listo</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="bannercolor-modal">
+  <div class="modal" style="width:340px;padding:20px;">
+    <h2 style="margin-bottom:4px;">Color de cartel</h2>
+    <p class="sub" style="margin-bottom:14px;">Se usa solo si no subiste una imagen de banner.</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <input type="color" id="us-banner-color" value="#5865f2" oninput="state._selBannerColor=this.value;renderCustomizationPickers();">
+      <div class="toggle" id="us-banner-color-toggle" onclick="this.classList.toggle('on');state._selBannerColorOn=this.classList.contains('on');renderCustomizationPickers();"></div>
+      <span style="font-size:.75rem;color:var(--text-2);">Usar como cartel</span>
+    </div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal('bannercolor-modal')">Listo</button></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="effect-modal">
+  <div class="modal" style="width:340px;padding:20px;">
+    <h2 style="margin-bottom:4px;">Efecto de perfil</h2>
+    <p class="sub" style="margin-bottom:14px;">Brillo alrededor de tu tarjeta de perfil.</p>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <div class="toggle" id="us-effect-toggle" onclick="toggleProfileEffectOn()"></div>
+      <span style="font-size:.8rem;color:var(--text-2);">Usar efecto</span>
+    </div>
+    <div style="display:flex;gap:14px;align-items:center;">
+      <input type="color" id="us-effect-color" value="#7c3aed" oninput="updateProfileEffectColor(this.value)" style="width:56px;height:38px;padding:2px;cursor:pointer;">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-3);" id="us-effect-preview"></div>
+    </div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal('effect-modal')">Listo</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="folder-picker-modal">
   <div class="modal" style="width:320px;padding:20px;">
     <h2 style="margin-bottom:12px;">Mover a carpeta</h2>
@@ -1408,21 +1480,29 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <h4 style="font-size:.95rem;font-weight:700;color:var(--text-0);margin:0 0 4px;">Personalización de perfil</h4>
       <p style="font-size:.82rem;color:var(--text-3);margin:4px 0 16px;">Cómo se ve tu tarjeta de perfil para los demás.</p>
 
-      <label style="margin-top:6px;">Placa de nombre</label>
-      <div id="us-nameplate-picker" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;"></div>
-
-      <label>Marco de avatar <span style="color:var(--text-3);font-size:.75rem;text-transform:none;letter-spacing:0;font-weight:400;">(borde decorativo alrededor de tu foto)</span></label>
-      <div id="us-avatar-deco-picker" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;"></div>
-
-      <label>Color de cartel <span style="color:var(--text-3);font-size:.75rem;text-transform:none;letter-spacing:0;font-weight:400;">(se usa solo si no subiste una imagen de banner)</span></label>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-        <input type="color" id="us-banner-color" value="#5865f2" onchange="state._selBannerColorOn=true;renderCustomizationPickers();">
-        <div class="toggle" id="us-banner-color-toggle" onclick="this.classList.toggle('on');state._selBannerColorOn=this.classList.contains('on');"></div>
-        <span style="font-size:.75rem;color:var(--text-2);">Usar como cartel</span>
+      <div class="custom-section-row" onclick="openModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+        <div id="np-summary-chip" style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Placa de nombre</div><div style="font-size:.72rem;color:var(--text-3);">Color de fondo detrás de tu nombre</div></div>
+        <span style="color:var(--text-3);">→</span>
       </div>
 
-      <label>Efecto de perfil</label>
-      <div id="us-profile-effect-picker" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:6px;"></div>
+      <div class="custom-section-row" onclick="openModal('avatarframe-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+        <div id="af-summary-chip" style="width:34px;height:34px;border-radius:50%;background:var(--bg-3);flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Marco de avatar</div><div style="font-size:.72rem;color:var(--text-3);">Borde decorativo alrededor de tu foto</div></div>
+        <span style="color:var(--text-3);">→</span>
+      </div>
+
+      <div class="custom-section-row" onclick="openModal('bannercolor-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+        <div id="bc-summary-chip" style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Color de cartel</div><div style="font-size:.72rem;color:var(--text-3);">Se usa solo si no subiste una imagen de banner</div></div>
+        <span style="color:var(--text-3);">→</span>
+      </div>
+
+      <div class="custom-section-row" onclick="openModal('effect-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:16px;">
+        <div id="fx-summary-chip" style="width:34px;height:34px;border-radius:50%;background:var(--bg-3);flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Efecto de perfil</div><div style="font-size:.72rem;color:var(--text-3);">Brillo alrededor de tu tarjeta de perfil</div></div>
+        <span style="color:var(--text-3);">→</span>
+      </div>
 
       <div style="margin:24px 0 16px;border-top:1px solid var(--border);"></div>
       <p style="font-size:.85rem;color:var(--text-2);margin-bottom:16px;">Personaliza el aspecto de Communiter. Todos los temas son gratis.</p>
@@ -3915,9 +3995,13 @@ function buildMemberEl(m,isOnline){
   const botBadgeHtml=isBot?'<span class="bot-badge" style="font-size:.5rem;padding:1px 4px;margin-left:3px;">BOT</span>':'';
   const activity=isOnline?(state.onlineUsers[uid]?.activity||m.activity):null;
   const activityHtml=activity?renderActivityLine(activity):'';
-  const ringColor=m.avatarDecoration?avatarFrameRing(m.avatarDecoration):'';
-  const avatarRingStyle=ringColor?`box-shadow:0 0 0 2px ${ringColor};`:'';
-  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg};${avatarRingStyle}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'}">${m.nickname?escapeHtml(m.nickname):(m.name||'?')}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div>${activityHtml}</div>`;
+  const ringColor=m.avatarDecorationColor?avatarFrameRing(m.avatarDecorationColor):'';
+  const avatarRingStyle=m.avatarDecorationImageUrl
+    ?'box-shadow:0 0 0 2px var(--accent);'
+    :(ringColor?`box-shadow:0 0 0 2px ${ringColor};`:'');
+  const npCss=nameplateCss(m.nameplateColor1,m.nameplateColor2);
+  const nameStyle=`color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'};${npCss?`background:${npCss};padding:1px 8px;border-radius:6px;display:inline-block;`:''}`;
+  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg};${avatarRingStyle}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="${nameStyle}">${m.nickname?escapeHtml(m.nickname):(m.name||'?')}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div>${activityHtml}</div>`;
   div.onclick=e=>{showProfilePopupByUid(e,uid,m);e.stopPropagation();};
   return div;
 }
@@ -5834,19 +5918,24 @@ function renderProfilePopupContent(u,uid,loading){
   avaEl.innerHTML=avatarUrl?`<img src="${avatarUrl}" onerror="this.parentElement.style.background='${color}';this.outerHTML='${(name[0]||'?').toUpperCase()}'">`:(name[0]||'?').toUpperCase();
   const decoEl=document.getElementById('pp-avatar-frame');
   if(decoEl){
-    const frameCss=avatarFrameCss(u.avatarDecoration);
-    if(frameCss){decoEl.style.background=frameCss;decoEl.style.padding='4px';}
-    else{decoEl.style.background='';decoEl.style.padding='0';}
+    if(u.avatarDecorationImageUrl){
+      decoEl.style.background=`url(${u.avatarDecorationImageUrl}) center/contain no-repeat`;
+      decoEl.style.padding='6px';
+    }else{
+      const frameCss=avatarFrameCss(u.avatarDecorationColor);
+      if(frameCss){decoEl.style.background=frameCss;decoEl.style.padding='4px';}
+      else{decoEl.style.background='';decoEl.style.padding='0';}
+    }
   }
   const nameplateWrap=document.getElementById('pp-nameplate-wrap');
   if(nameplateWrap){
-    const npCss=nameplateCss(u.nameplate);
+    const npCss=nameplateCss(u.nameplateColor1,u.nameplateColor2);
     if(npCss){nameplateWrap.style.background=npCss;nameplateWrap.style.padding='6px 10px 8px';}
     else{nameplateWrap.style.background='';nameplateWrap.style.padding='0';}
   }
   const popupEl=document.getElementById('profile-popup');
   if(popupEl){
-    const fxShadow=profileEffectShadow(u.profileEffect);
+    const fxShadow=profileEffectShadow(u.profileEffectColor);
     popupEl.style.boxShadow=fxShadow?`0 16px 48px rgba(0,0,0,.6), ${fxShadow}`:'0 16px 48px rgba(0,0,0,.6)';
   }
   const dotEl=document.getElementById('pp-online-dot');
@@ -5978,39 +6067,27 @@ function manageRoles(uid){
 
 // ── ACTIVITY STATUS (Jugando a.../Escuchando.../Viendo...) ──
 // ── PERSONALIZACIÓN DE PERFIL (placa de nombre, decoración de avatar, efecto) ──
-const NAMEPLATE_PRESETS=[
-  {id:'sunset',label:'Atardecer',css:'linear-gradient(135deg,#ff512f,#dd2476)'},
-  {id:'ocean',label:'Océano',css:'linear-gradient(135deg,#2193b0,#6dd5ed)'},
-  {id:'forest',label:'Bosque',css:'linear-gradient(135deg,#134e5e,#71b280)'},
-  {id:'candy',label:'Dulce',css:'linear-gradient(135deg,#ff9a9e,#fecfef)'},
-  {id:'void',label:'Vacío',css:'linear-gradient(135deg,#0f0c29,#302b63,#24243e)'},
-  {id:'ember',label:'Brasa',css:'linear-gradient(135deg,#f12711,#f5af19)'},
-  {id:'mint',label:'Menta',css:'linear-gradient(135deg,#00b09b,#96c93d)'},
-  {id:'royal',label:'Real',css:'linear-gradient(135deg,#7f00ff,#e100ff)'},
-];
-const AVATAR_FRAME_PRESETS=[
-  {id:'gold',label:'Dorado',css:'conic-gradient(from 180deg,#fceabb,#f8b500,#fceabb,#f8b500,#fceabb)',ring:'#f8b500'},
-  {id:'silver',label:'Plateado',css:'conic-gradient(from 180deg,#f0f0f0,#a0a0a0,#f0f0f0,#a0a0a0,#f0f0f0)',ring:'#b0b0b0'},
-  {id:'fire',label:'Fuego',css:'conic-gradient(from 180deg,#ff512f,#f09819,#ff512f,#f09819,#ff512f)',ring:'#ff512f'},
-  {id:'ocean',label:'Océano',css:'conic-gradient(from 180deg,#2193b0,#6dd5ed,#2193b0,#6dd5ed,#2193b0)',ring:'#2193b0'},
-  {id:'toxic',label:'Tóxico',css:'conic-gradient(from 180deg,#a8ff78,#78ffd6,#a8ff78,#78ffd6,#a8ff78)',ring:'#78ffd6'},
-  {id:'royal',label:'Real',css:'conic-gradient(from 180deg,#7f00ff,#e100ff,#7f00ff,#e100ff,#7f00ff)',ring:'#a100ff'},
-  {id:'rose',label:'Rosa',css:'conic-gradient(from 180deg,#ff9a9e,#fecfef,#ff9a9e,#fecfef,#ff9a9e)',ring:'#ff9a9e'},
-  {id:'void',label:'Vacío',css:'conic-gradient(from 180deg,#0f0c29,#302b63,#0f0c29,#302b63,#0f0c29)',ring:'#302b63'},
-  {id:'rainbow',label:'Arcoíris',css:'conic-gradient(from 180deg,red,orange,yellow,green,blue,indigo,violet,red)',ring:'#ff512f'},
-];
-function avatarFrameCss(id){return(AVATAR_FRAME_PRESETS.find(f=>f.id===id)||{}).css||'';}
-function avatarFrameRing(id){return(AVATAR_FRAME_PRESETS.find(f=>f.id===id)||{}).ring||'';}
-const PROFILE_EFFECT_PRESETS=[
-  {id:'glow-purple',label:'Morado',color:'124,58,237'},
-  {id:'glow-gold',label:'Dorado',color:'234,179,8'},
-  {id:'neon-pink',label:'Rosa neón',color:'236,72,153'},
-  {id:'frost',label:'Escarcha',color:'59,130,246'},
-  {id:'ember',label:'Brasa',color:'239,68,68'},
-  {id:'mint',label:'Menta',color:'16,185,129'},
-];
-function nameplateCss(id){return(NAMEPLATE_PRESETS.find(n=>n.id===id)||{}).css||'';}
-function profileEffectShadow(id){const p=PROFILE_EFFECT_PRESETS.find(e=>e.id===id);return p?`0 0 0 2px rgba(${p.color},.55), 0 0 34px rgba(${p.color},.3)`:'';}
+function hexToRgb(hex){
+  if(!hex)return null;
+  const h=hex.replace('#','');
+  const full=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  const num=parseInt(full,16);
+  if(isNaN(num))return null;
+  return `${(num>>16)&255},${(num>>8)&255},${num&255}`;
+}
+function nameplateCss(c1,c2){
+  if(!c1)return'';
+  return `linear-gradient(135deg,${c1},${c2||c1})`;
+}
+function avatarFrameRing(color){return color||'';}
+function avatarFrameCss(color){
+  if(!color)return'';
+  return `conic-gradient(from 180deg,${color},${color}55,${color})`;
+}
+function profileEffectShadow(color){
+  const rgb=hexToRgb(color);
+  return rgb?`0 0 0 2px rgba(${rgb},.55), 0 0 34px rgba(${rgb},.3)`:'';
+}
 
 const ACTIVITY_LABELS={playing:'Jugando a',listening:'Escuchando',watching:'Viendo',custom:''};
 // Generic label for the top row of an Active Now card — the specific name (game/song/show)
@@ -6107,29 +6184,97 @@ function _updateActivityPlaceholder(){
 
 // ── PICKERS DE PERSONALIZACIÓN (placa de nombre, decoración de avatar, efecto) ──
 function renderCustomizationPickers(){
-  const npEl=document.getElementById('us-nameplate-picker');
-  if(npEl){
-    npEl.innerHTML=`<div onclick="selectNameplate(null)" style="height:40px;border-radius:8px;border:2px solid ${!state._selNameplate?'var(--accent)':'var(--border)'};background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.65rem;color:var(--text-3);">Ninguna</div>`+
-      NAMEPLATE_PRESETS.map(p=>`<div title="${p.label}" onclick="selectNameplate('${p.id}')" style="height:40px;border-radius:8px;cursor:pointer;background:${p.css};border:2px solid ${state._selNameplate===p.id?'#fff':'transparent'};box-shadow:${state._selNameplate===p.id?'0 0 0 2px var(--accent)':'none'};"></div>`).join('');
+  // Placa de nombre
+  const npToggle=document.getElementById('us-nameplate-toggle');
+  if(npToggle)npToggle.classList.toggle('on',!!state._selNameplateOn);
+  const npc1=document.getElementById('us-nameplate-color1');if(npc1)npc1.value=state._selNameplateColor1||'#ff512f';
+  const npc2=document.getElementById('us-nameplate-color2');if(npc2)npc2.value=state._selNameplateColor2||'#dd2476';
+  const npPrev=document.getElementById('us-nameplate-preview');
+  if(npPrev)npPrev.style.background=state._selNameplateOn?nameplateCss(state._selNameplateColor1,state._selNameplateColor2):'';
+  const npChip=document.getElementById('np-summary-chip');
+  if(npChip)npChip.style.background=state._selNameplateOn?nameplateCss(state._selNameplateColor1,state._selNameplateColor2):'var(--bg-3)';
+
+  // Marco de avatar
+  const adToggle=document.getElementById('us-avatarframe-toggle');
+  if(adToggle)adToggle.classList.toggle('on',!!state._selAvatarDecoOn);
+  const adc=document.getElementById('us-avatarframe-color');if(adc)adc.value=state._selAvatarDecoColor||'#f8b500';
+  const adPrev=document.getElementById('us-avatarframe-preview');
+  if(adPrev){
+    adPrev.style.background=state._selAvatarDecoOn?avatarFrameCss(state._selAvatarDecoColor):'';
+    adPrev.style.padding=state._selAvatarDecoOn?'4px':'0';
   }
-  const adEl=document.getElementById('us-avatar-deco-picker');
-  if(adEl){
-    adEl.innerHTML=`<div onclick="selectAvatarDeco(null)" style="height:46px;border-radius:8px;border:2px solid ${!state._selAvatarDeco?'var(--accent)':'var(--border)'};background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.6rem;color:var(--text-3);text-align:center;padding:2px;">Ninguno</div>`+
-      AVATAR_FRAME_PRESETS.map(p=>`<div title="${p.label}" onclick="selectAvatarDeco('${p.id}')" style="height:46px;border-radius:10px;cursor:pointer;background:${p.css};padding:3px;display:flex;align-items:center;justify-content:center;box-shadow:${state._selAvatarDeco===p.id?'0 0 0 2px var(--accent)':'none'};"><div style="width:100%;height:100%;border-radius:7px;background:var(--bg-3);"></div></div>`).join('');
+  const adChip=document.getElementById('af-summary-chip');
+  if(adChip){
+    if(state._selAvatarDecoImageUrl){
+      adChip.style.background=`url(${state._selAvatarDecoImageUrl}) center/contain no-repeat var(--bg-3)`;
+      adChip.style.boxShadow='none';
+    }else{
+      adChip.style.background='var(--bg-3)';
+      adChip.style.boxShadow=state._selAvatarDecoOn?`inset 0 0 0 3px ${state._selAvatarDecoColor}`:'none';
+    }
   }
-  const feEl=document.getElementById('us-profile-effect-picker');
-  if(feEl){
-    feEl.innerHTML=`<div onclick="selectProfileEffect(null)" style="height:36px;border-radius:8px;border:2px solid ${!state._selProfileEffect?'var(--accent)':'var(--border)'};background:var(--bg-3);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:.66rem;color:var(--text-3);">Ninguno</div>`+
-      PROFILE_EFFECT_PRESETS.map(p=>`<div onclick="selectProfileEffect('${p.id}')" style="height:36px;border-radius:8px;cursor:pointer;background:var(--bg-3);border:2px solid ${state._selProfileEffect===p.id?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:.66rem;color:var(--text-1);box-shadow:${state._selProfileEffect===p.id?`0 0 12px rgba(${p.color},.5)`:'none'};">${p.label}</div>`).join('');
-  }
+
+  // Efecto de perfil
+  const feToggle=document.getElementById('us-effect-toggle');
+  if(feToggle)feToggle.classList.toggle('on',!!state._selProfileEffectOn);
+  const fec=document.getElementById('us-effect-color');if(fec)fec.value=state._selProfileEffectColor||'#7c3aed';
+  const fePrev=document.getElementById('us-effect-preview');
+  if(fePrev)fePrev.style.boxShadow=state._selProfileEffectOn?profileEffectShadow(state._selProfileEffectColor):'none';
+  const feChip=document.getElementById('fx-summary-chip');
+  if(feChip)feChip.style.background=state._selProfileEffectOn?state._selProfileEffectColor:'var(--bg-3)';
+
+  // Color de cartel
   const bcEl=document.getElementById('us-banner-color');
   if(bcEl&&state._selBannerColor)bcEl.value=state._selBannerColor;
   const bcToggle=document.getElementById('us-banner-color-toggle');
   if(bcToggle)bcToggle.classList.toggle('on',!!state._selBannerColorOn);
+  const bcChip=document.getElementById('bc-summary-chip');
+  if(bcChip)bcChip.style.background=state._selBannerColorOn?(state._selBannerColor||'#5865f2'):'var(--bg-3)';
 }
-function selectNameplate(id){state._selNameplate=id;renderCustomizationPickers();}
-function selectAvatarDeco(e){state._selAvatarDeco=e;renderCustomizationPickers();}
-function selectProfileEffect(id){state._selProfileEffect=id;renderCustomizationPickers();}
+function setAvatarFrameTab(tab){
+  document.getElementById('af-tab-custom').classList.toggle('active',tab==='custom');
+  document.getElementById('af-tab-catalog').classList.toggle('active',tab==='catalog');
+  document.getElementById('af-tab-content-custom').style.display=tab==='custom'?'':'none';
+  document.getElementById('af-tab-content-catalog').style.display=tab==='catalog'?'':'none';
+  if(tab==='catalog')loadAvatarDecorationCatalog();
+}
+let _avatarDecorationCatalog=null;
+function loadAvatarDecorationCatalog(){
+  const grid=document.getElementById('us-avatarframe-catalog-grid');if(!grid)return;
+  if(_avatarDecorationCatalog){renderAvatarDecorationCatalogGrid(_avatarDecorationCatalog);return;}
+  grid.innerHTML='<div style="grid-column:1/-1;font-size:.75rem;color:var(--text-3);">Cargando...</div>';
+  fbOn('catalog/avatarDecorations',snap=>{
+    _avatarDecorationCatalog=Object.values(snap.val()||{});
+    renderAvatarDecorationCatalogGrid(_avatarDecorationCatalog);
+  });
+}
+function renderAvatarDecorationCatalogGrid(items){
+  const grid=document.getElementById('us-avatarframe-catalog-grid');if(!grid)return;
+  if(!items.length){grid.innerHTML='<div style="grid-column:1/-1;font-size:.75rem;color:var(--text-3);">Todavía no hay decoraciones disponibles.</div>';return;}
+  const noneSel=!state._selAvatarDecoImageUrl;
+  grid.innerHTML=`<div onclick="selectCatalogDecoration(null)" style="text-align:center;cursor:pointer;">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-3);border:2px solid ${noneSel?'var(--accent)':'var(--border)'};display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-3);margin:0 auto 4px;">Ninguna</div>
+    </div>`+
+    items.map(t=>`<div onclick="selectCatalogDecoration('${t.id}')" style="text-align:center;cursor:pointer;" title="${t.label}">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--bg-3);border:2px solid ${state._selAvatarDecoImageUrl===t.imageUrl?'var(--accent)':'transparent'};display:flex;align-items:center;justify-content:center;overflow:hidden;margin:0 auto 4px;">
+        <img src="${t.imageUrl}" style="width:100%;height:100%;object-fit:contain;" onerror="this.style.display='none'">
+      </div>
+      <div style="font-size:.65rem;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.label}</div>
+    </div>`).join('');
+}
+function selectCatalogDecoration(imageUrl){
+  state._selAvatarDecoImageUrl=imageUrl||null;
+  if(imageUrl)state._selAvatarDecoOn=false; // catálogo y color propio son excluyentes
+  renderAvatarDecorationCatalogGrid(_avatarDecorationCatalog||[]);
+  renderCustomizationPickers();
+}
+function toggleNameplateOn(){state._selNameplateOn=!state._selNameplateOn;renderCustomizationPickers();}
+
+function toggleAvatarDecoOn(){state._selAvatarDecoOn=!state._selAvatarDecoOn;if(state._selAvatarDecoOn)state._selAvatarDecoImageUrl=null;renderCustomizationPickers();}
+function toggleProfileEffectOn(){state._selProfileEffectOn=!state._selProfileEffectOn;renderCustomizationPickers();}
+function updateNameplateColor(n,val){state['_selNameplateColor'+n]=val;renderCustomizationPickers();}
+function updateAvatarDecoColor(val){state._selAvatarDecoColor=val;renderCustomizationPickers();}
+function updateProfileEffectColor(val){state._selProfileEffectColor=val;renderCustomizationPickers();}
 
 // ── SPOTIFY INTEGRATION ──
 // PKCE OAuth flow entirely client-side (no server/client-secret required).
@@ -6337,12 +6482,14 @@ function saveUserSettings(){
   const newBannerB64=document.getElementById('us-banner-b64').value;
   const avatarUrl=newAvatarB64||state.currentUser.avatarUrl||'';
   const bannerUrl=newBannerB64||state.currentUser.bannerUrl||'';
-  const nameplate=state._selNameplate||null;
-  const avatarDecoration=state._selAvatarDeco||null;
-  const profileEffect=state._selProfileEffect||null;
+  const nameplateColor1=state._selNameplateOn?(document.getElementById('us-nameplate-color1').value||null):null;
+  const nameplateColor2=state._selNameplateOn?(document.getElementById('us-nameplate-color2').value||null):null;
+  const avatarDecorationColor=state._selAvatarDecoOn?(document.getElementById('us-avatarframe-color').value||null):null;
+  const avatarDecorationImageUrl=state._selAvatarDecoImageUrl||null;
+  const profileEffectColor=state._selProfileEffectOn?(document.getElementById('us-effect-color').value||null):null;
   const bannerColor=state._selBannerColorOn?(document.getElementById('us-banner-color').value||null):null;
-  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplate,avatarDecoration,profileEffect,bannerColor};
-  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplate,avatarDecoration,profileEffect,bannerColor,createdAt:state.currentUser.createdAt||Date.now()};
+  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor};
+  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,createdAt:state.currentUser.createdAt||Date.now()};
   fbSet('users/'+state.currentUser.uid,userData);
   // Handle index for friend search
   fbSet('handles/'+handle,state.currentUser.uid);
@@ -6352,7 +6499,7 @@ function saveUserSettings(){
   const eKey=emailToKey(state.currentUser.email||'');
   if(eKey)fbSet('usersByEmail/'+eKey,userData);
   fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,nameColor,status,customStatus,activity,ts:Date.now()});
-  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecoration=avatarDecoration;m.nameplate=nameplate;m.profileEffect=profileEffect;m.bannerColor=bannerColor;}});
+  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecorationColor=avatarDecorationColor;m.avatarDecorationImageUrl=avatarDecorationImageUrl;m.nameplateColor1=nameplateColor1;m.nameplateColor2=nameplateColor2;m.profileEffectColor=profileEffectColor;m.bannerColor=bannerColor;}});
   saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();showToast('✅ Perfil actualizado');
 }
 
@@ -7296,9 +7443,14 @@ function openUserSettings() {
   const u = state.currentUser; if (!u) return;
   _updatePWAButtonUI();
   document.getElementById('us-lite-mode-toggle')?.classList.toggle('on',!!state.liteMode);
-  state._selNameplate=u.nameplate||null;
-  state._selAvatarDeco=u.avatarDecoration||null;
-  state._selProfileEffect=u.profileEffect||null;
+  state._selNameplateOn=!!(u.nameplateColor1);
+  state._selNameplateColor1=u.nameplateColor1||'#ff512f';
+  state._selNameplateColor2=u.nameplateColor2||'#dd2476';
+  state._selAvatarDecoOn=!!(u.avatarDecorationColor);
+  state._selAvatarDecoColor=u.avatarDecorationColor||'#f8b500';
+  state._selAvatarDecoImageUrl=u.avatarDecorationImageUrl||null;
+  state._selProfileEffectOn=!!(u.profileEffectColor);
+  state._selProfileEffectColor=u.profileEffectColor||'#7c3aed';
   state._selBannerColor=u.bannerColor||'#5865f2';
   state._selBannerColorOn=!!u.bannerColor;
   renderCustomizationPickers();
