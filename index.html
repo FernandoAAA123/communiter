@@ -2239,6 +2239,9 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 // reemplaza todo el innerHTML del popup con su propia plantilla de bot; sin esto,
 // al volver a abrir el perfil de una persona real, renderProfilePopupContent no
 // encuentra pp-banner/pp-ava/pp-name (fueron borrados) y se corrompe el popup.
+// (showProfilePopupByUid ahora restaura esta plantilla SIEMPRE, no solo cuando
+// detecta que veníamos de un bot — y usa un reqId para descartar fetches viejos
+// que podrían resolver tarde y pisar el popup con datos de otro usuario/bot.)
 const PROFILE_POPUP_SKELETON = document.getElementById('profile-popup')?.innerHTML || '';
 // ═══════════════════ CORDIS v2 — JS ═══════════════════
 const STATUS_COLORS={online:'#3ba55d',idle:'#faa81a',dnd:'#ed4245',offline:'#72767d'};
@@ -5878,6 +5881,9 @@ function showProfilePopup(event,uid){
 
 function showBotProfilePopup(event,botInfo){
   const popup=document.getElementById('profile-popup');
+  // Invalida cualquier fetch de perfil humano que siga en vuelo (ver showProfilePopupByUid),
+  // así no puede "resolver tarde" y pisar este popup de bot con datos de otra persona.
+  popup.dataset.reqId=String((parseInt(popup.dataset.reqId||'0',10)||0)+1);
   const color=getAutoAvatarColor(botInfo.uid||botInfo.id||botInfo.name);
 
   const avatarHtml=botInfo.avatarUrl
@@ -5922,13 +5928,16 @@ function positionProfilePopup(event){
 }
 async function showProfilePopupByUid(event,uid,info){
   const popup=document.getElementById('profile-popup');
-  // Si el último popup mostrado fue el de un bot (showBotProfilePopup reemplaza
-  // todo el innerHTML), restaurá la plantilla humana antes de seguir — si no,
-  // getElementById('pp-banner') etc. da null y el render se corrompe a medias.
-  if(popup.dataset.kind==='bot'||!document.getElementById('pp-banner')){
-    popup.innerHTML=PROFILE_POPUP_SKELETON;
-  }
+  // Siempre restauramos la plantilla humana desde cero, sin importar de dónde
+  // veníamos (bot, otro humano, o lo que sea) — así pp-banner/pp-ava/pp-name
+  // siempre existen y el popup nunca se renderiza a medias.
+  popup.innerHTML=PROFILE_POPUP_SKELETON;
   popup.dataset.kind='user';
+  // Token de esta solicitud: si mientras esperamos el fetch de abajo se abre
+  // OTRO popup (bot o humano), ese otro popup incrementa reqId y el nuestro
+  // queda invalidado — así nunca pisamos su contenido con datos viejos.
+  const reqId=String((parseInt(popup.dataset.reqId||'0',10)||0)+1);
+  popup.dataset.reqId=reqId;
   if(!info){
     const srv=getServer(state.currentServerId);
     info=(srv?.members||[]).find(m=>(m.uid||m.id)===uid)||state.onlineUsers[uid]||{};
@@ -5946,7 +5955,7 @@ async function showProfilePopupByUid(event,uid,info){
   // Fetch full persisted profile (has avatarUrl/bannerUrl/bio even if user is offline)
   let fullUser={};
   try{const snap=await fbGet('users/'+uid);if(snap.exists())fullUser=snap.val();}catch(e){}
-  if(!popup.classList.contains('open')||popup.dataset.uid!==uid)return;
+  if(!popup.classList.contains('open')||popup.dataset.uid!==uid||popup.dataset.reqId!==reqId)return;
   const u={...selfFallback,...info,...fullUser,...liveUser};
   renderProfilePopupContent(u,uid,false);
   positionProfilePopup(event); // content size may have changed (bio/links/roles) — re-clamp
