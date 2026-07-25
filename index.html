@@ -5983,7 +5983,11 @@ function renderProfilePopupContent(u,uid,loading){
   const bannerUrl=u.bannerUrl||'';
   const bannerEl=document.getElementById('pp-banner');
   if(bannerEl){
-    if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition=`${u.bannerPosX??50}% ${u.bannerPosY??50}%`;bannerEl.style.background='';}
+    // OJO: nunca tocar bannerEl.style.background aquí. 'background' es el shorthand
+    // que engloba background-image/-size/-position; asignarle '' (aunque sea para
+    // "limpiar") resetea también el background-image que acabamos de poner arriba,
+    // dejando el banner siempre en blanco pese a que bannerUrl era correcto.
+    if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition=`${u.bannerPosX??50}% ${u.bannerPosY??50}%`;}
     else if(u.bannerColor){bannerEl.style.backgroundImage='';bannerEl.style.background=u.bannerColor;}
     else{bannerEl.style.backgroundImage='';bannerEl.style.background=`linear-gradient(135deg,${color},${color}66)`;}
     bannerEl.style.opacity=loading?'.6':'1';
