@@ -1417,11 +1417,14 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div class="tab-content active" id="us-tab-0">
       <!-- Banner + Avatar preview -->
       <div style="position:relative;margin-bottom:48px;">
-        <div id="us-banner-preview" onclick="document.getElementById('us-banner-file').click()"
-          style="height:80px;border-radius:var(--r-sm);background:var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:.78rem;transition:opacity .15s;"
-          title="Cambiar banner">Clic para subir banner</div>
+        <div id="us-banner-preview" onmousedown="startBannerDrag(event)" ontouchstart="startBannerDrag(event)"
+          style="height:80px;border-radius:var(--r-sm);background:var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:.78rem;transition:opacity .15s;user-select:none;"
+          title="Clic para subir · arrastra para ajustar">Clic para subir banner</div>
         <input type="file" id="us-banner-file" accept="image/*" style="display:none" onchange="handleImgUpload(this,'us-banner-preview','us-banner-b64',800,200)">
         <input type="hidden" id="us-banner-b64">
+        <input type="hidden" id="us-banner-posx" value="50">
+        <input type="hidden" id="us-banner-posy" value="50">
+        <div id="us-banner-drag-hint" style="display:none;position:absolute;top:4px;right:8px;font-size:.68rem;color:rgba(255,255,255,.75);background:rgba(0,0,0,.35);padding:2px 6px;border-radius:6px;pointer-events:none;">Arrastra para ajustar</div>
         <div style="position:absolute;bottom:-36px;left:16px;display:flex;align-items:flex-end;gap:10px;">
           <div id="us-avatar-preview" onclick="document.getElementById('us-avatar-file').click()"
             style="width:72px;height:72px;border-radius:18px;border:4px solid var(--bg-2);background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;color:#fff;cursor:pointer;overflow:hidden;flex-shrink:0;"
@@ -5675,6 +5678,10 @@ function handleStickerUpload(input){
   });
 }
 
+function currentUserCosmetics(){
+  const u=state.currentUser||{};
+  return{nameplateColor1:u.nameplateColor1||null,nameplateColor2:u.nameplateColor2||null,avatarDecorationColor:u.avatarDecorationColor||null,avatarDecorationImageUrl:u.avatarDecorationImageUrl||null,profileEffectColor:u.profileEffectColor||null,bannerColor:u.bannerColor||null,bannerUrl:u.bannerUrl||null,bannerPosX:u.bannerPosX??50,bannerPosY:u.bannerPosY??50};
+}
 // ── INVITE ──
 function copyInviteCode(){const code=document.getElementById('invite-code-text').textContent;navigator.clipboard.writeText(code).then(()=>showToast('✅ Código copiado'));}
 function approvePending(uid){
@@ -5682,7 +5689,7 @@ function approvePending(uid){
   const p=srv.pendingMembers?.find(m=>m.uid===uid);if(!p)return;
   srv.pendingMembers=srv.pendingMembers.filter(m=>m.uid!==uid);
   if(!srv.members)srv.members=[];
-  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',roles:['Miembro']});
+  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',roles:['Miembro'],nameplateColor1:p.nameplateColor1||null,nameplateColor2:p.nameplateColor2||null,avatarDecorationColor:p.avatarDecorationColor||null,avatarDecorationImageUrl:p.avatarDecorationImageUrl||null,profileEffectColor:p.profileEffectColor||null,bannerColor:p.bannerColor||null,bannerUrl:p.bannerUrl||null,bannerPosX:p.bannerPosX??50,bannerPosY:p.bannerPosY??50});
   saveServers();openServerSettings();showToast('✅ '+p.name+' aceptado');
 }
 function rejectPending(uid){
@@ -5769,7 +5776,7 @@ function joinByInviteNew() {
     if(srv.serverType==='request'){
       if(!srv.pendingMembers) srv.pendingMembers=[];
       if(!srv.pendingMembers.find(p=>p.uid===state.currentUser.uid)){
-        srv.pendingMembers.push({uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',ts:Date.now()});
+        srv.pendingMembers.push({uid:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',ts:Date.now(),...currentUserCosmetics()});
         saveServers();
       }
       document.getElementById('join-code-input').value='';
@@ -5778,7 +5785,7 @@ function joinByInviteNew() {
       showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg> Solicitud enviada a "'+srv.name+'"');return;
     }
     if (!srv.members) srv.members = [];
-    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
+    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro'],...currentUserCosmetics()});
     saveServers();
   }
   document.getElementById('join-code-input').value = '';
@@ -5795,7 +5802,7 @@ function joinByInvite() {
   if (isUserBanned(srv, state.currentUser.uid)) { showToast('⛔ Fuiste baneado de este servidor'); return; }
   if (!(srv.members || []).find(m => (m.uid || m.id) === state.currentUser.uid)) {
     if (!srv.members) srv.members = [];
-    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro']});
+    srv.members.push({uid:state.currentUser.uid,id:state.currentUser.uid,name:state.currentUser.name,avatarUrl:state.currentUser.avatarUrl||'',roles:['Miembro'],...currentUserCosmetics()});
     saveServers();
   }
   selectServer(srv.id); closeModal('server-settings-modal'); showToast('✅ Te uniste a "' + srv.name + '"');
@@ -5976,7 +5983,7 @@ function renderProfilePopupContent(u,uid,loading){
   const bannerUrl=u.bannerUrl||'';
   const bannerEl=document.getElementById('pp-banner');
   if(bannerEl){
-    if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition='center';bannerEl.style.background='';}
+    if(bannerUrl){bannerEl.style.backgroundImage=`url(${bannerUrl})`;bannerEl.style.backgroundSize='cover';bannerEl.style.backgroundPosition=`${u.bannerPosX??50}% ${u.bannerPosY??50}%`;bannerEl.style.background='';}
     else if(u.bannerColor){bannerEl.style.backgroundImage='';bannerEl.style.background=u.bannerColor;}
     else{bannerEl.style.backgroundImage='';bannerEl.style.background=`linear-gradient(135deg,${color},${color}66)`;}
     bannerEl.style.opacity=loading?'.6':'1';
@@ -6615,8 +6622,10 @@ function saveUserSettings(){
   const avatarDecorationImageUrl=state._selAvatarDecoImageUrl||null;
   const profileEffectColor=state._selProfileEffectOn?(document.getElementById('us-effect-color').value||null):null;
   const bannerColor=state._selBannerColorOn?(document.getElementById('us-banner-color').value||null):null;
-  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor};
-  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,createdAt:state.currentUser.createdAt||Date.now()};
+  const bannerPosX=parseFloat(document.getElementById('us-banner-posx')?.value)||50;
+  const bannerPosY=parseFloat(document.getElementById('us-banner-posy')?.value)||50;
+  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,bannerPosX,bannerPosY};
+  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,bannerPosX,bannerPosY,createdAt:state.currentUser.createdAt||Date.now()};
   fbSet('users/'+state.currentUser.uid,userData);
   // Handle index for friend search
   fbSet('handles/'+handle,state.currentUser.uid);
@@ -6626,7 +6635,7 @@ function saveUserSettings(){
   const eKey=emailToKey(state.currentUser.email||'');
   if(eKey)fbSet('usersByEmail/'+eKey,userData);
   fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,nameColor,status,customStatus,activity,ts:Date.now()});
-  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecorationColor=avatarDecorationColor;m.avatarDecorationImageUrl=avatarDecorationImageUrl;m.nameplateColor1=nameplateColor1;m.nameplateColor2=nameplateColor2;m.profileEffectColor=profileEffectColor;m.bannerColor=bannerColor;}});
+  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecorationColor=avatarDecorationColor;m.avatarDecorationImageUrl=avatarDecorationImageUrl;m.nameplateColor1=nameplateColor1;m.nameplateColor2=nameplateColor2;m.profileEffectColor=profileEffectColor;m.bannerColor=bannerColor;m.bannerUrl=bannerUrl;m.bannerPosX=bannerPosX;m.bannerPosY=bannerPosY;}});
   saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();showToast('✅ Perfil actualizado');
 }
 
@@ -7463,9 +7472,79 @@ function compressImage(file, maxW, maxH, maxKB, cb) {
   };
   reader.readAsDataURL(file);
 }
+function resetBannerPosition(){
+  document.getElementById('us-banner-posx').value='50';
+  document.getElementById('us-banner-posy').value='50';
+  const el=document.getElementById('us-banner-preview');
+  if(el)el.style.backgroundPosition='50% 50%';
+}
+let _bannerDrag=null;
+function startBannerDrag(ev){
+  const el=document.getElementById('us-banner-preview');
+  if(!el||!el.style.backgroundImage)  { document.getElementById('us-banner-file').click(); return; }
+  const p=ev.touches?ev.touches[0]:ev;
+  _bannerDrag={
+    startX:p.clientX,startY:p.clientY,
+    startPosX:parseFloat(document.getElementById('us-banner-posx').value)||50,
+    startPosY:parseFloat(document.getElementById('us-banner-posy').value)||50,
+    moved:false,
+    rect:el.getBoundingClientRect(),
+  };
+  const hint=document.getElementById('us-banner-drag-hint');
+  if(hint)hint.style.display='block';
+  document.addEventListener('mousemove',onBannerDrag);
+  document.addEventListener('touchmove',onBannerDrag,{passive:false});
+  document.addEventListener('mouseup',endBannerDrag);
+  document.addEventListener('touchend',endBannerDrag);
+}
+function onBannerDrag(ev){
+  if(!_bannerDrag)return;
+  ev.preventDefault&&ev.preventDefault();
+  const p=ev.touches?ev.touches[0]:ev;
+  const dx=p.clientX-_bannerDrag.startX, dy=p.clientY-_bannerDrag.startY;
+  if(Math.abs(dx)>3||Math.abs(dy)>3)_bannerDrag.moved=true;
+  // Arrastrar la imagen a la derecha debe mover el "foco" visible hacia la
+  // izquierda de la imagen, por eso restamos en vez de sumar.
+  const px=clamp(_bannerDrag.startPosX-(dx/_bannerDrag.rect.width)*100,0,100);
+  const py=clamp(_bannerDrag.startPosY-(dy/_bannerDrag.rect.height)*100,0,100);
+  document.getElementById('us-banner-posx').value=px.toFixed(1);
+  document.getElementById('us-banner-posy').value=py.toFixed(1);
+  const el=document.getElementById('us-banner-preview');
+  if(el)el.style.backgroundPosition=`${px}% ${py}%`;
+}
+function endBannerDrag(){
+  const hint=document.getElementById('us-banner-drag-hint');
+  if(hint)hint.style.display='none';
+  document.removeEventListener('mousemove',onBannerDrag);
+  document.removeEventListener('touchmove',onBannerDrag);
+  document.removeEventListener('mouseup',endBannerDrag);
+  document.removeEventListener('touchend',endBannerDrag);
+  if(_bannerDrag&&!_bannerDrag.moved)document.getElementById('us-banner-file').click();
+  _bannerDrag=null;
+}
+function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
 function handleImgUpload(input, previewId, hiddenId, maxW, maxH) {
   const file = input.files[0]; if (!file) return;
   if (file.size > 5*1024*1024) { showToast('⚠️ Imagen muy grande (máx 5MB)'); return; }
+  // Los GIF animados pierden su animación si pasan por el <canvas> de compressImage
+  // (canvas solo captura un frame, y toDataURL los fuerza a JPEG). Para GIFs los
+  // leemos directo a base64 sin recomprimir, así se conserva la animación.
+  if (file.type === 'image/gif') {
+    if (file.size > 3*1024*1024) { showToast('⚠️ GIF muy grande (máx 3MB para animados)'); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const b64 = e.target.result;
+      const el = document.getElementById(previewId);
+      el.style.backgroundImage = `url(${b64})`;
+      el.style.backgroundSize = 'cover';
+      el.style.backgroundPosition = 'center';
+      el.textContent = '';
+      document.getElementById(hiddenId).value = b64;
+      if (previewId === 'us-banner-preview') resetBannerPosition();
+    };
+    reader.readAsDataURL(file);
+    return;
+  }
   compressImage(file, maxW, maxH, maxW > 300 ? 200 : 150, b64 => {
     const el = document.getElementById(previewId);
     el.style.backgroundImage = `url(${b64})`;
@@ -7473,6 +7552,7 @@ function handleImgUpload(input, previewId, hiddenId, maxW, maxH) {
     el.style.backgroundPosition = 'center';
     el.textContent = '';
     document.getElementById(hiddenId).value = b64;
+    if (previewId === 'us-banner-preview') resetBannerPosition();
   });
 }
 function handleServerIconUpload(input, previewId, hiddenId) {
@@ -7620,8 +7700,10 @@ function openUserSettings() {
   if (u.avatarUrl) { avaEl.innerHTML=`<img src="${u.avatarUrl}" style="width:100%;height:100%;object-fit:cover;">`; }
   else { avaEl.style.background=_autoAvaColor; avaEl.textContent=(u.name||'?')[0].toUpperCase(); }
   const banEl = document.getElementById('us-banner-preview');
-  if (u.bannerUrl) { banEl.style.backgroundImage=`url(${u.bannerUrl})`;banEl.style.backgroundSize='cover';banEl.style.backgroundPosition='center';banEl.textContent=''; }
+  if (u.bannerUrl) { banEl.style.backgroundImage=`url(${u.bannerUrl})`;banEl.style.backgroundSize='cover';banEl.style.backgroundPosition=`${u.bannerPosX??50}% ${u.bannerPosY??50}%`;banEl.textContent=''; }
   else { banEl.style.backgroundImage='';banEl.style.background=_autoAvaColor; }
+  document.getElementById('us-banner-posx').value=u.bannerPosX??50;
+  document.getElementById('us-banner-posy').value=u.bannerPosY??50;
   const emailEl=document.getElementById('us-email-display');
   const uidEl=document.getElementById('us-uid-display');
   if(emailEl)emailEl.textContent=window._firebaseAuth?.currentUser?.email||'—';
