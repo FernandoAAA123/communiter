@@ -1286,7 +1286,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
-<div class="modal-overlay" id="bannercolor-modal">
+<div class="modal-overlay" id="bannercolor-modal" style="z-index:1050;">
   <div class="modal" style="width:340px;padding:20px;">
     <h2 style="margin-bottom:4px;">Color de cartel</h2>
     <p class="sub" style="margin-bottom:14px;">Se usa solo si no subiste una imagen de banner.</p>
@@ -1315,16 +1315,21 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
-<div class="modal-overlay" id="serveravatar-modal">
+<div class="modal-overlay" id="serveravatar-modal" style="z-index:1050;">
   <div class="modal" style="width:340px;padding:20px;">
-    <h2 style="margin-bottom:4px;">Foto en este servidor</h2>
-    <p class="sub" style="margin-bottom:14px;">Reemplaza tu foto solo acá — no toca tu foto de perfil normal, y podés sacarla cuando quieras.</p>
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px;">
+    <h2 style="margin-bottom:4px;">Foto y banner en este servidor</h2>
+    <p class="sub" style="margin-bottom:14px;">Reemplazan tu foto/banner solo acá — no tocan tu perfil normal, y podés sacarlos cuando quieras.</p>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
       <div id="sa-preview" style="width:64px;height:64px;border-radius:50%;background:var(--bg-3);overflow:hidden;flex-shrink:0;"></div>
       <input type="file" id="sa-file" accept="image/*" onchange="handleServerAvatarFile(this)">
     </div>
+    <div class="modal-actions" style="margin-bottom:18px;">
+      <button class="btn btn-ghost" onclick="clearServerAvatar()">Quitar foto</button>
+    </div>
+    <div id="sb-preview" onclick="document.getElementById('sb-file').click()" style="height:64px;border-radius:var(--r-sm);background:var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:.76rem;margin-bottom:10px;">Clic para subir banner</div>
+    <input type="file" id="sb-file" accept="image/*" style="display:none" onchange="handleServerBannerFile(this)">
     <div class="modal-actions">
-      <button class="btn btn-ghost" onclick="clearServerAvatar()">Quitar</button>
+      <button class="btn btn-ghost" onclick="clearServerBanner()">Quitar banner</button>
       <button class="btn btn-primary" onclick="closeModal('serveravatar-modal')">Listo</button>
     </div>
   </div>
@@ -2779,10 +2784,12 @@ async function onUserLoggedIn(firebaseUser){
 
   // Restore prefs (theme, last server/channel, recent emojis) from Firebase — survives project migration
   let prefs={};
+  let _prefsTimedOut=false;
   try{
-    const prefSnap=await withTimeout(fbGet('users/'+state.currentUser.uid+'/prefs'),4000,null);
-    prefs=(prefSnap&&prefSnap.exists?.())?prefSnap.val():{};
-  }catch(e){ prefs={}; }
+    const prefSnap=await withTimeout(fbGet('users/'+state.currentUser.uid+'/prefs'),8000,null);
+    if(prefSnap===null){ _prefsTimedOut=true; }
+    else{ prefs=(prefSnap.exists?.())?prefSnap.val():{}; }
+  }catch(e){ prefs={}; _prefsTimedOut=true; }
 
   const lastSrv=prefs.lastServer;
   const lastCh=prefs.lastChannel;
@@ -2791,7 +2798,17 @@ async function onUserLoggedIn(firebaseUser){
   if(lastCh)state.currentChannelId=lastCh;
   state.lastRead=prefs.lastRead||{};
   state._lastReadLoaded=true;
-  state.liteMode=!!prefs.liteMode;
+  // Si la lectura de prefs se cayó por timeout (conexión lenta al iniciar), NO
+  // asumimos liteMode=false — eso apagaba el Modo Lite en silencio cada vez que
+  // Firebase tardaba de más. Usamos el respaldo en localStorage como fuente de
+  // verdad en ese caso puntual, y si sí llegó la respuesta real, la usamos (y
+  // de paso la reflejamos en localStorage para la próxima).
+  if(_prefsTimedOut){
+    state.liteMode=localStorage.getItem('bap_liteMode')==='1';
+  }else{
+    state.liteMode=!!prefs.liteMode;
+    try{localStorage.setItem('bap_liteMode',state.liteMode?'1':'0');}catch(e){}
+  }
   state.serverFolders=prefs.serverFolders||[];
   state.mutedServers=new Set(prefs.mutedServers||[]);
   state.mutedChannels=new Set(prefs.mutedChannels||[]);
@@ -4037,7 +4054,13 @@ function buildMemberEl(m,isOnline){
     ?'box-shadow:0 0 0 2px var(--accent);'
     :(ringColor?`box-shadow:0 0 0 2px ${ringColor};`:'');
   const npCss=nameplateCss(m.nameplateColor1,m.nameplateColor2);
-  const nameStyle=`color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'};${npCss?`background:${npCss};padding:1px 8px;border-radius:6px;display:inline-block;`:''}`;
+  // La placa ahora es el fondo de TODA la fila (avatar + nombre + badge), no solo
+  // un recuadro pegado al texto — así se ve como una tarjeta, igual que en Discord.
+  if(npCss){
+    div.style.background=npCss;
+    div.style.borderRadius='8px';
+  }
+  const nameStyle=`color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'};`;
   div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg};${avatarRingStyle}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="${nameStyle}">${m.nickname?escapeHtml(m.nickname):(m.name||'?')}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div>${activityHtml}</div>`;
   div.onclick=e=>{ isBot?showBotProfilePopup(e,m):showProfilePopupByUid(e,uid,m); e.stopPropagation(); };
   return div;
@@ -5980,7 +6003,7 @@ async function showProfilePopupByUid(event,uid,info){
 }
 function renderProfilePopupContent(u,uid,loading){
   const name=u.name||'?';const color=getAutoAvatarColor(uid||name);const avatarUrl=u.serverAvatarUrl||u.avatarUrl||'';
-  const bannerUrl=u.bannerUrl||'';
+  const bannerUrl=u.serverBannerUrl||u.bannerUrl||'';
   const bannerEl=document.getElementById('pp-banner');
   if(bannerEl){
     // OJO: nunca tocar bannerEl.style.background aquí. 'background' es el shorthand
@@ -6382,6 +6405,11 @@ function openServerAvatarModal(){
   const m=currentServerMember();
   const prev=document.getElementById('sa-preview');
   prev.innerHTML=m?.serverAvatarUrl?`<img src="${m.serverAvatarUrl}" style="width:100%;height:100%;object-fit:cover;">`:'';
+  const bprev=document.getElementById('sb-preview');
+  if(bprev){
+    if(m?.serverBannerUrl){bprev.style.backgroundImage=`url(${m.serverBannerUrl})`;bprev.style.backgroundSize='cover';bprev.style.backgroundPosition='center';bprev.textContent='';}
+    else{bprev.style.backgroundImage='';bprev.style.background='var(--accent)';bprev.textContent='Clic para subir banner';}
+  }
   openModal('serveravatar-modal');
 }
 function handleServerAvatarFile(input){
@@ -6405,6 +6433,34 @@ function clearServerAvatar(){
   saveServerAvatarUrl(null);
   document.getElementById('sa-preview').innerHTML='';
   document.getElementById('sa-file').value='';
+}
+function handleServerBannerFile(input){
+  const file=input.files[0];if(!file)return;
+  if(file.size>5*1024*1024){showToast('⚠️ Imagen muy grande (máx 5MB)');return;}
+  const applyPreview=b64=>{
+    const el=document.getElementById('sb-preview');
+    el.style.backgroundImage=`url(${b64})`;el.style.backgroundSize='cover';el.style.backgroundPosition='center';el.textContent='';
+    saveServerBannerUrl(b64);
+  };
+  if(file.type==='image/gif'){
+    if(file.size>3*1024*1024){showToast('⚠️ GIF muy grande (máx 3MB para animados)');return;}
+    const reader=new FileReader();reader.onload=e=>applyPreview(e.target.result);reader.readAsDataURL(file);
+    return;
+  }
+  compressImage(file,800,200,200,applyPreview);
+}
+function saveServerBannerUrl(url){
+  const srv=getServer(state.currentServerId);if(!srv)return;
+  const m=currentServerMember();if(!m)return;
+  m.serverBannerUrl=url||null;
+  saveServers();
+  renderAll();
+}
+function clearServerBanner(){
+  saveServerBannerUrl(null);
+  const el=document.getElementById('sb-preview');
+  el.style.backgroundImage='';el.style.background='var(--accent)';el.textContent='Clic para subir banner';
+  document.getElementById('sb-file').value='';
 }
 function toggleNameplateOn(){state._selNameplateOn=!state._selNameplateOn;renderCustomizationPickers();}
 
@@ -7650,6 +7706,7 @@ async function toggleLiteMode(){
   );
   if(!ok)return;
   try{await fbUpdate('users/'+state.currentUser.uid+'/prefs',{liteMode:turningOn});}catch(e){}
+  try{localStorage.setItem('bap_liteMode',turningOn?'1':'0');}catch(e){}
   location.reload();
 }
 function openUserSettings() {
