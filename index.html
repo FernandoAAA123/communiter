@@ -1260,6 +1260,25 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
+<div class="modal-overlay" id="namefont-modal" style="z-index:1050;">
+  <div class="modal" style="width:360px;padding:20px;">
+    <h2 style="margin-bottom:4px;">Fuente del nombre</h2>
+    <p class="sub" style="margin-bottom:14px;">Cambia la tipografía de tu nombre en toda la app.</p>
+    <select id="us-namefont" onchange="previewNameFont(this.value)" style="width:100%;padding:9px 10px;border-radius:8px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-1);margin-bottom:14px;font-size:.9rem;">
+      <option value="">Predeterminada</option>
+      <option value="Georgia, serif" style="font-family:Georgia, serif;">Georgia (serif)</option>
+      <option value="'Courier New', monospace" style="font-family:'Courier New', monospace;">Courier New (monospace)</option>
+      <option value="'Trebuchet MS', sans-serif" style="font-family:'Trebuchet MS', sans-serif;">Trebuchet MS</option>
+      <option value="Impact, sans-serif" style="font-family:Impact, sans-serif;">Impact</option>
+      <option value="'Comic Sans MS', cursive" style="font-family:'Comic Sans MS', cursive;">Comic Sans MS</option>
+      <option value="'Brush Script MT', cursive" style="font-family:'Brush Script MT', cursive;">Brush Script MT</option>
+      <option value="'Palatino Linotype', serif" style="font-family:'Palatino Linotype', serif;">Palatino</option>
+    </select>
+    <div id="us-namefont-preview" style="padding:12px;border-radius:8px;background:var(--bg-2);text-align:center;font-size:1.1rem;color:var(--text-1);margin-bottom:14px;">Vista previa del nombre</div>
+    <div class="modal-actions"><button class="btn btn-primary" onclick="closeModal('namefont-modal')">Listo</button></div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="avatarframe-modal" style="z-index:1050;">
   <div class="modal" style="width:400px;padding:20px;">
     <h2 style="margin-bottom:4px;">Marco de avatar</h2>
@@ -1326,7 +1345,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
     <div class="modal-actions" style="margin-bottom:18px;">
       <button class="btn btn-ghost" onclick="clearServerAvatar()">Quitar foto</button>
     </div>
-    <div id="sb-preview" onclick="document.getElementById('sb-file').click()" style="height:64px;border-radius:var(--r-sm);background:var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:.76rem;margin-bottom:10px;">Clic para subir banner</div>
+    <div id="sb-preview" onclick="if(!hasCommuniterPlus(state.currentUser))showToast('🔒 El banner por servidor es de Communiter+');document.getElementById('sb-file').click()" style="height:64px;border-radius:var(--r-sm);background:var(--accent);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.5);font-size:.76rem;margin-bottom:10px;">Clic para subir banner</div>
     <input type="file" id="sb-file" accept="image/*" style="display:none" onchange="handleServerBannerFile(this)">
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="clearServerBanner()">Quitar banner</button>
@@ -1505,13 +1524,19 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <h4 style="font-size:.95rem;font-weight:700;color:var(--text-0);margin:0 0 4px;">Personalización de perfil</h4>
       <p style="font-size:.82rem;color:var(--text-3);margin:4px 0 16px;">Cómo se ve tu tarjeta de perfil para los demás.</p>
 
-      <div class="custom-section-row" onclick="openModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+      <div class="custom-section-row" onclick="openCosmeticModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div id="np-summary-chip" style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Placa de nombre</div><div style="font-size:.72rem;color:var(--text-3);">Color de fondo detrás de tu nombre</div></div>
         <span style="color:var(--text-3);">→</span>
       </div>
 
-      <div class="custom-section-row" onclick="openModal('avatarframe-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+      <div class="custom-section-row" onclick="openCosmeticModal('namefont-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+        <div style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--text-2);">Aa</div>
+        <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Fuente del nombre</div><div style="font-size:.72rem;color:var(--text-3);">Tipografía distinta para tu nombre</div></div>
+        <span style="color:var(--text-3);">→</span>
+      </div>
+
+      <div class="custom-section-row" onclick="openCosmeticModal('avatarframe-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div id="af-summary-chip" style="width:34px;height:34px;border-radius:50%;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Marco de avatar</div><div style="font-size:.72rem;color:var(--text-3);">Borde decorativo alrededor de tu foto</div></div>
         <span style="color:var(--text-3);">→</span>
@@ -1523,7 +1548,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <span style="color:var(--text-3);">→</span>
       </div>
 
-      <div class="custom-section-row" onclick="openModal('effect-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:16px;">
+      <div class="custom-section-row" onclick="openCosmeticModal('effect-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:16px;">
         <div id="fx-summary-chip" style="width:34px;height:34px;border-radius:50%;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Efecto de perfil</div><div style="font-size:.72rem;color:var(--text-3);">Brillo alrededor de tu tarjeta de perfil</div></div>
         <span style="color:var(--text-3);">→</span>
@@ -2243,6 +2268,28 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 <script>
+// ── COMMUNITER+ (respaldo) ──
+// Si plus.js no carga (falta el archivo, red bloqueada, etc.) la app base NUNCA
+// debe romperse. Estos son valores por defecto PERMISIVOS: hasCommuniterPlus
+// devuelve true (no bloquea a nadie) para que, en ausencia del complemento,
+// nadie quede trabado sin poder editar lo que ya tenía. plus.js, si carga,
+// redefine estas mismas funciones abajo y las reemplaza.
+window.hasCommuniterPlus = function(u){ return true; };
+window.checkPlusGrandfather = function(u){ return false; };
+window.checkServerAvatarGrandfather = function(){ return false; };
+window.openCosmeticModal = function(modalId){ openModal(modalId); };
+window.Plus = {
+  emojiCap: 0,
+  fetchEmojis: async function(){ return []; },
+  getCachedEmojis: function(){ return []; },
+  addEmoji: async function(){ showToast('⚠️ Communiter+ no está disponible ahora mismo'); return false; },
+  removeEmoji: async function(){ return false; },
+  getCrossServerEmojis: function(){ return []; },
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="console.warn('[Communiter+] SDK de Supabase no cargó')"></script>
+<script src="plus.js" onerror="console.warn('[Communiter+] plus.js no cargó — usando respaldo permisivo')"></script>
+<script>
 // Guarda la plantilla original del popup de perfil humano. showBotProfilePopup
 // reemplaza todo el innerHTML del popup con su propia plantilla de bot; sin esto,
 // al volver a abrir el perfil de una persona real, renderProfilePopupContent no
@@ -2803,12 +2850,9 @@ async function onUserLoggedIn(firebaseUser){
   // Firebase tardaba de más. Usamos el respaldo en localStorage como fuente de
   // verdad en ese caso puntual, y si sí llegó la respuesta real, la usamos (y
   // de paso la reflejamos en localStorage para la próxima).
-  if(_prefsTimedOut){
-    state.liteMode=localStorage.getItem('bap_liteMode')==='1';
-  }else{
-    state.liteMode=!!prefs.liteMode;
-    try{localStorage.setItem('bap_liteMode',state.liteMode?'1':'0');}catch(e){}
-  }
+  state.liteMode=_prefsTimedOut?(localStorage.getItem('bap_liteMode')==='1'):!!prefs.liteMode;
+  if(!_prefsTimedOut){try{localStorage.setItem('bap_liteMode',state.liteMode?'1':'0');}catch(e){}}
+  checkPlusGrandfather(state.currentUser);
   state.serverFolders=prefs.serverFolders||[];
   state.mutedServers=new Set(prefs.mutedServers||[]);
   state.mutedChannels=new Set(prefs.mutedChannels||[]);
@@ -2895,6 +2939,7 @@ function subscribeServers(){
   fbOn('state/servers',snap=>{
     if(snap.exists()){const val=snap.val();state.servers=normalizeServers(Array.isArray(val)?val:Object.values(val||{}));}
     else state.servers=[];
+    checkServerAvatarGrandfather();
     subscribeAllChannelsActivity();
     renderServerBar();renderChannelsPanel();renderMembersPanel();
   });
@@ -2927,8 +2972,10 @@ function subscribeTypingGlobal(){
 let _msgListeners={};
 // Modo Lite: por debajo de este número de mensajes, un canal ya es "chico" y no
 // vale la pena filtrar por fecha — se muestra completo tal cual. Solo canales con
-// MÁS mensajes que esto aplican el corte de las últimas 24h.
+// MÁS mensajes que esto aplican el corte de las últimas 24h. Igual para todos,
+// no depende de Communiter+.
 const LITE_MODE_THRESHOLD=100;
+function liteModeThreshold(){ return LITE_MODE_THRESHOLD; }
 function subscribeChannel(channelId){
   if(_msgListeners[channelId])return;
   let isFirst=true;
@@ -2939,7 +2986,7 @@ function subscribeChannel(channelId){
   // todo el historial, y 2) si Firebase devuelve exactamente ese límite, sabemos
   // que el canal tiene MÁS mensajes que el umbral (si devuelve menos, es que ya
   // trajimos el historial completo y no hace falta filtrar por fecha).
-  const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(LITE_MODE_THRESHOLD)):baseRef;
+  const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(liteModeThreshold())):baseRef;
   window._fbOnValue(target,snap=>{
     const prev=state.messages[channelId]||[];
     if(!snap.exists()){state.messages[channelId]=[];}
@@ -2950,7 +2997,7 @@ function subscribeChannel(channelId){
       let merged=[...fromFb,...localOnly].sort((a,b)=>a.ts-b.ts);
       // Solo filtramos por fecha si el canal realmente supera el umbral —
       // si trajo menos del límite, eso YA ES todo el historial del canal.
-      if(state.liteMode&&fromFb.length>=LITE_MODE_THRESHOLD)merged=merged.filter(m=>m.ts>=liteCutoff);
+      if(state.liteMode&&fromFb.length>=liteModeThreshold())merged=merged.filter(m=>m.ts>=liteCutoff);
       state.messages[channelId]=merged;
     }
     // Notify on new messages after first load
@@ -2984,12 +3031,12 @@ function subscribeDMChannel(dmId){
   let isFirst=true;
   const baseRef=fbRef('dmMessages/'+dmId);
   const liteCutoff=Date.now()-24*60*60*1000;
-  const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(LITE_MODE_THRESHOLD)):baseRef;
+  const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(liteModeThreshold())):baseRef;
   window._fbOnValue(target,snap=>{
     const prev=state.messages[key]||[];
     if(!snap.exists()){state.messages[key]=[];if(state.currentChannelId===key)renderMessages();return;}
     let list=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
-    if(state.liteMode&&list.length>=LITE_MODE_THRESHOLD)list=list.filter(m=>m.ts>=liteCutoff);
+    if(state.liteMode&&list.length>=liteModeThreshold())list=list.filter(m=>m.ts>=liteCutoff);
     state.messages[key]=list;
     if(!isFirst){
       const newMsgs=list.filter(m=>!prev.find(p=>p.id===m.id)&&m.uid!==state.currentUser?.uid);
@@ -4047,6 +4094,7 @@ function buildMemberEl(m,isOnline){
   const roleColor=getRoleColorForUserInServer(uid,state.currentServerId);
   const isBot=m.isBot||(uid||'').startsWith('bot_');
   const botBadgeHtml=isBot?'<span class="bot-badge" style="font-size:.5rem;padding:1px 4px;margin-left:3px;">BOT</span>':'';
+  const plusBadgeHtml=(!isBot&&hasCommuniterPlus(m))?'<span style="font-size:.65rem;margin-left:4px;color:#ffd76a;" title="Communiter+">✦</span>':'';
   const activity=isOnline?(state.onlineUsers[uid]?.activity||m.activity):null;
   const activityHtml=activity?renderActivityLine(activity):'';
   const ringColor=m.avatarDecorationColor?avatarFrameRing(m.avatarDecorationColor):'';
@@ -4060,8 +4108,8 @@ function buildMemberEl(m,isOnline){
     div.style.background=npCss;
     div.style.borderRadius='8px';
   }
-  const nameStyle=`color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'};`;
-  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg};${avatarRingStyle}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="${nameStyle}">${m.nickname?escapeHtml(m.nickname):(m.name||'?')}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}</div>${activityHtml}</div>`;
+  const nameStyle=`color:${isOnline?(roleColor||'var(--text-1)'):'var(--text-3)'};${m.nameFont?`font-family:${m.nameFont};`:''}`;
+  div.innerHTML=`<div class="member-avatar-wrap"><div class="member-avatar" style="background:${bg};${avatarRingStyle}">${avatarC}</div><div class="member-status" style="background:${statusColor}"></div></div><div class="member-info"><div class="member-name" style="${nameStyle}">${m.nickname?escapeHtml(m.nickname):(m.name||'?')}${uid===state.currentUser.uid?' <span style="font-size:.65rem;color:var(--accent);">(tú)</span>':''}${botBadgeHtml}${plusBadgeHtml}</div>${activityHtml}</div>`;
   div.onclick=e=>{ isBot?showBotProfilePopup(e,m):showProfilePopupByUid(e,uid,m); e.stopPropagation(); };
   return div;
 }
@@ -5506,6 +5554,9 @@ function addCustomEmoji(){
   if(!b64){showToast('⚠️ Sube una imagen primero');return;}
   const srv=getServer(state.currentServerId);if(!srv)return;
   if(!srv.customEmojis)srv.customEmojis=[];
+  // El aumento de slots (Plus) y los emojis cross-server van a vivir en Supabase,
+  // no acá — subir el tope acá significaría más imágenes base64 en Firebase,
+  // justo lo que se quiere evitar. Por ahora el tope es el mismo para todos.
   if(srv.customEmojis.length>=100){showToast('⚠️ Máximo 100 emojis por servidor');return;}
   const restrictVal=document.getElementById('ce-restrict')?.value||'';
   let restrict=null;
@@ -5703,7 +5754,7 @@ function handleStickerUpload(input){
 
 function currentUserCosmetics(){
   const u=state.currentUser||{};
-  return{nameplateColor1:u.nameplateColor1||null,nameplateColor2:u.nameplateColor2||null,avatarDecorationColor:u.avatarDecorationColor||null,avatarDecorationImageUrl:u.avatarDecorationImageUrl||null,profileEffectColor:u.profileEffectColor||null,bannerColor:u.bannerColor||null,bannerUrl:u.bannerUrl||null,bannerPosX:u.bannerPosX??50,bannerPosY:u.bannerPosY??50};
+  return{nameplateColor1:u.nameplateColor1||null,nameplateColor2:u.nameplateColor2||null,avatarDecorationColor:u.avatarDecorationColor||null,avatarDecorationImageUrl:u.avatarDecorationImageUrl||null,profileEffectColor:u.profileEffectColor||null,bannerColor:u.bannerColor||null,bannerUrl:u.bannerUrl||null,bannerPosX:u.bannerPosX??50,bannerPosY:u.bannerPosY??50,nameFont:u.nameFont||'',isPlus:u.isPlus||false,plusGrandfathered:u.plusGrandfathered||false};
 }
 // ── INVITE ──
 function copyInviteCode(){const code=document.getElementById('invite-code-text').textContent;navigator.clipboard.writeText(code).then(()=>showToast('✅ Código copiado'));}
@@ -5712,7 +5763,7 @@ function approvePending(uid){
   const p=srv.pendingMembers?.find(m=>m.uid===uid);if(!p)return;
   srv.pendingMembers=srv.pendingMembers.filter(m=>m.uid!==uid);
   if(!srv.members)srv.members=[];
-  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',roles:['Miembro'],nameplateColor1:p.nameplateColor1||null,nameplateColor2:p.nameplateColor2||null,avatarDecorationColor:p.avatarDecorationColor||null,avatarDecorationImageUrl:p.avatarDecorationImageUrl||null,profileEffectColor:p.profileEffectColor||null,bannerColor:p.bannerColor||null,bannerUrl:p.bannerUrl||null,bannerPosX:p.bannerPosX??50,bannerPosY:p.bannerPosY??50});
+  srv.members.push({uid:p.uid,id:p.uid,name:p.name,avatarUrl:p.avatarUrl||'',roles:['Miembro'],nameplateColor1:p.nameplateColor1||null,nameplateColor2:p.nameplateColor2||null,avatarDecorationColor:p.avatarDecorationColor||null,avatarDecorationImageUrl:p.avatarDecorationImageUrl||null,profileEffectColor:p.profileEffectColor||null,bannerColor:p.bannerColor||null,bannerUrl:p.bannerUrl||null,bannerPosX:p.bannerPosX??50,bannerPosY:p.bannerPosY??50,nameFont:p.nameFont||'',isPlus:p.isPlus||false,plusGrandfathered:p.plusGrandfathered||false});
   saveServers();openServerSettings();showToast('✅ '+p.name+' aceptado');
 }
 function rejectPending(uid){
@@ -6044,7 +6095,9 @@ function renderProfilePopupContent(u,uid,loading){
   }
   const dotEl=document.getElementById('pp-online-dot');
   if(dotEl){const st=state.onlineUsers[uid]?.status;const isOn=!!state.onlineUsers[uid]&&st!=='offline';dotEl.style.display=isOn?'block':'none';dotEl.style.background=st==='idle'?'var(--yellow)':st==='dnd'?'var(--red)':'var(--green)';}
-  document.getElementById('pp-name').textContent=u.displayName||name;
+  const ppNameEl=document.getElementById('pp-name');
+  ppNameEl.style.fontFamily=u.nameFont||'';
+  ppNameEl.innerHTML=escapeHtml(u.displayName||name)+(hasCommuniterPlus(u)?' <span style="font-size:.8em;color:#ffd76a;" title="Communiter+">✦</span>':'');
   document.getElementById('pp-tag').textContent=u.handle?'@'+u.handle:(u.tag||'');
   const statusEl=document.getElementById('pp-status');
   statusEl.innerHTML='';
@@ -6424,6 +6477,7 @@ function handleServerAvatarFile(input){
 function saveServerAvatarUrl(url){
   const srv=getServer(state.currentServerId);if(!srv)return;
   const m=currentServerMember();if(!m)return;
+  if(url&&!hasCommuniterPlus(state.currentUser)){showToast('🔒 La foto por servidor es de Communiter+');return;}
   m.serverAvatarUrl=url||null;
   saveServers();
   renderCustomizationPickers();
@@ -6443,6 +6497,7 @@ function handleServerBannerFile(input){
     saveServerBannerUrl(b64);
   };
   if(file.type==='image/gif'){
+    if(!hasCommuniterPlus(state.currentUser)){showToast('🔒 Los banners GIF son de Communiter+');return;}
     if(file.size>3*1024*1024){showToast('⚠️ GIF muy grande (máx 3MB para animados)');return;}
     const reader=new FileReader();reader.onload=e=>applyPreview(e.target.result);reader.readAsDataURL(file);
     return;
@@ -6452,6 +6507,7 @@ function handleServerBannerFile(input){
 function saveServerBannerUrl(url){
   const srv=getServer(state.currentServerId);if(!srv)return;
   const m=currentServerMember();if(!m)return;
+  if(url&&!hasCommuniterPlus(state.currentUser)){showToast('🔒 El banner por servidor es de Communiter+');return;}
   m.serverBannerUrl=url||null;
   saveServers();
   renderAll();
@@ -6463,6 +6519,11 @@ function clearServerBanner(){
   document.getElementById('sb-file').value='';
 }
 function toggleNameplateOn(){state._selNameplateOn=!state._selNameplateOn;renderCustomizationPickers();}
+function previewNameFont(font){
+  state._selNameFont=font||'';
+  const prev=document.getElementById('us-namefont-preview');
+  if(prev){prev.style.fontFamily=font||'';prev.textContent=state.currentUser?.name||'Vista previa del nombre';}
+}
 
 function toggleAvatarDecoOn(){state._selAvatarDecoOn=!state._selAvatarDecoOn;if(state._selAvatarDecoOn)state._selAvatarDecoImageUrl=null;renderCustomizationPickers();}
 function toggleProfileEffectOn(){state._selProfileEffectOn=!state._selProfileEffectOn;renderCustomizationPickers();}
@@ -6676,16 +6737,22 @@ function saveUserSettings(){
   const newBannerB64=document.getElementById('us-banner-b64').value;
   const avatarUrl=newAvatarB64||state.currentUser.avatarUrl||'';
   const bannerUrl=newBannerB64||state.currentUser.bannerUrl||'';
-  const nameplateColor1=state._selNameplateOn?(document.getElementById('us-nameplate-color1').value||null):null;
-  const nameplateColor2=state._selNameplateOn?(document.getElementById('us-nameplate-color2').value||null):null;
-  const avatarDecorationColor=state._selAvatarDecoOn?(document.getElementById('us-avatarframe-color').value||null):null;
-  const avatarDecorationImageUrl=state._selAvatarDecoImageUrl||null;
-  const profileEffectColor=state._selProfileEffectOn?(document.getElementById('us-effect-color').value||null):null;
+  // Communiter+: placa/marco/efecto/color de banner son cosméticos exclusivos.
+  // Si el usuario no tiene Plus ni viene grandfathered, no le borramos lo que ya
+  // tenía guardado — simplemente ignoramos cualquier cambio nuevo que haya hecho
+  // en esos campos y conservamos el valor previo tal cual estaba.
+  const _plusOk=hasCommuniterPlus(state.currentUser);
+  const nameplateColor1=_plusOk?(state._selNameplateOn?(document.getElementById('us-nameplate-color1').value||null):null):(state.currentUser.nameplateColor1||null);
+  const nameplateColor2=_plusOk?(state._selNameplateOn?(document.getElementById('us-nameplate-color2').value||null):null):(state.currentUser.nameplateColor2||null);
+  const avatarDecorationColor=_plusOk?(state._selAvatarDecoOn?(document.getElementById('us-avatarframe-color').value||null):null):(state.currentUser.avatarDecorationColor||null);
+  const avatarDecorationImageUrl=_plusOk?(state._selAvatarDecoImageUrl||null):(state.currentUser.avatarDecorationImageUrl||null);
+  const profileEffectColor=_plusOk?(state._selProfileEffectOn?(document.getElementById('us-effect-color').value||null):null):(state.currentUser.profileEffectColor||null);
   const bannerColor=state._selBannerColorOn?(document.getElementById('us-banner-color').value||null):null;
+  const nameFont=_plusOk?(document.getElementById('us-namefont')?.value||''):(state.currentUser.nameFont||'');
   const bannerPosX=parseFloat(document.getElementById('us-banner-posx')?.value)||50;
   const bannerPosY=parseFloat(document.getElementById('us-banner-posy')?.value)||50;
-  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,bannerPosX,bannerPosY};
-  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,bannerPosX,bannerPosY,createdAt:state.currentUser.createdAt||Date.now()};
+  state.currentUser={...state.currentUser,name,handle,displayName,bio,aboutMe,activity,avatarUrl,bannerUrl,customStatus,status,nameColor,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,bannerPosX,bannerPosY,nameFont};
+  const userData={uid:state.currentUser.uid,name,handle,displayName,tag:state.currentUser.tag,email:state.currentUser.email||'',avatarUrl,bannerUrl,nameColor,status,customStatus,bio,aboutMe,activity,social,privacy,nameplateColor1,nameplateColor2,avatarDecorationColor,avatarDecorationImageUrl,profileEffectColor,bannerColor,bannerPosX,bannerPosY,nameFont,createdAt:state.currentUser.createdAt||Date.now()};
   fbSet('users/'+state.currentUser.uid,userData);
   // Handle index for friend search
   fbSet('handles/'+handle,state.currentUser.uid);
@@ -6695,7 +6762,7 @@ function saveUserSettings(){
   const eKey=emailToKey(state.currentUser.email||'');
   if(eKey)fbSet('usersByEmail/'+eKey,userData);
   fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,nameColor,status,customStatus,activity,ts:Date.now()});
-  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecorationColor=avatarDecorationColor;m.avatarDecorationImageUrl=avatarDecorationImageUrl;m.nameplateColor1=nameplateColor1;m.nameplateColor2=nameplateColor2;m.profileEffectColor=profileEffectColor;m.bannerColor=bannerColor;m.bannerUrl=bannerUrl;m.bannerPosX=bannerPosX;m.bannerPosY=bannerPosY;}});
+  state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecorationColor=avatarDecorationColor;m.avatarDecorationImageUrl=avatarDecorationImageUrl;m.nameplateColor1=nameplateColor1;m.nameplateColor2=nameplateColor2;m.profileEffectColor=profileEffectColor;m.bannerColor=bannerColor;m.bannerUrl=bannerUrl;m.bannerPosX=bannerPosX;m.bannerPosY=bannerPosY;m.nameFont=nameFont;m.isPlus=state.currentUser.isPlus;m.plusGrandfathered=state.currentUser.plusGrandfathered;}});
   saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();showToast('✅ Perfil actualizado');
 }
 
@@ -7590,6 +7657,8 @@ function handleImgUpload(input, previewId, hiddenId, maxW, maxH) {
   // (canvas solo captura un frame, y toDataURL los fuerza a JPEG). Para GIFs los
   // leemos directo a base64 sin recomprimir, así se conserva la animación.
   if (file.type === 'image/gif') {
+    const isOwnProfileSlot = previewId === 'us-avatar-preview' || previewId === 'us-banner-preview';
+    if (isOwnProfileSlot && !hasCommuniterPlus(state.currentUser)) { showToast('🔒 GIFs como foto/banner son de Communiter+'); return; }
     if (file.size > 3*1024*1024) { showToast('⚠️ GIF muy grande (máx 3MB para animados)'); return; }
     const reader = new FileReader();
     reader.onload = e => {
@@ -7723,6 +7792,9 @@ function openUserSettings() {
   state._selProfileEffectColor=u.profileEffectColor||'#7c3aed';
   state._selBannerColor=u.bannerColor||'#5865f2';
   state._selBannerColorOn=!!u.bannerColor;
+  state._selNameFont=u.nameFont||'';
+  const nfSel=document.getElementById('us-namefont');
+  if(nfSel){nfSel.value=state._selNameFont;previewNameFont(state._selNameFont);}
   renderCustomizationPickers();
   document.getElementById('us-username').value = u.name || '';
   document.getElementById('us-handle').value = u.handle || '';
@@ -8047,7 +8119,19 @@ function handleChatFileUpload(input){
 }
 
 // ── AUDIO RECORDING ──
-let _audioRecorder=null,_audioChunks=[],_audioBlob=null,_audioTimerInterval=null,_audioSeconds=0;
+let _audioRecorder=null,_audioChunks=[],_audioBlob=null,_audioTimerInterval=null,_audioSeconds=0,_audioMime='audio/webm';
+// Elegimos el mimeType explícitamente porque dejar que MediaRecorder use su
+// default y después etiquetar el Blob a mano como 'audio/webm' (como hacía
+// antes) rompe en Safari/iOS: ahí el navegador SIEMPRE graba en un formato
+// tipo mp4/aac, nunca webm — el Blob quedaba mal etiquetado y el audio no se
+// podía ni reproducir ni a veces ni terminar de procesar bien.
+function pickAudioMimeType(){
+  const candidates=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/aac','audio/ogg;codecs=opus'];
+  for(const c of candidates){
+    if(window.MediaRecorder&&MediaRecorder.isTypeSupported&&MediaRecorder.isTypeSupported(c))return c;
+  }
+  return ''; // dejamos que el navegador decida si ninguno de los candidatos es soportado
+}
 function toggleAudioRecording(){
   const btn=document.getElementById('audio-record-btn');
   if(_audioRecorder&&_audioRecorder.state==='recording'){
@@ -8057,27 +8141,59 @@ function toggleAudioRecording(){
     clearInterval(_audioTimerInterval);
     return;
   }
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){showToast('⚠️ Este navegador no soporta grabar audio');return;}
+  if(typeof MediaRecorder==='undefined'){showToast('⚠️ Este navegador no soporta grabar audio (falta MediaRecorder)');return;}
   navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
     _audioChunks=[];_audioSeconds=0;
-    _audioRecorder=new MediaRecorder(stream);
-    _audioRecorder.ondataavailable=e=>_audioChunks.push(e.data);
+    _audioMime=pickAudioMimeType();
+    try{
+      _audioRecorder=_audioMime?new MediaRecorder(stream,{mimeType:_audioMime}):new MediaRecorder(stream);
+    }catch(err){
+      // Si el mimeType elegido resulta no soportado en este dispositivo puntual,
+      // reintentamos sin forzar ninguno — mejor que crashear.
+      _audioMime='';
+      _audioRecorder=new MediaRecorder(stream);
+    }
+    _audioRecorder.ondataavailable=e=>{ if(e.data&&e.data.size>0)_audioChunks.push(e.data); };
+    _audioRecorder.onerror=(ev)=>{
+      console.warn('[Audio] MediaRecorder error',ev.error||ev);
+      showToast('⚠️ Se cortó la grabación (error del micrófono)');
+      clearInterval(_audioTimerInterval);
+      try{stream.getTracks().forEach(t=>t.stop());}catch(e){}
+      btn.innerHTML='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg> Grabar';
+      btn.style.background='';
+    };
+    // En celular es común que el sistema le quite el micrófono a la app a
+    // mitad de grabación (llamada entrante, se cambia de app, etc.). Sin este
+    // handler, el track "moría" en silencio y la grabación quedaba colgada.
+    stream.getAudioTracks().forEach(track=>{
+      track.onended=()=>{
+        if(_audioRecorder&&_audioRecorder.state==='recording'){
+          showToast('⚠️ Se perdió acceso al micrófono, grabación detenida');
+          _audioRecorder.stop();
+        }
+      };
+    });
     _audioRecorder.onstop=()=>{
-      _audioBlob=new Blob(_audioChunks,{type:'audio/webm'});
+      _audioBlob=new Blob(_audioChunks,{type:_audioMime||'audio/webm'});
       const url=URL.createObjectURL(_audioBlob);
       const preview=document.getElementById('audio-preview');
-      preview.src=url;preview.style.display='block';
-      document.getElementById('audio-send-btn').style.display='inline-flex';
+      if(preview){preview.src=url;preview.style.display='block';}
+      const sendBtn=document.getElementById('audio-send-btn');
+      if(sendBtn)sendBtn.style.display='inline-flex';
       stream.getTracks().forEach(t=>t.stop());
       // Visualizer stop
-      document.getElementById('audio-visualizer').innerHTML='<div style="color:var(--green);font-size:.85rem;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Grabación lista</div>';
+      const vizEl=document.getElementById('audio-visualizer');
+      if(vizEl)vizEl.innerHTML='<div style="color:var(--green);font-size:.85rem;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Grabación lista</div>';
     };
     _audioRecorder.start();
     btn.textContent='⏹ Detener';
     btn.style.background='var(--red)';
     // Timer
-    const timerEl=document.getElementById('audio-timer');
     _audioTimerInterval=setInterval(()=>{
       _audioSeconds++;
+      const timerEl=document.getElementById('audio-timer');
+      if(!timerEl){clearInterval(_audioTimerInterval);return;} // el modal se cerró: no seguir corriendo el timer a ciegas
       const m=String(Math.floor(_audioSeconds/60)).padStart(2,'0');
       const s=String(_audioSeconds%60).padStart(2,'0');
       timerEl.textContent=`${m}:${s}`;
@@ -8085,9 +8201,14 @@ function toggleAudioRecording(){
     },1000);
     // Animated visualizer
     const viz=document.getElementById('audio-visualizer');
-    viz.innerHTML='';
-    for(let i=0;i<20;i++){const b=document.createElement('div');b.style.cssText=`width:4px;background:var(--accent);border-radius:2px;animation:vizBar ${.3+Math.random()*.7}s ease-in-out infinite alternate;height:${4+Math.random()*28}px;`;viz.appendChild(b);}
-  }).catch(()=>showToast('⚠️ No se pudo acceder al micrófono'));
+    if(viz){
+      viz.innerHTML='';
+      for(let i=0;i<20;i++){const b=document.createElement('div');b.style.cssText=`width:4px;background:var(--accent);border-radius:2px;animation:vizBar ${.3+Math.random()*.7}s ease-in-out infinite alternate;height:${4+Math.random()*28}px;`;viz.appendChild(b);}
+    }
+  }).catch((err)=>{
+    console.warn('[Audio] getUserMedia error',err);
+    showToast('⚠️ No se pudo acceder al micrófono');
+  });
 }
 function closeAudioModal(){
   if(_audioRecorder&&_audioRecorder.state==='recording'){_audioRecorder.stop();}
