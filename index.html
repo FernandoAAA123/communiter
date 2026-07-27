@@ -1531,6 +1531,16 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <h4 style="font-size:.95rem;font-weight:700;color:var(--text-0);margin:0 0 4px;">Personalización de perfil</h4>
       <p style="font-size:.82rem;color:var(--text-3);margin:4px 0 16px;">Cómo se ve tu tarjeta de perfil para los demás.</p>
 
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--bg-2);border:1px dashed var(--border);margin-bottom:16px;">
+        <div style="flex:1;">
+          <div style="font-size:.85rem;font-weight:700;color:#ffd76a;">✦ Communiter+</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin:2px 0 6px;">Complemento aparte — subí tu archivo <code>plus.js</code> para activarlo.</div>
+          <div id="plus-status-row"><span style="color:var(--text-3);">No activado</span></div>
+        </div>
+        <button class="btn btn-ghost" id="plus-upload-btn" style="font-size:.78rem;" onclick="document.getElementById('plus-file-input').click()">Subir archivo</button>
+        <input type="file" id="plus-file-input" accept=".js" style="display:none" onchange="handlePlusFileUpload(this)">
+      </div>
+
       <div class="custom-section-row" onclick="openCosmeticModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div id="np-summary-chip" style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Placa de nombre</div><div style="font-size:.72rem;color:var(--text-3);">Color de fondo detrás de tu nombre</div></div>
@@ -2281,21 +2291,85 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 // devuelve true (no bloquea a nadie) para que, en ausencia del complemento,
 // nadie quede trabado sin poder editar lo que ya tenía. plus.js, si carga,
 // redefine estas mismas funciones abajo y las reemplaza.
-window.hasCommuniterPlus = function(u){ return true; };
+window.hasCommuniterPlus = function(u){ return false; };
 window.checkPlusGrandfather = function(u){ return false; };
 window.checkServerAvatarGrandfather = function(){ return false; };
-window.openCosmeticModal = function(modalId){ openModal(modalId); };
+window.openCosmeticModal = function(modalId){
+  showToast('🔒 Activá Communiter+ en Configuración para usar esto');
+  openModal(modalId);
+};
 window.Plus = {
   emojiCap: 0,
   fetchEmojis: async function(){ return []; },
   getCachedEmojis: function(){ return []; },
-  addEmoji: async function(){ showToast('⚠️ Communiter+ no está disponible ahora mismo'); return false; },
+  addEmoji: async function(){ showToast('🔒 Activá Communiter+ en Configuración primero'); return false; },
   removeEmoji: async function(){ return false; },
   getCrossServerEmojis: function(){ return []; },
 };
+// ── Activación de Communiter+ (inyectado por el propio jugador, no viene
+// incluido por defecto en la app) ──
+function loadSupabaseSdkThen(cb){
+  if(window.supabase){cb();return;}
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+  s.onload=cb;
+  s.onerror=()=>showToast('⚠️ No se pudo cargar el SDK de Supabase (revisa tu conexión)');
+  document.head.appendChild(s);
+}
+function injectPlusCode(code,{silent}={}){
+  loadSupabaseSdkThen(()=>{
+    try{
+      const old=document.getElementById('communiter-plus-script');
+      if(old)old.remove();
+      const s=document.createElement('script');
+      s.id='communiter-plus-script';
+      s.textContent=code;
+      document.body.appendChild(s);
+      if(!window.__plusInjected){ if(!silent)showToast('⚠️ El archivo no parece ser Communiter+ (plus.js)'); return; }
+      if(!silent)showToast('✅ Communiter+ activado');
+      if(typeof checkPlusGrandfather==='function')checkPlusGrandfather(state.currentUser);
+      if(typeof checkServerAvatarGrandfather==='function')checkServerAvatarGrandfather();
+      renderMembersPanel();renderPlusStatusUI();
+    }catch(e){
+      console.warn('[Communiter+]',e);
+      if(!silent)showToast('⚠️ El archivo no se pudo activar (¿es el correcto?)');
+    }
+  });
+}
+function handlePlusFileUpload(input){
+  const file=input.files[0];if(!file)return;
+  if(!file.name.endsWith('.js')){showToast('⚠️ Debe ser un archivo .js');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const code=e.target.result;
+    localStorage.setItem('communiterPlusCode',code);
+    injectPlusCode(code);
+  };
+  reader.onerror=()=>showToast('⚠️ No se pudo leer el archivo');
+  reader.readAsText(file);
+  input.value='';
+}
+function deactivatePlusCode(){
+  localStorage.removeItem('communiterPlusCode');
+  showToast('Communiter+ desactivado — recargando...');
+  setTimeout(()=>location.reload(),700);
+}
+function renderPlusStatusUI(){
+  const el=document.getElementById('plus-status-row');
+  const btn=document.getElementById('plus-upload-btn');
+  if(!el)return;
+  const active=!!window.__plusInjected;
+  el.innerHTML=active
+    ?`<span style="color:var(--green);font-weight:600;">✦ Communiter+ activo</span> <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:.75rem;" onclick="deactivatePlusCode()">Desactivar</button>`
+    :`<span style="color:var(--text-3);">No activado</span>`;
+  if(btn)btn.textContent=active?'Actualizar archivo':'Subir archivo';
+}
+// Si ya lo activó antes, lo vuelve a inyectar solo, sin pedirle el archivo de nuevo
+(function(){
+  const saved=localStorage.getItem('communiterPlusCode');
+  if(saved)injectPlusCode(saved,{silent:true});
+})();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" onerror="console.warn('[Communiter+] SDK de Supabase no cargó')"></script>
-<script src="plus.js" onerror="console.warn('[Communiter+] plus.js no cargó — usando respaldo permisivo')"></script>
 <script>
 // Guarda la plantilla original del popup de perfil humano. showBotProfilePopup
 // reemplaza todo el innerHTML del popup con su propia plantilla de bot; sin esto,
@@ -7836,6 +7910,7 @@ async function toggleLiteMode(){
 function openUserSettings() {
   const u = state.currentUser; if (!u) return;
   _updatePWAButtonUI();
+  renderPlusStatusUI();
   document.getElementById('us-lite-mode-toggle')?.classList.toggle('on',!!state.liteMode);
   state._selNameplateOn=!!(u.nameplateColor1);
   state._selNameplateColor1=u.nameplateColor1||'#ff512f';
