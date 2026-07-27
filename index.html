@@ -1005,6 +1005,13 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <span id="reply-text">Respondiendo a...</span>
       <button class="icon-btn" onclick="cancelReply()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
+    <!-- Imagen adjunta pendiente: se sube y se previsualiza acá, pero NO se envía
+         hasta que el usuario le da a Enviar (con o sin texto) -->
+    <div id="pending-img-bar" style="display:none;align-items:center;gap:10px;padding:6px 16px;">
+      <img id="pending-img-preview" style="width:44px;height:44px;object-fit:cover;border-radius:8px;border:1px solid var(--border);">
+      <span style="font-size:.78rem;color:var(--text-3);flex:1;">Imagen lista — escribe algo o enviá directo</span>
+      <button class="icon-btn" onclick="cancelPendingImage()" title="Quitar imagen"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
     <!-- Channel note bar (personal, per channel) -->
     <div id="channel-note-bar" style="display:none;flex-shrink:0;margin:0 16px 6px;border-radius:10px;background:var(--bg-3);border:1px solid var(--border);overflow:hidden;">
       <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:1px solid var(--border);">
@@ -2969,6 +2976,37 @@ function subscribeTypingGlobal(){
     renderTyping();
   });
 }
+let _pruningInFlight={};
+// Limpieza automática: si un canal (o DM) pasa de 500 mensajes, borra los más
+// viejos hasta dejarlo en 500 — nunca toca mensajes fijados, ni canales, ni
+// hilos, solo mensajes sueltos. Corre sola cuando alguien abre ese canal (el
+// primero que lo abre después de pasar el umbral dispara la poda; si varios
+// la disparan casi a la vez no pasa nada, borrar un mensaje ya borrado es un
+// no-op en Firebase).
+const CHANNEL_MSG_CAP=250;
+function isThreadChannel(channelId){
+  for(const srv of state.servers||[]){
+    for(const cat of srv.channels||[]){
+      const ch=(cat.children||[]).find(c=>c.id===channelId);
+      if(ch)return ch.type==='thread';
+    }
+  }
+  return false;
+}
+async function pruneChannelMessages(dbPath,messages){
+  if(!messages||messages.length<=CHANNEL_MSG_CAP)return;
+  if(_pruningInFlight[dbPath])return;
+  _pruningInFlight[dbPath]=true;
+  try{
+    const excess=messages.length-CHANNEL_MSG_CAP;
+    const deletable=messages.filter(m=>!m.pinned).sort((a,b)=>a.ts-b.ts).slice(0,excess);
+    for(const m of deletable){
+      try{await fbRemove(dbPath+'/'+m.id);}catch(e){}
+    }
+  }finally{
+    _pruningInFlight[dbPath]=false;
+  }
+}
 let _msgListeners={};
 // Modo Lite: por debajo de este número de mensajes, un canal ya es "chico" y no
 // vale la pena filtrar por fecha — se muestra completo tal cual. Solo canales con
@@ -2999,6 +3037,7 @@ function subscribeChannel(channelId){
       // si trajo menos del límite, eso YA ES todo el historial del canal.
       if(state.liteMode&&fromFb.length>=liteModeThreshold())merged=merged.filter(m=>m.ts>=liteCutoff);
       state.messages[channelId]=merged;
+      if(!state.liteMode&&!isThreadChannel(channelId))pruneChannelMessages('state/messages/'+channelId,fromFb);
     }
     // Notify on new messages after first load
     if(!isFirst){
@@ -3038,6 +3077,7 @@ function subscribeDMChannel(dmId){
     let list=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
     if(state.liteMode&&list.length>=liteModeThreshold())list=list.filter(m=>m.ts>=liteCutoff);
     state.messages[key]=list;
+    if(!state.liteMode)pruneChannelMessages('dmMessages/'+dmId,list);
     if(!isFirst){
       const newMsgs=list.filter(m=>!prev.find(p=>p.id===m.id)&&m.uid!==state.currentUser?.uid);
       newMsgs.forEach(m=>{
@@ -4218,7 +4258,8 @@ function checkCanSendMessage(channelId){
 async function sendMessage(){
   const input=document.getElementById('msg-input');
   const content=input.value.trim();
-  if(!content||!state.currentChannelId)return;
+  const pendingImg=state._pendingImageB64||null;
+  if((!content&&!pendingImg)||!state.currentChannelId)return;
   if(!checkCanSendMessage(state.currentChannelId))return;
   if(!state._lastSentAt)state._lastSentAt={};
   state._lastSentAt[state.currentChannelId]=Date.now();
@@ -4229,17 +4270,18 @@ async function sendMessage(){
   const _srvMember=isDM?null:currentServerMember();
   const _msgAvatar=(_srvMember&&_srvMember.serverAvatarUrl)||u.avatarUrl||'';
   let storedContent=content,decryptedForLocal=content;
-  if(isDM&&isDMEncrypted(dmId)){
+  if(isDM&&content&&isDMEncrypted(dmId)){
     const r=await dmEncryptText(dmId,content);
     storedContent=r.content;
   }
   const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:_msgAvatar,content:storedContent,ts:Date.now(),reactions:[],pinned:false,edited:false,replyTo:state.replyToMsg?.id||null};
+  if(pendingImg)msg.imageData=pendingImg;
   if(isDM){
-    msg._decrypted=decryptedForLocal;
+    if(content)msg._decrypted=decryptedForLocal;
     fbSet('dmMessages/'+dmId+'/'+msg.id,msg);
     const otherUid=state.currentDmUid;
     const otherInfo=state.dmConversations[otherUid]||{name:'?'};
-    const lastMsgPreview=isDMEncrypted(dmId)?'🔒 Mensaje cifrado':content.substring(0,40);
+    const lastMsgPreview=pendingImg?'🖼️ Imagen':(isDMEncrypted(dmId)?'🔒 Mensaje cifrado':content.substring(0,40));
     fbSet('dms/'+u.uid+'/'+otherUid,{uid:otherUid,name:otherInfo.name,avatarUrl:otherInfo.avatarUrl||'',lastMsg:lastMsgPreview,ts:Date.now()});
     fbSet('dms/'+otherUid+'/'+u.uid,{uid:u.uid,name:u.name,avatarUrl:u.avatarUrl||'',lastMsg:lastMsgPreview,ts:Date.now()});
   }else{
@@ -4248,6 +4290,7 @@ async function sendMessage(){
   if(!state.messages[state.currentChannelId])state.messages[state.currentChannelId]=[];
   if(!state.messages[state.currentChannelId].find(m=>m.id===msg.id))state.messages[state.currentChannelId].push(msg);
   input.value='';input.style.height='auto';
+  cancelPendingImage();
   fbRemove('typing/'+state.currentUser.uid);
   cancelReply();renderMessages();closePicker();
   awardXP(); // Award XP for sending a message
@@ -7580,20 +7623,32 @@ function loadCustomThemeFile(input){
 }
 
 // ── IMAGE HELPERS ──
-function compressImage(file, maxW, maxH, maxKB, cb) {
+function compressImage(file, maxW, maxH, maxKB, cb, onError) {
+  const fail=(msg)=>{
+    console.warn('[compressImage]',msg);
+    showToast('⚠️ No se pudo procesar la imagen — probá con otra o en formato JPG/PNG');
+    if(onError)onError();
+  };
   const reader = new FileReader();
+  const safetyTimer=setTimeout(()=>fail('timeout'),15000);
+  reader.onerror = () => { clearTimeout(safetyTimer); fail('reader error'); };
   reader.onload = e => {
     const img = new Image();
+    img.onerror = () => { clearTimeout(safetyTimer); fail('image decode error'); };
     img.onload = () => {
-      const canvas = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      const ratio = Math.min(maxW/w, maxH/h, 1);
-      w = Math.round(w*ratio); h = Math.round(h*ratio);
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      let quality = 0.85, b64 = canvas.toDataURL('image/jpeg', quality);
-      while (b64.length > maxKB*1024*1.37 && quality > 0.2) { quality -= 0.1; b64 = canvas.toDataURL('image/jpeg', quality); }
-      cb(b64);
+      clearTimeout(safetyTimer);
+      try{
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if(!w||!h){fail('dimensiones inválidas');return;}
+        const ratio = Math.min(maxW/w, maxH/h, 1);
+        w = Math.round(w*ratio); h = Math.round(h*ratio);
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        let quality = 0.85, b64 = canvas.toDataURL('image/jpeg', quality);
+        while (b64.length > maxKB*1024*1.37 && quality > 0.2) { quality -= 0.1; b64 = canvas.toDataURL('image/jpeg', quality); }
+        cb(b64);
+      }catch(err){ fail(err.message||'error de canvas'); }
     };
     img.src = e.target.result;
   };
@@ -8074,17 +8129,26 @@ function jumpToMessage(id){
 // ── CHAT IMAGE UPLOAD ──
 function handleChatImageUpload(input){
   const file=input.files[0];if(!file)return;
-  if(file.size>8*1024*1024){showToast('⚠️ Imagen muy grande (máx 8MB)');return;}
+  if(file.size>8*1024*1024){showToast('⚠️ Imagen muy grande (máx 8MB)');input.value='';return;}
+  const bar=document.getElementById('pending-img-bar');
+  const prev=document.getElementById('pending-img-preview');
+  // Avisamos ANTES de terminar de comprimir — en celulares con fotos grandes
+  // la compresión puede tardar un par de segundos y sin este aviso parecía que
+  // "no detectaba" el archivo (no pasaba nada visible hasta que terminaba).
+  if(bar){bar.style.display='flex';}
+  if(prev){prev.style.opacity='.4';}
   compressImage(file,800,800,400,b64=>{
-    if(!state.currentChannelId)return;
-    const u=state.currentUser;
-    const isDM=!!state.currentDmUid;
-    const _rc=isDM?'':getRoleColorForUserInServer(u.uid,state.currentServerId);
-    const msg={id:'msg'+genId(12),uid:u.uid,name:u.name,color:u.nameColor||'',roleColor:_rc,avatarUrl:u.avatarUrl||'',content:'',imageData:b64,ts:Date.now(),reactions:[],pinned:false};
-    msg.channelId=state.currentChannelId;
-    sendMsg(msg);
-  });
+    state._pendingImageB64=b64;
+    if(prev){prev.src=b64;prev.style.opacity='1';}
+    if(bar)bar.style.display='flex';
+    document.getElementById('msg-input')?.focus();
+  },()=>{ if(bar)bar.style.display='none'; });
   input.value='';
+}
+function cancelPendingImage(){
+  state._pendingImageB64=null;
+  const bar=document.getElementById('pending-img-bar');
+  if(bar)bar.style.display='none';
 }
 
 // Adjuntar archivos genéricos (APKs chicos, PDFs, zips, etc.) sin usar Firebase Storage
