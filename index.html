@@ -1541,19 +1541,19 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <input type="file" id="plus-file-input" accept=".js" style="display:none" onchange="handlePlusFileUpload(this)">
       </div>
 
-      <div class="custom-section-row" onclick="openCosmeticModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+      <div class="custom-section-row" id="plus-row-nameplate" onclick="openCosmeticModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div id="np-summary-chip" style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Placa de nombre</div><div style="font-size:.72rem;color:var(--text-3);">Color de fondo detrás de tu nombre</div></div>
         <span style="color:var(--text-3);">→</span>
       </div>
 
-      <div class="custom-section-row" onclick="openCosmeticModal('namefont-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+      <div class="custom-section-row" id="plus-row-namefont" onclick="openCosmeticModal('namefont-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;color:var(--text-2);">Aa</div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Fuente del nombre</div><div style="font-size:.72rem;color:var(--text-3);">Tipografía distinta para tu nombre</div></div>
         <span style="color:var(--text-3);">→</span>
       </div>
 
-      <div class="custom-section-row" onclick="openCosmeticModal('avatarframe-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
+      <div class="custom-section-row" id="plus-row-avatarframe" onclick="openCosmeticModal('avatarframe-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div id="af-summary-chip" style="width:34px;height:34px;border-radius:50%;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Marco de avatar</div><div style="font-size:.72rem;color:var(--text-3);">Borde decorativo alrededor de tu foto</div></div>
         <span style="color:var(--text-3);">→</span>
@@ -1565,7 +1565,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <span style="color:var(--text-3);">→</span>
       </div>
 
-      <div class="custom-section-row" onclick="openCosmeticModal('effect-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:16px;">
+      <div class="custom-section-row" id="plus-row-effect" onclick="openCosmeticModal('effect-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:16px;">
         <div id="fx-summary-chip" style="width:34px;height:34px;border-radius:50%;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Efecto de perfil</div><div style="font-size:.72rem;color:var(--text-3);">Brillo alrededor de tu tarjeta de perfil</div></div>
         <span style="color:var(--text-3);">→</span>
@@ -2024,7 +2024,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <button class="btn btn-primary" onclick="addCustomSticker()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>Agregar</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="ss-field-label" style="margin:0;">Stickers del servidor — <span id="cs-count">0</span>/30</div>
+          <div class="ss-field-label" style="margin:0;">Stickers del servidor — <span id="cs-count">0</span>/10</div>
         </div>
         <div style="background:var(--bg-3);border-radius:12px;overflow:hidden;border:1px solid var(--border);">
           <div style="display:grid;grid-template-columns:60px 1fr 1fr auto;padding:10px 16px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);">
@@ -2357,12 +2357,20 @@ function deactivatePlusCode(){
 function renderPlusStatusUI(){
   const el=document.getElementById('plus-status-row');
   const btn=document.getElementById('plus-upload-btn');
-  if(!el)return;
   const active=!!window.__plusInjected;
-  el.innerHTML=active
-    ?`<span style="color:var(--green);font-weight:600;">✦ Communiter+ activo</span> <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:.75rem;" onclick="deactivatePlusCode()">Desactivar</button>`
-    :`<span style="color:var(--text-3);">No activado</span>`;
+  if(el){
+    el.innerHTML=active
+      ?`<span style="color:var(--green);font-weight:600;">✦ Communiter+ activo</span> <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:.75rem;" onclick="deactivatePlusCode()">Desactivar</button>`
+      :`<span style="color:var(--text-3);">No activado</span>`;
+  }
   if(btn)btn.textContent=active?'Actualizar archivo':'Subir archivo';
+  // Los cosméticos de Plus quedan ocultos por completo para quien no tiene
+  // Plus — nada de mostrarlos bloqueados/atenuados, directamente no aparecen.
+  const hasPlus=hasCommuniterPlus(state.currentUser);
+  ['plus-row-nameplate','plus-row-namefont','plus-row-avatarframe','plus-row-effect','server-avatar-row'].forEach(id=>{
+    const row=document.getElementById(id);
+    if(row)row.style.display=hasPlus?'flex':'none';
+  });
 }
 // Si ya lo activó antes, lo vuelve a inyectar solo, sin pedirle el archivo de nuevo
 (function(){
@@ -5674,7 +5682,7 @@ function addCustomEmoji(){
   // El aumento de slots (Plus) y los emojis cross-server van a vivir en Supabase,
   // no acá — subir el tope acá significaría más imágenes base64 en Firebase,
   // justo lo que se quiere evitar. Por ahora el tope es el mismo para todos.
-  if(srv.customEmojis.length>=100){showToast('⚠️ Máximo 100 emojis por servidor');return;}
+  if(srv.customEmojis.length>=25){showToast('⚠️ Máximo 25 emojis por servidor');return;}
   const restrictVal=document.getElementById('ce-restrict')?.value||'';
   let restrict=null;
   if(restrictVal){
@@ -5827,7 +5835,7 @@ function addCustomSticker(){
   if(!b64){showToast('Sube una imagen primero');return;}
   const srv=getServer(state.currentServerId);if(!srv)return;
   if(!srv.customStickers)srv.customStickers=[];
-  if(srv.customStickers.length>=30){showToast('Máximo 30 stickers por servidor');return;}
+  if(srv.customStickers.length>=10){showToast('Máximo 10 stickers por servidor');return;}
   srv.customStickers.push({name,url:b64,uploadedBy:state.currentUser?.name||'?',uploadedAt:Date.now()});
   saveServers();
   document.getElementById('cs-name').value='';
@@ -6859,6 +6867,16 @@ function saveUserSettings(){
   // tenía guardado — simplemente ignoramos cualquier cambio nuevo que haya hecho
   // en esos campos y conservamos el valor previo tal cual estaba.
   const _plusOk=hasCommuniterPlus(state.currentUser);
+  let _plusChangesBlocked=false;
+  if(!_plusOk){
+    const _u=state.currentUser;
+    if(!!state._selNameplateOn!==!!_u.nameplateColor1)_plusChangesBlocked=true;
+    if(state._selNameplateOn&&(document.getElementById('us-nameplate-color1').value!==(_u.nameplateColor1||'')))_plusChangesBlocked=true;
+    if(!!state._selAvatarDecoOn!==!!_u.avatarDecorationColor)_plusChangesBlocked=true;
+    if(state._selAvatarDecoImageUrl&&state._selAvatarDecoImageUrl!==_u.avatarDecorationImageUrl)_plusChangesBlocked=true;
+    if(!!state._selProfileEffectOn!==!!_u.profileEffectColor)_plusChangesBlocked=true;
+    if((document.getElementById('us-namefont')?.value||'')!==(_u.nameFont||''))_plusChangesBlocked=true;
+  }
   const nameplateColor1=_plusOk?(state._selNameplateOn?(document.getElementById('us-nameplate-color1').value||null):null):(state.currentUser.nameplateColor1||null);
   const nameplateColor2=_plusOk?(state._selNameplateOn?(document.getElementById('us-nameplate-color2').value||null):null):(state.currentUser.nameplateColor2||null);
   const avatarDecorationColor=_plusOk?(state._selAvatarDecoOn?(document.getElementById('us-avatarframe-color').value||null):null):(state.currentUser.avatarDecorationColor||null);
@@ -6880,7 +6898,9 @@ function saveUserSettings(){
   if(eKey)fbSet('usersByEmail/'+eKey,userData);
   fbSet('presence/'+state.currentUser.uid,{uid:state.currentUser.uid,name,avatarUrl,nameColor,status,customStatus,activity,ts:Date.now()});
   state.servers.forEach(srv=>{const m=(srv.members||[]).find(m=>(m.uid||m.id)===state.currentUser.uid);if(m){m.name=name;m.avatarUrl=avatarUrl;m.avatarDecorationColor=avatarDecorationColor;m.avatarDecorationImageUrl=avatarDecorationImageUrl;m.nameplateColor1=nameplateColor1;m.nameplateColor2=nameplateColor2;m.profileEffectColor=profileEffectColor;m.bannerColor=bannerColor;m.bannerUrl=bannerUrl;m.bannerPosX=bannerPosX;m.bannerPosY=bannerPosY;m.nameFont=nameFont;m.isPlus=state.currentUser.isPlus;m.plusGrandfathered=state.currentUser.plusGrandfathered;}});
-  saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();showToast('✅ Perfil actualizado');
+  saveServers();closeModal('user-settings-modal');updateUserBar();renderAll();
+  showToast('✅ Perfil actualizado');
+  if(_plusChangesBlocked)setTimeout(()=>showToast('🔒 La placa/marco/efecto/fuente no se guardaron — necesitas Communiter+'),1600);
 }
 
 // Bots son extensiones externas independientes (bot-*.html)
