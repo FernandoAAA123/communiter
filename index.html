@@ -1542,6 +1542,16 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         <input type="file" id="plus-file-input" accept=".js" style="display:none" onchange="handlePlusFileUpload(this)">
       </div>
 
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--bg-2);border:1px dashed var(--border);margin-bottom:16px;">
+        <div style="flex:1;">
+          <div style="font-size:.85rem;font-weight:700;color:#7dd3fc;">🚀 Server Boost</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin:2px 0 6px;">Complemento aparte — subí tu archivo <code>boost.js</code> para activarlo.</div>
+          <div id="boost-status-row"><span style="color:var(--text-3);">No activado</span></div>
+        </div>
+        <button class="btn btn-ghost" id="boost-upload-btn" style="font-size:.78rem;" onclick="document.getElementById('boost-file-input').click()">Subir archivo</button>
+        <input type="file" id="boost-file-input" accept=".js" style="display:none" onchange="handleBoostFileUpload(this)">
+      </div>
+
       <div class="custom-section-row" id="plus-row-nameplate" onclick="openCosmeticModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
         <div id="np-summary-chip" style="width:34px;height:34px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:.85rem;font-weight:600;color:var(--text-0);">Placa de nombre</div><div style="font-size:.72rem;color:var(--text-3);">Color de fondo detrás de tu nombre</div></div>
@@ -1840,6 +1850,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <h2 class="ss-section-title">Perfil de la comunidad</h2>
           <p class="ss-section-desc">Personaliza cómo aparece tu comunidad.</p>
         </div>
+        <div id="ss-boost-widget" style="padding:14px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);margin-bottom:20px;"></div>
         <div class="ss-field-label" style="margin-bottom:6px;">Tipo de comunidad</div>
         <select id="ss-server-type" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text-0);font-family:var(--font);font-size:.9rem;outline:none;margin-bottom:20px;">
           <option value="public">Pública</option>
@@ -2234,6 +2245,13 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
       <div class="toggle" id="edit-ch-private" onclick="this.classList.toggle('on')"></div>
       <span style="font-size:.875rem;color:var(--text-1);">Canal privado</span>
     </div>
+    <div id="edit-ch-protected-row" style="display:none;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--bg-2);border:1px solid var(--border);">
+      <div class="toggle" id="edit-ch-protected" onclick="this.classList.toggle('on')"></div>
+      <div style="flex:1;"><span style="font-size:.875rem;color:var(--text-1);">🛡️ Canal protegido</span><div style="font-size:.72rem;color:var(--text-3);">La limpieza automática de mensajes ignora este canal</div></div>
+    </div>
+    <div id="edit-ch-protected-locked" style="display:none;font-size:.75rem;color:var(--text-3);margin-top:10px;padding:8px 10px;border-radius:8px;background:var(--bg-2);border:1px dashed var(--border);">
+      🛡️ "Canal protegido" es una mejora de Server Boost — impulsa este servidor para desbloquearlo.
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('edit-channel-modal')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveEditChannel()">Guardar</button>
@@ -2307,6 +2325,26 @@ window.Plus = {
   removeEmoji: async function(){ return false; },
   getCrossServerEmojis: function(){ return []; },
 };
+// ── SERVER BOOST (respaldo) ──
+// Igual patrón que Plus: por defecto NINGÚN servidor está boosteado (tier 0).
+// boost.js, cuando se active desde Configuración, redefine estas funciones con
+// datos reales de su propia base de Supabase (aparte de la de Plus).
+const BOOST_TIERS=[
+  {name:'Base',boostsNeeded:0,emojiCap:25,stickerCap:10},
+  {name:'Super-Community',boostsNeeded:2,emojiCap:50,stickerCap:20},
+  {name:'Hyper-Community',boostsNeeded:5,emojiCap:100,stickerCap:35},
+  {name:'Ultra-Community',boostsNeeded:10,emojiCap:200,stickerCap:60},
+];
+window.getServerBoostTier = function(srv){ return 0; };
+window.getServerBoostCount = function(srv){ return 0; };
+window.isBoostingServer = function(srv,uid){ return false; };
+window.toggleServerBoost = function(srv){
+  showToast('🔒 Activá el complemento de Server Boost en Configuración primero');
+};
+function boostCapFor(srv,kind){
+  const tier=BOOST_TIERS[getServerBoostTier(srv)]||BOOST_TIERS[0];
+  return kind==='sticker'?tier.stickerCap:tier.emojiCap;
+}
 // ── Activación de Communiter+ (inyectado por el propio jugador, no viene
 // incluido por defecto en la app) ──
 function loadSupabaseSdkThen(cb){
@@ -2378,6 +2416,57 @@ function renderPlusStatusUI(){
   const saved=localStorage.getItem('communiterPlusCode');
   if(saved)injectPlusCode(saved,{silent:true});
 })();
+function injectBoostCode(code,{silent}={}){
+  loadSupabaseSdkThen(()=>{
+    try{
+      const old=document.getElementById('communiter-boost-script');
+      if(old)old.remove();
+      const s=document.createElement('script');
+      s.id='communiter-boost-script';
+      s.textContent=code;
+      document.body.appendChild(s);
+      if(!window.__boostInjected){ if(!silent)showToast('⚠️ El archivo no parece ser Server Boost (boost.js)'); return; }
+      if(!silent)showToast('✅ Server Boost activado');
+      renderBoostStatusUI();renderChannelsPanel();
+    }catch(e){
+      console.warn('[Boost]',e);
+      if(!silent)showToast('⚠️ El archivo no se pudo activar (¿es el correcto?)');
+    }
+  });
+}
+function handleBoostFileUpload(input){
+  const file=input.files[0];if(!file)return;
+  if(!file.name.endsWith('.js')){showToast('⚠️ Debe ser un archivo .js');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const code=e.target.result;
+    localStorage.setItem('communiterBoostCode',code);
+    injectBoostCode(code);
+  };
+  reader.onerror=()=>showToast('⚠️ No se pudo leer el archivo');
+  reader.readAsText(file);
+  input.value='';
+}
+function deactivateBoostCode(){
+  localStorage.removeItem('communiterBoostCode');
+  showToast('Server Boost desactivado — recargando...');
+  setTimeout(()=>location.reload(),700);
+}
+function renderBoostStatusUI(){
+  const el=document.getElementById('boost-status-row');
+  const btn=document.getElementById('boost-upload-btn');
+  const active=!!window.__boostInjected;
+  if(el){
+    el.innerHTML=active
+      ?`<span style="color:var(--green);font-weight:600;">🚀 Server Boost activo</span> <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:.75rem;" onclick="deactivateBoostCode()">Desactivar</button>`
+      :`<span style="color:var(--text-3);">No activado</span>`;
+  }
+  if(btn)btn.textContent=active?'Actualizar archivo':'Subir archivo';
+}
+(function(){
+  const saved=localStorage.getItem('communiterBoostCode');
+  if(saved)injectBoostCode(saved,{silent:true});
+})();
 </script>
 <script>
 // Guarda la plantilla original del popup de perfil humano. showBotProfilePopup
@@ -2423,7 +2512,7 @@ let state={
   isMuted:false,localStream:null,videoCallActive:false,isCamOff:false,
   friends:{},
   spotify:{connected:false,accessToken:null,expiresAt:0,pollTimer:null},
-  liteMode:false,
+  liteMode:true,
   serverFolders:[],
   mutedServers:new Set(),mutedChannels:new Set(),
 };
@@ -2940,7 +3029,7 @@ async function onUserLoggedIn(firebaseUser){
   // Firebase tardaba de más. Usamos el respaldo en localStorage como fuente de
   // verdad en ese caso puntual, y si sí llegó la respuesta real, la usamos (y
   // de paso la reflejamos en localStorage para la próxima).
-  state.liteMode=_prefsTimedOut?(localStorage.getItem('bap_liteMode')==='1'):!!prefs.liteMode;
+  state.liteMode=_prefsTimedOut?(localStorage.getItem('bap_liteMode')!=='0'):(prefs.hasOwnProperty('liteMode')?!!prefs.liteMode:true);
   if(!_prefsTimedOut){try{localStorage.setItem('bap_liteMode',state.liteMode?'1':'0');}catch(e){}}
   checkPlusGrandfather(state.currentUser);
   state.serverFolders=prefs.serverFolders||[];
@@ -3076,6 +3165,15 @@ function isThreadChannel(channelId){
   }
   return false;
 }
+function isProtectedChannel(channelId){
+  for(const srv of state.servers||[]){
+    for(const cat of srv.channels||[]){
+      const ch=(cat.children||[]).find(c=>c.id===channelId);
+      if(ch)return !!ch.protected&&getServerBoostTier(srv)>0;
+    }
+  }
+  return false;
+}
 async function pruneChannelMessages(dbPath,messages){
   if(!messages||messages.length<=CHANNEL_MSG_CAP)return;
   if(_pruningInFlight[dbPath])return;
@@ -3095,7 +3193,7 @@ let _msgListeners={};
 // vale la pena filtrar por fecha — se muestra completo tal cual. Solo canales con
 // MÁS mensajes que esto aplican el corte de las últimas 24h. Igual para todos,
 // no depende de Communiter+.
-const LITE_MODE_THRESHOLD=25;
+const LITE_MODE_THRESHOLD=15;
 function liteModeThreshold(){ return LITE_MODE_THRESHOLD; }
 function subscribeChannel(channelId){
   if(_msgListeners[channelId])return;
@@ -3118,7 +3216,7 @@ function subscribeChannel(channelId){
       // locales optimistas que empujaron el total por encima de 25.
       if(state.liteMode&&merged.length>liteModeThreshold())merged=merged.slice(-liteModeThreshold());
       state.messages[channelId]=merged;
-      if(!state.liteMode&&!isThreadChannel(channelId))pruneChannelMessages('state/messages/'+channelId,fromFb);
+      if(!state.liteMode&&!isThreadChannel(channelId)&&!isProtectedChannel(channelId))pruneChannelMessages('state/messages/'+channelId,fromFb);
     }
     // Notify on new messages after first load
     if(!isFirst){
@@ -4001,7 +4099,7 @@ function mediaHtml(msg){
       </div>
     </div>`;
   }
-  if(msg.imageData)return`<br><img class="msg-img" src="${msg.imageData}" alt="img" onclick="openImgViewer('${msg.id}')" style="cursor:zoom-in;">`;
+  if(msg.imageData)return`<br><img class="msg-img" src="${msg.imageData}" alt="img" loading="lazy" decoding="async" onclick="openImgViewer('${msg.id}')" style="cursor:zoom-in;">`;
   if(msg.imageUrl)return`<br><img class="msg-img" src="${msg.imageUrl}" alt="img" onclick="window.open('${msg.imageUrl}','_blank')" onerror="this.style.display='none'">`;
   if(msg.coverImg)return`<br><img class="msg-img" src="${msg.coverImg}" alt="img" onclick="openImgViewer('${msg.id}')" style="cursor:zoom-in;">`;
   if(msg.audioData)return`<br><audio controls src="${msg.audioData}" style="margin-top:6px;max-width:280px;border-radius:var(--r-sm);"></audio>`;
@@ -4287,11 +4385,21 @@ function renderFriendsActivityPanel(el){
 
 // ── MESSAGING ──
 let typingTimeout=null;
+let _lastTypingWrite=0;
 function handleTyping(){
   if(!state.currentChannelId)return;
-  fbSet('typing/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,channelId:state.currentChannelId,ts:Date.now()});
+  const now=Date.now();
+  // Antes esto escribía a Firebase en CADA tecla presionada — un mensaje de 50
+  // caracteres disparaba 50 escrituras casi simultáneas, compitiendo con el
+  // renderizado del propio texto que estás tipeando. Ahora como máximo escribe
+  // una vez cada 2 segundos; el indicador de "escribiendo..." de todos modos
+  // dura 3s para los demás, así que nadie nota la diferencia.
+  if(now-_lastTypingWrite>2000){
+    _lastTypingWrite=now;
+    fbSet('typing/'+state.currentUser.uid,{uid:state.currentUser.uid,name:state.currentUser.name,channelId:state.currentChannelId,ts:now});
+  }
   clearTimeout(typingTimeout);
-  typingTimeout=setTimeout(()=>{fbRemove('typing/'+state.currentUser.uid);},3000);
+  typingTimeout=setTimeout(()=>{fbRemove('typing/'+state.currentUser.uid);_lastTypingWrite=0;},3000);
 }
 function getChannelById(chId){
   for(const srv of state.servers){
@@ -4821,6 +4929,11 @@ function openEditChannel(chId, srvId){
   document.getElementById('edit-ch-slowmode').value=ch.slowmode||0;
   const tog=document.getElementById('edit-ch-private');
   ch.private?tog.classList.add('on'):tog.classList.remove('on');
+  const protTog=document.getElementById('edit-ch-protected');
+  ch.protected?protTog.classList.add('on'):protTog.classList.remove('on');
+  const boosted=getServerBoostTier(srv)>0;
+  document.getElementById('edit-ch-protected-row').style.display=boosted?'flex':'none';
+  document.getElementById('edit-ch-protected-locked').style.display=boosted?'none':'block';
   openModal('edit-channel-modal');
 }
 function saveEditChannel(){
@@ -4838,6 +4951,9 @@ function saveEditChannel(){
   ch.topic=document.getElementById('edit-ch-topic').value.trim();
   ch.slowmode=parseInt(document.getElementById('edit-ch-slowmode').value)||0;
   ch.private=document.getElementById('edit-ch-private').classList.contains('on');
+  if(getServerBoostTier(srv)>0){
+    ch.protected=document.getElementById('edit-ch-protected').classList.contains('on');
+  }
   saveServers();closeModal('edit-channel-modal');
   renderChannelsPanel();
   if(state.currentChannelId===chId)renderChatArea();
@@ -4910,6 +5026,26 @@ function saveServerRules(){
   renderAll();
   showToast('✅ Reglas actualizadas');
 }
+function renderBoostWidget(srv){
+  const el=document.getElementById('ss-boost-widget');if(!el)return;
+  const tier=getServerBoostTier(srv);
+  const count=getServerBoostCount(srv);
+  const iAmBoosting=isBoostingServer(srv,state.currentUser?.uid);
+  const cur=BOOST_TIERS[tier];
+  const next=BOOST_TIERS[tier+1];
+  const canBoost=hasCommuniterPlus(state.currentUser);
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;">
+      <div style="font-size:.85rem;font-weight:700;color:#7dd3fc;">🚀 ${cur.name} ${tier>0?`(nivel ${tier})`:''}</div>
+      <div style="font-size:.75rem;color:var(--text-3);">${count} impulso${count===1?'':'s'}</div>
+    </div>
+    <div style="font-size:.72rem;color:var(--text-3);margin-bottom:10px;">
+      ${next?`Faltan ${Math.max(0,next.boostsNeeded-count)} impulsos para ${next.name} (${next.emojiCap} emojis, ${next.stickerCap} stickers)`:'Nivel máximo alcanzado 🎉'}
+    </div>
+    <button class="btn ${iAmBoosting?'btn-primary':'btn-ghost'} btn-sm" onclick="toggleServerBoost(getServer('${srv.id}'))" ${canBoost?'':'disabled title="Necesitás Communiter+ para impulsar un servidor"'}>
+      ${iAmBoosting?'✓ Impulsando':(canBoost?'Impulsar este servidor':'🔒 Necesitás Communiter+')}
+    </button>`;
+}
 function openServerSettings(){
   const srv=getServer(state.currentServerId);
   if(!srv){
@@ -4923,6 +5059,8 @@ function openServerSettings(){
   // Fill general fields
   document.getElementById('ss-server-name').value=srv.name;
   if(document.getElementById('ss-server-type'))document.getElementById('ss-server-type').value=srv.serverType||'public';
+  renderBoostWidget(srv);
+  if(typeof fetchServerBoosts==='function')fetchServerBoosts(srv.id).then(()=>renderBoostWidget(srv));
   // Pending requests
   const pendSec=document.getElementById('ss-pending-section');
   const pendList=document.getElementById('ss-pending-list');
@@ -5680,7 +5818,8 @@ function addCustomEmoji(){
   // El aumento de slots (Plus) y los emojis cross-server van a vivir en Supabase,
   // no acá — subir el tope acá significaría más imágenes base64 en Firebase,
   // justo lo que se quiere evitar. Por ahora el tope es el mismo para todos.
-  if(srv.customEmojis.length>=25){showToast('⚠️ Máximo 25 emojis por servidor');return;}
+  const _emojiCap=boostCapFor(srv,'emoji');
+  if(srv.customEmojis.length>=_emojiCap){showToast(`⚠️ Máximo ${_emojiCap} emojis por servidor`+(getServerBoostTier(srv)<3?' — un Server Boost sube el tope':''));return;}
   const restrictVal=document.getElementById('ce-restrict')?.value||'';
   let restrict=null;
   if(restrictVal){
@@ -5833,7 +5972,8 @@ function addCustomSticker(){
   if(!b64){showToast('Sube una imagen primero');return;}
   const srv=getServer(state.currentServerId);if(!srv)return;
   if(!srv.customStickers)srv.customStickers=[];
-  if(srv.customStickers.length>=10){showToast('Máximo 10 stickers por servidor');return;}
+  const _stickerCap=boostCapFor(srv,'sticker');
+  if(srv.customStickers.length>=_stickerCap){showToast(`Máximo ${_stickerCap} stickers por servidor`+(getServerBoostTier(srv)<3?' — un Server Boost sube el tope':''));return;}
   srv.customStickers.push({name,url:b64,uploadedBy:state.currentUser?.name||'?',uploadedAt:Date.now()});
   saveServers();
   document.getElementById('cs-name').value='';
@@ -7916,6 +8056,7 @@ function openUserSettings() {
   const u = state.currentUser; if (!u) return;
   _updatePWAButtonUI();
   renderPlusStatusUI();
+  renderBoostStatusUI();
   document.getElementById('us-lite-mode-toggle')?.classList.toggle('on',!!state.liteMode);
   state._selNameplateOn=!!(u.nameplateColor1);
   state._selNameplateColor1=u.nameplateColor1||'#ff512f';
