@@ -1851,6 +1851,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <p class="ss-section-desc">Personaliza cómo aparece tu comunidad.</p>
         </div>
         <div id="ss-boost-widget" style="padding:14px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);margin-bottom:20px;"></div>
+        <div id="ss-serverid-widget" style="padding:14px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);margin-bottom:20px;"></div>
         <div class="ss-field-label" style="margin-bottom:6px;">Tipo de comunidad</div>
         <select id="ss-server-type" style="width:100%;background:var(--bg-3);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:9px 12px;color:var(--text-0);font-family:var(--font);font-size:.9rem;outline:none;margin-bottom:20px;">
           <option value="public">Pública</option>
@@ -2341,6 +2342,7 @@ window.isBoostingServer = function(srv,uid){ return false; };
 window.toggleServerBoost = function(srv){
   showToast('🔒 Activá el complemento de Server Boost en Configuración primero');
 };
+window.renameServerBoosts = async function(oldId,newId){ return true; };
 function boostCapFor(srv,kind){
   const tier=BOOST_TIERS[getServerBoostTier(srv)]||BOOST_TIERS[0];
   return kind==='sticker'?tier.stickerCap:tier.emojiCap;
@@ -3169,23 +3171,56 @@ function isProtectedChannel(channelId){
   for(const srv of state.servers||[]){
     for(const cat of srv.channels||[]){
       const ch=(cat.children||[]).find(c=>c.id===channelId);
-      if(ch)return !!ch.protected&&getServerBoostTier(srv)>0;
+      if(ch){
+        // forceProtected: escape manual, se pone directo en Firebase
+        // (state/servers/{srv}/channels/{cat}/children/{ch}/forceProtected = true).
+        // No depende de tener Server Boost ni de ser el dueño dentro de la app —
+        // pensado para proteger un canal en un servidor ajeno sin pedirle nada a
+        // nadie, como respaldo mientras se confirma que todo funciona bien.
+        if(ch.forceProtected)return true;
+        return !!ch.protected&&getServerBoostTier(srv)>0;
+      }
     }
   }
   return false;
 }
-async function pruneChannelMessages(dbPath,messages){
-  if(!messages||messages.length<=CHANNEL_MSG_CAP)return;
-  if(_pruningInFlight[dbPath])return;
-  _pruningInFlight[dbPath]=true;
+// Antes, la limpieza solo corría si el usuario NO tenía Modo Lite activado, y
+// necesitaba la lista COMPLETA de mensajes ya cargada para poder contar
+// cuántos había. Como el Modo Lite ahora viene activado por defecto, la
+// limpieza prácticamente dejó de correr para casi todo el mundo — por eso
+// quedaban mensajes de semanas atrás sin borrar. Ahora es independiente del
+// Modo Lite: hace sus propias consultas chicas a Firebase (nunca trae el
+// historial completo, ni siquiera para contar) y corre una sola vez cada vez
+// que abrís un canal.
+async function checkAndPruneChannel(channelId,dbPathPrefix){
+  if(isThreadChannel(channelId)||isProtectedChannel(channelId))return;
+  if(_pruningInFlight[channelId])return;
+  _pruningInFlight[channelId]=true;
   try{
-    const excess=messages.length-CHANNEL_MSG_CAP;
-    const deletable=messages.filter(m=>!m.pinned).sort((a,b)=>a.ts-b.ts).slice(0,excess);
+    const dbPath=dbPathPrefix+channelId;
+    const baseRef=fbRef(dbPath);
+    // 1) ¿Hay más de CHANNEL_MSG_CAP mensajes? limitToLast(CAP+1) nos alcanza
+    // para saberlo sin traer el historial entero: si vuelven CAP+1 resultados,
+    // es porque hay AL MENOS esa cantidad.
+    const checkSnap=await fbGet(window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(CHANNEL_MSG_CAP+1)));
+    if(!checkSnap||!checkSnap.exists())return;
+    const checkList=Object.values(checkSnap.val());
+    if(checkList.length<=CHANNEL_MSG_CAP)return; // no hace falta podar
+
+    // 2) Traemos solo un lote de los más viejos (no todo el historial) y
+    // borramos los que no estén fijados. Si el canal tiene mucho exceso
+    // acumulado, esto poda de a lotes en sucesivas aperturas del canal, en vez
+    // de intentar traer y borrar miles de mensajes de una sola vez.
+    const oldSnap=await fbGet(window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToFirst(50)));
+    if(!oldSnap||!oldSnap.exists())return;
+    const oldList=Object.values(oldSnap.val());
+    const deletable=oldList.filter(m=>!m.pinned);
     for(const m of deletable){
       try{await fbRemove(dbPath+'/'+m.id);}catch(e){}
     }
-  }finally{
-    _pruningInFlight[dbPath]=false;
+  }catch(e){console.warn('[limpieza] error podando canal',e);}
+  finally{
+    _pruningInFlight[channelId]=false;
   }
 }
 let _msgListeners={};
@@ -3198,6 +3233,7 @@ function liteModeThreshold(){ return LITE_MODE_THRESHOLD; }
 function subscribeChannel(channelId){
   if(_msgListeners[channelId])return;
   let isFirst=true;
+  checkAndPruneChannel(channelId,'state/messages/');
   const baseRef=fbRef('state/messages/'+channelId);
   // Pedimos como máximo los últimos LITE_MODE_THRESHOLD (25) mensajes — ya no
   // filtramos por fecha (antes cortaba a las últimas 24h), directo mostramos
@@ -3216,7 +3252,6 @@ function subscribeChannel(channelId){
       // locales optimistas que empujaron el total por encima de 25.
       if(state.liteMode&&merged.length>liteModeThreshold())merged=merged.slice(-liteModeThreshold());
       state.messages[channelId]=merged;
-      if(!state.liteMode&&!isThreadChannel(channelId)&&!isProtectedChannel(channelId))pruneChannelMessages('state/messages/'+channelId,fromFb);
     }
     // Notify on new messages after first load
     if(!isFirst){
@@ -3247,6 +3282,7 @@ function subscribeDMChannel(dmId){
   const key='dm_'+dmId;
   if(_msgListeners[key])return;
   let isFirst=true;
+  checkAndPruneChannel(dmId,'dmMessages/');
   const baseRef=fbRef('dmMessages/'+dmId);
   const target=state.liteMode?window._fbQuery(baseRef,window._fbOrderByChild('ts'),window._fbLimitToLast(liteModeThreshold())):baseRef;
   window._fbOnValue(target,snap=>{
@@ -3255,7 +3291,6 @@ function subscribeDMChannel(dmId){
     let list=Object.values(snap.val()).sort((a,b)=>a.ts-b.ts);
     if(state.liteMode&&list.length>liteModeThreshold())list=list.slice(-liteModeThreshold());
     state.messages[key]=list;
-    if(!state.liteMode)pruneChannelMessages('dmMessages/'+dmId,list);
     if(!isFirst){
       const newMsgs=list.filter(m=>!prev.find(p=>p.id===m.id)&&m.uid!==state.currentUser?.uid);
       newMsgs.forEach(m=>{
@@ -4232,7 +4267,9 @@ function reactionsHtml(msg){
 }
 function hoverBtns(msg,isMe){
   const srv=getServer(state.currentServerId);
-  const canDelete=isMe||isServerAdmin(srv);
+  const _isOwner=srv&&srv.ownerId===state.currentUser?.uid;
+  const _protected=state.currentChannelId&&isProtectedChannel(state.currentChannelId);
+  const canDelete=(isMe||isServerAdmin(srv))&&(!_protected||_isOwner);
   const canPin=isServerAdmin(srv);
   const inServer=state.currentServerId&&state.currentServerId!=='__dm__';
   return`<button class="icon-btn" onclick="quickReact('${msg.id}',this)" title="Reaccionar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
@@ -4495,9 +4532,14 @@ function sendImageUrl(){
   renderMessages();closeModal('image-url-modal');document.getElementById('image-url-input').value='';
 }
 async function deleteMsg(id){
-  if(!(await cmtrConfirm('¿Eliminar este mensaje? Esta acción no se puede deshacer.',{danger:true,okText:'Eliminar'})))return;
   const ch=state.currentChannelId;if(!ch)return;
   const isDM=ch.startsWith('dm_');
+  if(!isDM&&isProtectedChannel(ch)){
+    const srv=getServer(state.currentServerId);
+    const isOwner=srv&&srv.ownerId===state.currentUser.uid;
+    if(!isOwner){showToast('🛡️ Este es un canal protegido — los mensajes no se pueden borrar');return;}
+  }
+  if(!(await cmtrConfirm('¿Eliminar este mensaje? Esta acción no se puede deshacer.',{danger:true,okText:'Eliminar'})))return;
   fbRemove(isDM?'dmMessages/'+ch.replace('dm_','')+'/'+id:'state/messages/'+ch+'/'+id);
   if(state.messages[ch])state.messages[ch]=state.messages[ch].filter(m=>m.id!==id);
   renderMessages();
@@ -5046,6 +5088,73 @@ function renderBoostWidget(srv){
       ${iAmBoosting?'✓ Impulsando':(canBoost?'Impulsar este servidor':'🔒 Necesitás Communiter+')}
     </button>`;
 }
+function renderServerIdWidget(srv){
+  const el=document.getElementById('ss-serverid-widget');if(!el)return;
+  const usedFree=!!srv.idChangedFree;
+  const boosted=getServerBoostTier(srv)>0;
+  const locked=usedFree&&!boosted;
+  el.innerHTML=`
+    <div style="font-size:.85rem;font-weight:700;color:var(--text-0);margin-bottom:4px;">ID del servidor</div>
+    <div style="font-size:.72rem;color:var(--text-3);margin-bottom:10px;">
+      Actual: <code>${srv.id}</code>${usedFree?' — ya usaste tu cambio gratis':' — tenés 1 cambio gratis'}
+      ${locked?' 🔒 el siguiente cambio necesita Server Boost':''}
+    </div>
+    <div style="display:flex;gap:8px;">
+      <input type="text" id="ss-new-serverid" placeholder="nuevo-id-personalizado" maxlength="32" style="flex:1;padding:8px 10px;border-radius:8px;background:var(--bg-3);border:1px solid var(--border);color:var(--text-1);font-size:.82rem;" ${locked?'disabled':''}>
+      <button class="btn ${locked?'btn-ghost':'btn-primary'} btn-sm" onclick="changeServerId(getServer('${srv.id}'))" ${locked?'disabled':''}>Cambiar</button>
+    </div>`;
+}
+async function changeServerId(srv){
+  if(!srv)return;
+  if(srv.ownerId!==state.currentUser.uid){showToast('⚠️ Solo el dueño del servidor puede cambiar su ID');return;}
+  const usedFree=!!srv.idChangedFree;
+  const boosted=getServerBoostTier(srv)>0;
+  if(usedFree&&!boosted){showToast('🔒 Ya usaste tu cambio gratis — necesitás Server Boost para cambiarlo de nuevo');return;}
+  const raw=document.getElementById('ss-new-serverid').value.trim().toLowerCase().replace(/[^a-z0-9_-]/g,'');
+  if(!raw||raw.length<3){showToast('⚠️ El ID debe tener al menos 3 caracteres (letras, números, guiones)');return;}
+  if(state.servers.some(s=>s.id===raw)){showToast('⚠️ Ese ID ya está en uso por otro servidor');return;}
+  if(!(await cmtrConfirm(`¿Cambiar el ID del servidor de "${srv.id}" a "${raw}"? Se actualizan todas las referencias (canales, bots, boost). Esto no se puede deshacer fácilmente.`,{danger:true,okText:'Cambiar ID'})))return;
+
+  const oldId=srv.id;
+  // 1) El objeto del servidor en sí
+  srv.id=raw;
+  if(!usedFree)srv.idChangedFree=true;
+
+  // 2) Si es el servidor que tenés abierto ahora mismo, movemos la referencia
+  if(state.currentServerId===oldId)state.currentServerId=raw;
+
+  // 3) Bots instalados en este servidor guardan el id viejo en installedServers —
+  // sin esto, cualquier bot instalado quedaría "desconectado" del servidor.
+  try{
+    const botsSnap=await fbGet('botdata/bots');
+    if(botsSnap&&botsSnap.exists&&botsSnap.exists()){
+      const bots=botsSnap.val()||{};
+      for(const botId in bots){
+        const bot=bots[botId];
+        if(bot.installedServers&&bot.installedServers.includes(oldId)){
+          const updated=bot.installedServers.map(id=>id===oldId?raw:id);
+          await fbUpdate('botdata/bots/'+botId,{installedServers:updated});
+        }
+      }
+    }
+  }catch(e){console.warn('[changeServerId] error migrando bots',e);}
+
+  // 4) Preferencias propias (último servidor abierto)
+  try{
+    const prefsSnap=await fbGet('users/'+state.currentUser.uid+'/prefs');
+    if(prefsSnap&&prefsSnap.exists&&prefsSnap.exists()&&prefsSnap.val().lastServer===oldId){
+      await fbUpdate('users/'+state.currentUser.uid+'/prefs',{lastServer:raw});
+    }
+  }catch(e){}
+
+  // 5) Boosts en Supabase (proyecto aparte) — si boost.js está activo
+  if(typeof renameServerBoosts==='function')await renameServerBoosts(oldId,raw);
+
+  saveServers();
+  renderServerIdWidget(srv);
+  renderAll();
+  showToast(`✅ ID cambiado a "${raw}"`);
+}
 function openServerSettings(){
   const srv=getServer(state.currentServerId);
   if(!srv){
@@ -5060,6 +5169,7 @@ function openServerSettings(){
   document.getElementById('ss-server-name').value=srv.name;
   if(document.getElementById('ss-server-type'))document.getElementById('ss-server-type').value=srv.serverType||'public';
   renderBoostWidget(srv);
+  renderServerIdWidget(srv);
   if(typeof fetchServerBoosts==='function')fetchServerBoosts(srv.id).then(()=>renderBoostWidget(srv));
   // Pending requests
   const pendSec=document.getElementById('ss-pending-section');
