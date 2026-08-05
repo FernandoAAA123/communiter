@@ -1251,6 +1251,14 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
   </div>
 </div>
 
+<div class="modal-overlay" id="store-progress-modal" style="z-index:1050;">
+  <div class="modal" style="width:360px;padding:20px;">
+    <h2 style="margin-bottom:4px;">🏆 Mi progreso</h2>
+    <p class="sub" style="margin-bottom:14px;">Logros y Communicoins ganados en los juegos BAP.</p>
+    <div id="store-progress-content" style="font-size:.85rem;color:var(--text-3);">Cargando...</div>
+    <div class="modal-actions" style="margin-top:16px;"><button class="btn btn-primary" onclick="closeModal('store-progress-modal')">Cerrar</button></div>
+  </div>
+</div>
 <div class="modal-overlay" id="nameplate-modal" style="z-index:1050;">
   <div class="modal" style="width:360px;padding:20px;">
     <h2 style="margin-bottom:4px;">Placa de nombre</h2>
@@ -1550,6 +1558,17 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <button class="btn btn-ghost" id="boost-upload-btn" style="font-size:.78rem;" onclick="document.getElementById('boost-file-input').click()">Subir archivo</button>
         <input type="file" id="boost-file-input" accept=".js" style="display:none" onchange="handleBoostFileUpload(this)">
+      </div>
+
+      <div style="display:flex;align-items:center;gap:12px;padding:12px;border-radius:10px;background:var(--bg-2);border:1px dashed var(--border);margin-bottom:16px;">
+        <div style="flex:1;">
+          <div style="font-size:.85rem;font-weight:700;color:#a78bfa;">🏆 Communiter Store</div>
+          <div style="font-size:.72rem;color:var(--text-3);margin:2px 0 6px;">Complemento aparte — subí tu archivo <code>store.js</code> para activarlo.</div>
+          <div id="store-status-row"><span style="color:var(--text-3);">No activado</span></div>
+          <button class="btn btn-ghost" style="font-size:.72rem;padding:4px 10px;margin-top:6px;" onclick="openStoreProgress()">Ver mi progreso</button>
+        </div>
+        <button class="btn btn-ghost" id="store-upload-btn" style="font-size:.78rem;" onclick="document.getElementById('store-file-input').click()">Subir archivo</button>
+        <input type="file" id="store-file-input" accept=".js" style="display:none" onchange="handleStoreFileUpload(this)">
       </div>
 
       <div class="custom-section-row" id="plus-row-nameplate" onclick="openCosmeticModal('nameplate-modal')" style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);cursor:pointer;margin-bottom:8px;">
@@ -2006,7 +2025,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
         </div>
         <!-- Table like Discord -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="ss-field-label" style="margin:0;">Emojis del servidor — <span id="ce-count">0</span>/50</div>
+          <div class="ss-field-label" style="margin:0;">Emojis del servidor — <span id="ce-count">0</span>/<span id="ce-cap">25</span></div>
         </div>
         <div style="background:var(--bg-3);border-radius:12px;overflow:hidden;border:1px solid var(--border);">
           <div style="display:grid;grid-template-columns:50px 1fr 1fr 1fr auto;padding:10px 16px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);">
@@ -2037,7 +2056,7 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
           <button class="btn btn-primary" onclick="addCustomSticker()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="20 6 9 17 4 12"/></svg>Agregar</button>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-          <div class="ss-field-label" style="margin:0;">Stickers del servidor — <span id="cs-count">0</span>/10</div>
+          <div class="ss-field-label" style="margin:0;">Stickers del servidor — <span id="cs-count">0</span>/<span id="cs-cap">10</span></div>
         </div>
         <div style="background:var(--bg-3);border-radius:12px;overflow:hidden;border:1px solid var(--border);">
           <div style="display:grid;grid-template-columns:60px 1fr 1fr auto;padding:10px 16px;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);">
@@ -2343,6 +2362,9 @@ window.toggleServerBoost = function(srv){
   showToast('🔒 Activá el complemento de Server Boost en Configuración primero');
 };
 window.renameServerBoosts = async function(oldId,newId){ return true; };
+window.Store = {
+  getCoinBalance: async function(){ return 0; },
+};
 function boostCapFor(srv,kind){
   const tier=BOOST_TIERS[getServerBoostTier(srv)]||BOOST_TIERS[0];
   return kind==='sticker'?tier.stickerCap:tier.emojiCap;
@@ -2469,6 +2491,73 @@ function renderBoostStatusUI(){
   const saved=localStorage.getItem('communiterBoostCode');
   if(saved)injectBoostCode(saved,{silent:true});
 })();
+function injectStoreCode(code,{silent}={}){
+  loadSupabaseSdkThen(()=>{
+    try{
+      const old=document.getElementById('communiter-store-script');
+      if(old)old.remove();
+      const s=document.createElement('script');
+      s.id='communiter-store-script';
+      s.textContent=code;
+      document.body.appendChild(s);
+      if(!window.__storeInjected){ if(!silent)showToast('⚠️ El archivo no parece ser Communiter Store (store.js)'); return; }
+      if(!silent)showToast('✅ Communiter Store activado');
+      renderStoreStatusUI();
+    }catch(e){
+      console.warn('[Store]',e);
+      if(!silent)showToast('⚠️ El archivo no se pudo activar (¿es el correcto?)');
+    }
+  });
+}
+function handleStoreFileUpload(input){
+  const file=input.files[0];if(!file)return;
+  if(!file.name.endsWith('.js')){showToast('⚠️ Debe ser un archivo .js');input.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const code=e.target.result;
+    localStorage.setItem('communiterStoreCode',code);
+    injectStoreCode(code);
+  };
+  reader.onerror=()=>showToast('⚠️ No se pudo leer el archivo');
+  reader.readAsText(file);
+  input.value='';
+}
+async function openStoreProgress(){
+  openModal('store-progress-modal');
+  const el=document.getElementById('store-progress-content');
+  if(!window.__storeInjected){
+    el.innerHTML='<div style="text-align:center;padding:12px;">🔒 Activá Communiter Store primero para ver tu progreso.</div>';
+    return;
+  }
+  const uid=state.currentUser.uid;
+  const balance=await window.Store.getCoinBalance(uid);
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);">
+      <span style="font-size:1.4rem;">🪙</span>
+      <div><div style="font-size:1.1rem;font-weight:700;color:var(--text-0);">${balance}</div><div style="font-size:.7rem;color:var(--text-3);">Communicoins</div></div>
+    </div>
+  `;
+}
+function deactivateStoreCode(){
+  localStorage.removeItem('communiterStoreCode');
+  showToast('Communiter Store desactivado — recargando...');
+  setTimeout(()=>location.reload(),700);
+}
+function renderStoreStatusUI(){
+  const el=document.getElementById('store-status-row');
+  const btn=document.getElementById('store-upload-btn');
+  const active=!!window.__storeInjected;
+  if(el){
+    el.innerHTML=active
+      ?`<span style="color:var(--green);font-weight:600;">🏆 Store activo</span> <button class="btn btn-ghost" style="margin-left:10px;padding:4px 10px;font-size:.75rem;" onclick="deactivateStoreCode()">Desactivar</button>`
+      :`<span style="color:var(--text-3);">No activado</span>`;
+  }
+  if(btn)btn.textContent=active?'Actualizar archivo':'Subir archivo';
+}
+(function(){
+  const saved=localStorage.getItem('communiterStoreCode');
+  if(saved)injectStoreCode(saved,{silent:true});
+})();
 </script>
 <script>
 // Guarda la plantilla original del popup de perfil humano. showBotProfilePopup
@@ -2487,7 +2576,7 @@ const CHAN_ICONS={
   announcement:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 3 2 10l7 3 3 7 10-17z"/></svg>`,
   thread:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>`,
   forum:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
-  readonly:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`,
+  readonly:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
   rules:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="12" y2="17"/></svg>`,
 };
 const ROLE_COLORS=['#ed4245','#faa81a','#3ba55d','#5865f2','#eb459e','#00b0f4'];
@@ -3072,14 +3161,23 @@ async function onUserLoggedIn(firebaseUser){
 }
 
 // ── SUBSCRIPTIONS ──
+let _presenceRenderTimer=null;
 function subscribePresence(){
   fbOn('presence',snap=>{
     state.onlineUsers={};
     if(snap.exists())snap.forEach(c=>{const u=c.val();state.onlineUsers[u.uid]=u;});
-    updateOnlineCount();renderMembersPanel();
-    if(state.currentServerId==='__dm__'&&!state.currentChannelId)renderFriendsPage();
-    // Update avatars in rendered messages in real time
-    updateAvatarsInDOM();
+    // Antes esto re-renderizaba TODO (panel de miembros + un barrido de
+    // querySelectorAll sobre el DOM entero) en CADA cambio de presencia de
+    // CUALQUIER usuario de toda la app, esté o no relacionado con lo que
+    // estás mirando. Con varios usuarios conectados esto se disparaba
+    // constantemente. Ahora se agrupan varios cambios seguidos en un solo
+    // render, como máximo cada 300ms.
+    clearTimeout(_presenceRenderTimer);
+    _presenceRenderTimer=setTimeout(()=>{
+      updateOnlineCount();renderMembersPanel();
+      if(state.currentServerId==='__dm__'&&!state.currentChannelId)renderFriendsPage();
+      updateAvatarsInDOM();
+    },300);
   });
 }
 function updateAvatarsInDOM(){
@@ -3680,7 +3778,7 @@ function renderChannelsPanel(){
       const muteIcon=chMuted?'<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;flex-shrink:0;"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>':'';
       const slowmodeIcon=ch.slowmode?`<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:2px;flex-shrink:0;color:var(--text-3);" title="Modo lento: ${ch.slowmode}s"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`:'';
 
-      item.innerHTML=`${!chMuted&&isChannelUnread(ch.id)?'<span class="unread-dot"></span>':''}${forumCover||`<span class="ch-icon">${CHAN_ICONS[ch.type]||CHAN_ICONS.text}</span>`}${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}${slowmodeIcon}${muteIcon}${unread?`<div class="unread-badge${channelHasMention(ch.id)?' mention':''}">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="openEditChannel('${ch.id}','${srv.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}</div>`;
+      item.innerHTML=`${!chMuted&&isChannelUnread(ch.id)?'<span class="unread-dot"></span>':''}${forumCover||`<span class="ch-icon">${CHAN_ICONS[ch.type]||CHAN_ICONS.text}</span>`}${ch.name}${ch.private?'<span style="font-size:.7rem;color:var(--text-3);margin-left:2px;" title="Canal privado"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>':''}${slowmodeIcon}${muteIcon}${unread?`<div class="unread-badge${channelHasMention(ch.id)?' mention':''}">${unread}</div>`:''}<div class="ch-actions">${isServerAdmin(srv)?`<button class="icon-btn" onclick="openEditChannel('${ch.id}','${srv.id}')" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" onclick="deleteChannel('${ch.id}','${srv.id}')" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>`:''}</div>`;
       item.onclick=e=>{if(!e.target.closest('.ch-actions'))selectChannel(ch.id);};
       item.oncontextmenu=e=>{e.preventDefault();showChannelCtx(e,ch,srv);};
 
@@ -5987,6 +6085,8 @@ function renderCustomEmojiList(srv){
   const emojis=srv?.customEmojis||[];
   const countEl=document.getElementById('ce-count');
   if(countEl)countEl.textContent=emojis.length;
+  const capEl=document.getElementById('ce-cap');
+  if(capEl)capEl.textContent=boostCapFor(srv,'emoji');
   if(!emojis.length){
     el.innerHTML='<div class="ce-table-row" style="justify-content:center;color:var(--text-3);font-size:.85rem;padding:24px;gap:6px;">Sin emojis aún — sube el primero arriba <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></div>';
     return;
@@ -6096,6 +6196,8 @@ function renderCustomStickerList(srv){
   const stickers=srv?.customStickers||[];
   const countEl=document.getElementById('cs-count');
   if(countEl)countEl.textContent=stickers.length;
+  const capEl=document.getElementById('cs-cap');
+  if(capEl)capEl.textContent=boostCapFor(srv,'sticker');
   if(!stickers.length){
     el.innerHTML='<div class="ce-table-row" style="justify-content:center;color:var(--text-3);font-size:.85rem;padding:24px;">Sin stickers aún — sube el primero arriba</div>';
     return;
@@ -8167,6 +8269,7 @@ function openUserSettings() {
   _updatePWAButtonUI();
   renderPlusStatusUI();
   renderBoostStatusUI();
+  renderStoreStatusUI();
   document.getElementById('us-lite-mode-toggle')?.classList.toggle('on',!!state.liteMode);
   state._selNameplateOn=!!(u.nameplateColor1);
   state._selNameplateColor1=u.nameplateColor1||'#ff512f';
