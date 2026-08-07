@@ -1252,10 +1252,10 @@ input[type=color]{width:32px;height:32px;border:none;border-radius:var(--r-xs);c
 </div>
 
 <div class="modal-overlay" id="store-progress-modal" style="z-index:1050;">
-  <div class="modal" style="width:360px;padding:20px;">
-    <h2 style="margin-bottom:4px;">🏆 Mi progreso</h2>
-    <p class="sub" style="margin-bottom:14px;">Logros y Communicoins ganados en los juegos BAP.</p>
-    <div id="store-progress-content" style="font-size:.85rem;color:var(--text-3);">Cargando...</div>
+  <div class="modal" style="width:380px;padding:20px;">
+    <h2 style="margin-bottom:4px;">🏆 Communiter Store</h2>
+    <p class="sub" style="margin-bottom:14px;">Tu saldo y los cosméticos exclusivos del Store.</p>
+    <div id="store-progress-content" style="font-size:.85rem;color:var(--text-3);max-height:60vh;overflow-y:auto;">Cargando...</div>
     <div class="modal-actions" style="margin-top:16px;"><button class="btn btn-primary" onclick="closeModal('store-progress-modal')">Cerrar</button></div>
   </div>
 </div>
@@ -2371,6 +2371,9 @@ window.toggleChannelProtection = async function(){
 };
 window.Store = {
   getCoinBalance: async function(){ return 0; },
+  getCatalog: async function(){ return []; },
+  getInventory: async function(){ return []; },
+  purchaseItem: async function(){ showToast('🔒 Activá Communiter Store en Configuración primero'); return false; },
 };
 function boostCapFor(srv,kind){
   const tier=BOOST_TIERS[getServerBoostTier(srv)]||BOOST_TIERS[0];
@@ -2536,14 +2539,46 @@ async function openStoreProgress(){
     el.innerHTML='<div style="text-align:center;padding:12px;">🔒 Activá Communiter Store primero para ver tu progreso.</div>';
     return;
   }
+  el.innerHTML='<div style="text-align:center;padding:12px;color:var(--text-3);">Cargando...</div>';
   const uid=state.currentUser.uid;
-  const balance=await window.Store.getCoinBalance(uid);
+  const [balance,catalog,inventory]=await Promise.all([
+    window.Store.getCoinBalance(uid),
+    window.Store.getCatalog(),
+    window.Store.getInventory(uid)
+  ]);
+  const catLabels={nameplate:'Placas',avatarframe:'Marcos',effect:'Efectos',badge:'Insignias'};
+  const byCategory={};
+  catalog.forEach(item=>{(byCategory[item.category]=byCategory[item.category]||[]).push(item);});
+  let itemsHtml='';
+  Object.keys(byCategory).forEach(cat=>{
+    itemsHtml+=`<div style="font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--text-3);margin:14px 0 6px;">${catLabels[cat]||cat}</div>`;
+    byCategory[cat].forEach(item=>{
+      const owned=inventory.includes(item.id);
+      const preview=item.category==='nameplate'||item.category==='effect'
+        ?`<div style="width:32px;height:32px;border-radius:8px;background:${item.color2?`linear-gradient(135deg,${item.color1},${item.color2})`:(item.color1||'var(--bg-3)')};flex-shrink:0;"></div>`
+        :(item.image_url?`<img src="${item.image_url}" style="width:32px;height:32px;border-radius:8px;object-fit:cover;flex-shrink:0;">`:`<div style="width:32px;height:32px;border-radius:8px;background:var(--bg-3);flex-shrink:0;"></div>`);
+      itemsHtml+=`
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:9px;background:var(--bg-2);border:1px solid var(--border);margin-bottom:6px;">
+          ${preview}
+          <div style="flex:1;min-width:0;"><div style="font-size:.82rem;font-weight:600;color:var(--text-0);">${escapeHtml(item.name)}</div>${item.description?`<div style="font-size:.7rem;color:var(--text-3);">${escapeHtml(item.description)}</div>`:''}</div>
+          ${owned
+            ?`<span style="font-size:.72rem;color:var(--green);font-weight:600;white-space:nowrap;">✓ Adquirido</span>`
+            :`<button class="btn btn-primary btn-sm" style="white-space:nowrap;font-size:.75rem;" onclick="buyStoreItem('${item.id}')">${item.price} 🪙</button>`}
+        </div>`;
+    });
+  });
   el.innerHTML=`
-    <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);">
-      <span style="font-size:1.4rem;">🪙</span>
+    <div style="display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:var(--bg-2);border:1px solid var(--border);margin-bottom:6px;">
+      <img src="https://chibi.iitranq.co.uk/VlKfTuUBBAUs.png" style="width:28px;height:28px;object-fit:contain;">
       <div><div style="font-size:1.1rem;font-weight:700;color:var(--text-0);">${balance}</div><div style="font-size:.7rem;color:var(--text-3);">Communicoins</div></div>
     </div>
+    ${itemsHtml||'<div style="text-align:center;color:var(--text-3);padding:16px;font-size:.8rem;">Todavía no hay objetos en venta</div>'}
   `;
+}
+async function buyStoreItem(itemId){
+  const uid=state.currentUser.uid;
+  const ok=await window.Store.purchaseItem(uid,itemId);
+  if(ok)openStoreProgress();
 }
 function deactivateStoreCode(){
   localStorage.removeItem('communiterStoreCode');
